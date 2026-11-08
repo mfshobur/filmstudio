@@ -17,7 +17,7 @@ filmstudio audio-check            # loudness, clipping, dynamics
 filmstudio export                 # optional: render build/film.mp4 (slow on small devices, resumable; test with --from-bar 1 --to-bar 3 first)
 ```
 ## Length and music (decide this early)
-Scores are 46 bars: **seconds = 11040 / bpm** (bpm 128 = 86 s, 184 = 60 s, 100 = 110 s). Change `bpm`, never `bars`. Presets: `anthem-46` (energetic) and `calm-46` (no hard drums). Details: `filmstudio guide storyboard`.
+Length: **seconds = bars x 240 / bpm**. Run `filmstudio length <seconds> [--preset calm-46]` and put the `bars` and `bpm` it suggests into spec.json (bars is 46, or an even number from 40 to 78; the montage stretches). Presets: `anthem-46` (energetic) and `calm-46` (no hard drums). Details: `filmstudio guide storyboard`.
 
 ## Rules
 - You cannot hear audio or judge taste: say so, use measurements, ask the user to listen and report timecodes.

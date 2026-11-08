@@ -40,7 +40,7 @@ function mixDown(music, voiceClips, sr, opts = {}) { // voiceClips: [{start (s),
 
 async function renderMusic(spec, opts) { // returns Float32Array covering [fromBar, toBar) (seconds from the start of fromBar)
   const bpm = spec.bpm || 128, barSec = 60 / bpm * 4, sr = opts.sr, fromBar = opts.fromBar, toBar = opts.toBar, chunk = opts.chunk || 4;
-  const preset = (spec.score && spec.score.preset) || 'anthem-46', sc = { calm: preset === 'calm-46', transpose: (spec.score && spec.score.transpose) || 0 };
+  const preset = (spec.score && spec.score.preset) || 'anthem-46', sc = { calm: preset === 'calm-46', transpose: (spec.score && spec.score.transpose) || 0, bars: spec.bars || 46 };
   const total = new Float32Array(Math.round((toBar - fromBar) * barSec * sr)), cuts = cutsMap(spec);
   const tpl = fs.readFileSync(path.join(__dirname, '..', 'engine', 'audiopcm.template.html'), 'utf8').replace('{{MUSIC}}', () => fs.readFileSync(path.join(__dirname, '..', 'engine', 'music.js'), 'utf8'));
   fs.mkdirSync(opts.workDir, { recursive: true });

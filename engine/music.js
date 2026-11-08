@@ -1,7 +1,17 @@
 /* ---------- the score: 128 BPM, A minor, 46 bars ---------- */
+/* film bar -> score bar. The score is 46 bars; the montage (score bars 13-20, four 2-bar units) stretches or shrinks
+   so a film can be 40 to 78 bars (even numbers). The last montage unit (19-20, riser + roll into the break) always plays. */
+function filmScoreSeq(L){
+  L=L||46;var u=Math.max(1,Math.round((L-38)/2)),seq=[],i;
+  for(i=1;i<=12;i++)seq.push(i);
+  for(i=0;i<u-1;i++){var base=13+(i%3)*2;seq.push(base,base+1)}
+  seq.push(19,20);
+  for(i=21;i<=46;i++)seq.push(i);
+  return seq;
+}
 function createMusic(c, out, BPM, opts){
   opts = opts || {}; var CALM = !!opts.calm, TR = opts.transpose | 0;
-  var spb=60/BPM, s16=spb/4, M={BPM:BPM,spb:spb,s16:s16,bars:46,steps:46*16};
+  var spb=60/BPM, s16=spb/4, SEQ=filmScoreSeq(opts.bars||46),M={BPM:BPM,spb:spb,s16:s16,bars:SEQ.length,steps:SEQ.length*16};
   function mtof(m){return 440*Math.pow(2,(m+TR-69)/12)}
   /* buses */
   var master=c.createGain();master.gain.value=1;master.connect(out);
@@ -126,8 +136,8 @@ function createMusic(c, out, BPM, opts){
   M.chordAt=function(bar){return prog[bar]};
 
   M.step=function(step,t){
-    var bar=Math.floor(step/16)+1,st=step%16,beat=st>>2,sub=st&3,S=sec(bar),name=prog[bar],ch=CH[name];
-    if(!ch||bar>46)return;
+    var bar=SEQ[Math.floor(step/16)],st=step%16,beat=st>>2,sub=st&3,S=sec(bar),name=prog[bar],ch=CH[name];
+    if(!bar||!ch)return;
     var barLen=spb*4,dn=st===0;
     /* the breath before the drop: last beat of bar 28 is silent */
     if(bar===28&&st>=12)return;

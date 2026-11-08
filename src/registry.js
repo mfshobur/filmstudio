@@ -35,6 +35,16 @@ const STYLES = {
 const FORMATS = { '16:9': [16, 9], '9:16': [9, 16], '1:1': [1, 1], '4:5': [4, 5] };
 /* default pixel size for a format; `long` is the longer side */
 function sizeFor(format, long) { const f = FORMATS[format] || FORMATS['16:9'], L = long || 640, k = L / Math.max(f[0], f[1]); return [Math.round(f[0] * k / 2) * 2, Math.round(f[1] * k / 2) * 2]; }
+/* film lengths the built-in scores support: 46 bars, or any even number from 40 to 78 (the montage stretches) */
+const BARS_MIN = 40, BARS_MAX = 78;
+function barsOk(b) { return Number.isInteger(b) && b % 2 === 0 && b >= BARS_MIN && b <= BARS_MAX; }
+/* choose bars and bpm for a target length, staying near the preset's natural tempo */
+function planLength(seconds, preset) {
+  const sc = SCORES[preset || 'anthem-46'] || SCORES['anthem-46'];
+  let bars = Math.round(seconds * sc.bpm / 240 / 2) * 2; bars = Math.max(BARS_MIN, Math.min(BARS_MAX, bars));
+  const bpm = Math.max(60, Math.min(200, Math.round(bars * 240 / seconds)));
+  return { bars, bpm, seconds: Math.round(bars * 240 / bpm * 10) / 10 };
+}
 const SCORES = {
   'anthem-46': { bars: 46, bpm: 128, note: 'Energetic: suspense intro, build, drum-driven montage, breakdown, drop, outro. A minor. No piano.' },
   'calm-46': { bars: 46, bpm: 100, note: 'Same shape and melody but no hard drums: soft heartbeat pulse, gentle bass and cello, glass lead. For calm, reflective or sleepy films. Try bpm 90 to 105.' },
@@ -51,4 +61,4 @@ const MOODS = {
 Object.keys(MOODS).forEach(k => { if (STYLES[k]) STYLES[k].moods = MOODS[k]; });
 const ICON_NAMES = ['bulb', 'heart', 'house', 'book', 'rocket', 'chart', 'person', 'tree', 'cloud', 'star', 'gear', 'check'];
 const PUPPET_KINDS = ['hero', 'demon', 'clown', 'gunungan', 'bird', 'tree', 'mountain', 'house', 'deer'];
-module.exports = { FORMATS, sizeFor, STYLES, SCORES, ICON_NAMES, PUPPET_KINDS };
+module.exports = { FORMATS, sizeFor, barsOk, planLength, BARS_MIN, BARS_MAX, STYLES, SCORES, ICON_NAMES, PUPPET_KINDS };

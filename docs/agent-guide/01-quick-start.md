@@ -23,7 +23,7 @@ You are an AI agent using `filmstudio` to make a short generated film (procedura
 - Keep all work inside the project folder.
 
 ## Time and size guide
-Films are always 46 bars: **seconds = 11040 / bpm**. bpm 128 = 86 s; 184 = 60 s; 123 = 90 s; 100 = 110 s. Do not change `bars`; change `bpm` (see `guide storyboard`). Ask where it will play: set `format` (`16:9` default, `9:16`, `1:1`, `4:5`) if it is not wide. Pick `score.preset` `anthem-46` (energetic) or `calm-46` (gentle). The starter shots are a generic placeholder montage: replace them with styles that fit the topic (`styles --mood <tone>`, `guide style-grammar`). `new` does not create `treatment.md`; write it yourself. Narration lines should be 2 to 5 seconds (seconds per bar = 240 / bpm); cuts every 2 to 8 beats.
+Length: **seconds = bars x 240 / bpm**. Default 46 bars at bpm 128 = 86 s. For another length run `filmstudio length 60` and set the `bars` and `bpm` it suggests (bars: 46, or even 40 to 78; see `guide storyboard`). Ask where it will play: set `format` (`16:9` default, `9:16`, `1:1`, `4:5`) if it is not wide. Pick `score.preset` `anthem-46` (energetic) or `calm-46` (gentle). The starter shots are a generic placeholder montage: replace them with styles that fit the topic (`styles --mood <tone>`, `guide style-grammar`). `new` does not create `treatment.md`; write it yourself. Narration lines should be 2 to 5 seconds (seconds per bar = 240 / bpm); cuts every 2 to 8 beats.
 
 ## What this tool cannot do (tell the user honestly)
 It makes procedural 2D/3D animation, not photoreal footage or real people. The user's own pictures and logos can be shown with the `image` style (see `guide images`).

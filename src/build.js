@@ -33,7 +33,7 @@ function compile(spec, projectDir) {
     END_BAR: spec.endCardBar || (spec.bars || 46) - 1.4,
     TITLE_LINES: JSON.stringify(meta.titleLines || ['The end']),
     TITLE_ACCENT: meta.titleAccent == null ? -1 : meta.titleAccent,
-    SCORE: JSON.stringify({ calm: ((spec.score && spec.score.preset) || 'anthem-46') === 'calm-46', transpose: (spec.score && spec.score.transpose) || 0 }),
+    SCORE: JSON.stringify({ calm: ((spec.score && spec.score.preset) || 'anthem-46') === 'calm-46', transpose: (spec.score && spec.score.transpose) || 0, bars: spec.bars || 46 }),
     SHOTS: JSON.stringify(embedAssets(spec.shots, projectDir)),
     VO_AT: JSON.stringify(narr.map(n => n.at)),
     VO_TXT: JSON.stringify(narr.map(n => n.text)),

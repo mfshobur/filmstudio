@@ -30,6 +30,7 @@ const HELP = `filmstudio <command> [project-dir] [options]   (all output is JSON
   audio-check [dir]                      render the score offline; report loudness, clipping, dynamics
   doctor [--deep]                        check this machine
   mcp [--root dir]                       run an MCP server on stdio (tools + the guide as resources)
+  length <seconds> [--preset calm-46]    suggest bars and bpm for a target length
   serve [dir] [--port 4173] [--host 127.0.0.1] [--token t]   local web page to edit the storyboard (token required off localhost)
   styles [--mood calm]                   list shot styles and variants (filter by mood)
   guide [topic]                          print the agent guide (no topic = list topics)`;
@@ -48,6 +49,7 @@ const HELP = `filmstudio <command> [project-dir] [options]   (all output is JSON
       return console.log(want.map(f => fs.readFileSync(path.join(gdir, f), 'utf8')).join('\n\n---\n\n'));
     }
     if (cmd === 'mcp') { require('../src/mcp').serve(flags.root ? String(flags.root) : null); return; }
+    if (cmd === 'length') { const sec = Number(pos[1]); if (!(sec > 0)) fail('usage: filmstudio length <seconds> [--preset anthem-46|calm-46]'); const r = require('../src/registry').planLength(sec, flags.preset ? String(flags.preset) : 'anthem-46'); return out(Object.assign(r, { set: 'In spec.json set "bars": ' + r.bars + ' and "bpm": ' + r.bpm + '.', note: Math.abs(r.seconds - sec) > 2 ? 'Closest this score can get to ' + sec + ' s without a very fast or slow tempo.' : undefined })); }
     if (cmd === 'serve') {
       const host = String(flags.host || '127.0.0.1'), local = ['127.0.0.1', 'localhost', '::1'].includes(host);
       const token = flags.token ? String(flags.token) : (local ? null : require('crypto').randomBytes(16).toString('hex'));

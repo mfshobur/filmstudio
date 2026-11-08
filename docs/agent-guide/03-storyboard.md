@@ -3,7 +3,7 @@
 Start from the starter: `filmstudio new my-film` copies `examples/starter` (a valid spec with the proven shot rhythm and no narration). For a finished film to imitate, run `filmstudio new copy --example the-only-limit`. Edit the shots, the text and the narration; run `validate` after every change.
 
 ## Film length (read this first)
-The built-in scores are 46 bars long, so **length in seconds = 46 x 240 / bpm = 11040 / bpm**. You change the length by changing `bpm`, never `bars`.
+**length in seconds = bars x 240 / bpm.** The built-in scores are 46 bars (86 s at the default 128 bpm). To change the length, run `filmstudio length <seconds>` (add `--preset calm-46` for calm) and put the `bars` and `bpm` it prints into spec.json. `bars` may be 46 or any even number from 40 to 78: the drum-driven montage (film bars 13 onward) stretches or shrinks by 2-bar units while the intro, build, break, climax and outro stay fixed. That means a floor of about 48 s at a tempo near 200 and no film shorter than 40 bars. Shots are placed on the film's own bars, so after changing `bars` move the shots to fit and keep the last shot ending at bars + 1. Changing only `bpm` (with bars 46) still works too; the table below uses that.
 
 | target length | bpm |
 |---|---|

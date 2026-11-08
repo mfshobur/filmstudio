@@ -18,7 +18,7 @@ function validate(spec, dir) {
   if (!(Number.isInteger(bars) && bars >= 8 && bars <= 200)) err('bars', 'bars must be an integer from 8 to 200', 'bars = film length in seconds * bpm / 240.');
   const preset = (spec.score && spec.score.preset) || 'anthem-46';
   if (!SCORES[preset]) err('score.preset', 'unknown score preset "' + preset + '"', 'Available: ' + Object.keys(SCORES).join(', '));
-  else if (SCORES[preset].bars !== bars) err('bars', 'score preset "' + preset + '" is ' + SCORES[preset].bars + ' bars long, spec has ' + bars, 'Set bars to ' + SCORES[preset].bars + '. Film length is fixed by the score: seconds = ' + SCORES[preset].bars + ' x 240 / bpm. To change the length, change bpm (e.g. bpm 184 gives 60 s, 123 gives 90 s, 92 gives 120 s), not bars.');
+  else if (bars !== SCORES[preset].bars && !require('./registry').barsOk(bars)) err('bars', 'the built-in scores support 46 bars or any even number from 40 to 78, spec has ' + bars, 'Pick bars from 40 to 78 (even) and a bpm to match: seconds = bars x 240 / bpm. `filmstudio length <seconds>` suggests both.');
   if (spec.format != null && !require('./registry').FORMATS[spec.format]) err('format', 'unknown format "' + spec.format + '"', 'Use one of: ' + Object.keys(require('./registry').FORMATS).join(', ') + '. Leave it out for 16:9.');
   if (spec.score && spec.score.transpose != null && !(Number.isInteger(spec.score.transpose) && spec.score.transpose >= -6 && spec.score.transpose <= 6)) err('score.transpose', 'transpose must be a whole number of semitones from -6 to 6', 'Use 0 for the default A minor; +3 gives C minor.');
   if (!spec.meta || !spec.meta.title) err('meta.title', 'meta.title is required', 'Add a short title.');
@@ -80,7 +80,7 @@ function validate(spec, dir) {
     real.forEach((s, i) => { const beats = (s[1] - s[0]) * 4; if (beats > 12 && i < real.length - 1 && !(s[2] === 'domino' && s[3] === 'title')) warn('shots[' + i + ']', 'shot lasts ' + beats + ' beats; long holds lose attention', 'Cut away at least every 8 to 12 beats (the final shot may be longer).'); });
     real.forEach((s, i) => { if (i && real[i - 1][2] === s[2] && real[i - 1][3] === s[3] && s[2] !== 'stage') warn('shots[' + i + ']', 'same style/variant "' + s[2] + '/' + s[3] + '" twice in a row', 'Alternate styles so each cut reads as a change.'); });
     const distinct = new Set(real.map(s => s[2])).size; if (distinct > 12) warn('shots', distinct + ' different styles in one film looks scattered', 'Keep it to about 12 or fewer, chosen to fit the story.');
-    if (preset === 'anthem-46' || preset === 'calm-46') { const mont = real.filter(s => s[0] >= 13 && s[0] < 21).length; if (mont < 6) warn('shots', 'only ' + mont + ' shots in the montage (bars 13 to 20); the score builds to quick cuts there', 'Use 8 to 16 shots of 0.25 to 0.5 bar in bars 13-20.'); }
+    if (preset === 'anthem-46' || preset === 'calm-46') { const mont = real.filter(s => s[0] >= 13 && s[0] < 13 + 8 + (bars - 46)).length; if (mont < 6) warn('shots', 'only ' + mont + ' shots in the montage (bars 13 to 20); the score builds to quick cuts there', 'Use 8 to 16 shots of 0.25 to 0.5 bar in bars 13-20.'); }
   }
   // narration
   let durations = null;

@@ -28,6 +28,8 @@ const { launch } = require('../src/browser'), { createStudio } = require('../src
     assert.strictEqual(JSON.parse(fs.readFileSync(path.join(dir, 'feedback.json'), 'utf8')).length, 1);
     await page.click('[data-tab=idea]'); await page.fill('[data-b=title]', 'Edited title'); await page.waitForTimeout(1300);
     assert.strictEqual(JSON.parse(fs.readFileSync(path.join(dir, 'brief.json'), 'utf8')).title, 'Edited title');
+    await page.fill('#targetSec', '60'); await page.click('#applySec'); await page.waitForTimeout(1200);
+    { const sp = specNow(); assert.strictEqual(sp.bars, 40); assert.strictEqual(sp.bpm, 160); assert.strictEqual(sp.shots[sp.shots.length - 1][1], 41, 'last shot ends at the new end'); }
     await page.setViewportSize({ width: 380, height: 800 }); await page.click('[data-tab=story]');
     assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth + 1), 'no horizontal scroll at phone width');
     assert.deepStrictEqual(errs, [], 'page errors: ' + errs.join('|'));

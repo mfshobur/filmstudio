@@ -10,7 +10,7 @@ async function audioCheck(dir, spec, opts = {}) {
   const tmp = path.join(dir, 'build'); fs.mkdirSync(tmp, { recursive: true });
   const file = path.join(tmp, 'audiocheck.html'); fs.writeFileSync(file, html);
   const os = require('os');
-  const preset = (spec.score && spec.score.preset) || 'anthem-46', score = { calm: preset === 'calm-46', transpose: (spec.score && spec.score.transpose) || 0 };
+  const preset = (spec.score && spec.score.preset) || 'anthem-46', score = { calm: preset === 'calm-46', transpose: (spec.score && spec.score.transpose) || 0, bars: spec.bars || 46 };
   const chunk = opts.chunk || (os.totalmem() < 6e9 ? 4 : 8), bars = spec.bars, bpm = spec.bpm || 128;
   const cacheFile = path.join(tmp, 'audiocheck.partial.json');
   let cache = {}; try { cache = JSON.parse(fs.readFileSync(cacheFile, 'utf8')); } catch (e) { /* none */ }
