@@ -69,7 +69,7 @@ const HELP = `filmstudio <command> [project-dir] [options]   (all output is JSON
     if (cmd === 'build') {
       const v = validate(spec, dir); if (!v.ok) fail('spec has errors; fix them first', { errors: v.errors });
       const html = compile(spec, dir), o = path.join(dir, 'build', 'film.html'); fs.mkdirSync(path.dirname(o), { recursive: true }); fs.writeFileSync(o, html);
-      return out({ ok: true, out: path.resolve(o), bytes: html.length, warnings: v.warnings, hasVoice: html.includes('var VO=[') });
+      return out({ ok: true, out: path.resolve(o), bytes: html.length, warnings: v.warnings, hasVoice: html.includes('var VO=['), note: html.includes('var VO=[') ? undefined : 'No narration audio is attached yet; run `filmstudio voice` if the film has narration lines.' });
     }
     if (cmd === 'voice') {
       const r = await require('../src/voice').voice(dir, spec, { provider: flags.provider, force: !!flags.force, yes: !!flags.yes, log: m => console.error(m) });

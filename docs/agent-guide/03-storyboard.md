@@ -15,6 +15,10 @@ The built-in scores are 46 bars long, so **length in seconds = 46 x 240 / bpm = 
 
 `validate` prints `info.seconds` so you can confirm. The tempo changes with bpm, so very high or low values change the feel; stay between 90 and 150 when you can.
 
+**Seconds per bar = 240 / bpm** (bpm 128: 1.9 s; 184: 1.3 s; 100: 2.4 s). A 2 to 5 second narration line is therefore about 2 bars at 128 bpm but 3 to 4 bars at 184. Space lines by clip length, not a fixed bar count, and run `voice` then `validate` to catch overlaps.
+
+**Calm and short together:** `calm-46` is tuned for 90 to 105 bpm, so a calm film of 60 s (bpm 184) plays the gentle score at nearly double speed. If the user wants calm, prefer a longer film (about 105 to 120 s), or say plainly that 60 s calm will feel brisk and let them choose.
+
 ## spec.json fields
 ```json
 {
