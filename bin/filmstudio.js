@@ -30,6 +30,7 @@ const HELP = `filmstudio <command> [project-dir] [options]   (all output is JSON
   audio-check [dir]                      render the score offline; report loudness, clipping, dynamics
   doctor [--deep]                        check this machine
   mcp [--root dir]                       run an MCP server on stdio (tools + the guide as resources)
+  serve [dir] [--port 4173] [--host 127.0.0.1] [--token t]   local web page to edit the storyboard (token required off localhost)
   styles [--mood calm]                   list shot styles and variants (filter by mood)
   guide [topic]                          print the agent guide (no topic = list topics)`;
 
@@ -47,6 +48,14 @@ const HELP = `filmstudio <command> [project-dir] [options]   (all output is JSON
       return console.log(want.map(f => fs.readFileSync(path.join(gdir, f), 'utf8')).join('\n\n---\n\n'));
     }
     if (cmd === 'mcp') { require('../src/mcp').serve(flags.root ? String(flags.root) : null); return; }
+    if (cmd === 'serve') {
+      const host = String(flags.host || '127.0.0.1'), local = ['127.0.0.1', 'localhost', '::1'].includes(host);
+      const token = flags.token ? String(flags.token) : (local ? null : require('crypto').randomBytes(16).toString('hex'));
+      const st = require('../src/studio').createStudio({ dir: path.resolve(dir), host, token });
+      const port = Number(flags.port || 4173); await st.listen(port);
+      console.log(JSON.stringify({ ok: true, url: 'http://' + (host === '0.0.0.0' ? 'localhost' : host) + ':' + port + '/' + (token ? '?token=' + token : ''), dir: path.resolve(dir), note: 'Ctrl+C to stop. Nothing is exposed beyond ' + host + '.' }, null, 2));
+      return;
+    }
     if (cmd === 'doctor') return out(await require('../src/doctor').doctor({ deep: !!flags.deep }));
     if (cmd === 'new') {
       const target = path.resolve(pos[1] || 'my-film'); if (fs.existsSync(target) && fs.readdirSync(target).length) fail('folder not empty: ' + target);

@@ -8,7 +8,7 @@ Run `node <clone>/bin/filmstudio.js <command>` (or `filmstudio <command>` if you
 ## Option B: MCP server
 `filmstudio mcp [--root <workspace>]` runs an MCP server on stdio. It offers 11 tools (`filmstudio_new`, `_validate`, `_build`, `_voice`, `_voice_check`, `_review`, `_audio_check`, `_export`, `_styles`, `_guide`, `_doctor`) and the whole guide as resources (`filmstudio://guide/<topic>`). Project paths are confined to `--root` (default: the folder the server starts in); anything outside it is refused.
 
-Typical registrations (check your tool's current docs, the file formats change between versions):
+Verified: Claude Code (non-interactive run with `--mcp-config`) started the server, called `filmstudio_styles` and got the correct list. The other registrations below are from memory of those tools' formats; check their current docs, because the file formats change between versions.
 - **Claude Code:** `claude mcp add filmstudio -- node /path/to/filmstudio/bin/filmstudio.js mcp --root /path/to/workspace`
 - **Codex CLI** (`~/.codex/config.toml`): 
   ```toml

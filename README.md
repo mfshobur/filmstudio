@@ -74,6 +74,8 @@ Then open `build/film.html` in a browser and press Begin. Use headphones.
 
 ## Making your own
 
+If you'd rather type than talk, run `node bin/filmstudio.js serve my-film` and open the address it prints. It's a plain page for the brief, the storyboard, the voice and notes; your agent sees everything you change because it's all files.
+
 The normal way is to point an agent (Claude Code, Codex CLI, Gemini CLI, Cursor, anything that can run shell commands) at this repo and tell it what you want. The agent reads `AGENTS.md`, which sends it to a written guide in `docs/agent-guide/`. With Claude Code you can also copy `skills/film-maker` into `~/.claude/skills/`.
 
 You can do it by hand too. A film is a folder:
@@ -102,12 +104,14 @@ All commands print JSON.
 | `build` | write `build/film.html` |
 | `review` | screenshot each shot, make contact sheets; `--size 400x800` for portrait, `--motion` to check shots animate |
 | `audio-check` | render the score offline and report loudness, clipping, dynamics |
+| `serve` | open a local web page to edit the storyboard, hear the narration, preview the film, and leave notes for your agent |
 | `mcp` | run an MCP server (11 tools, the guide as resources) for agent tools that prefer native tool calls |
 | `doctor` | check this machine |
 
-Developing: `npm test` runs the fast checks (no browser). `npm run qa` draws every style and variant in a headless browser and reports errors and static shots.
 | `styles` | list the styles and variants |
 | `guide [topic]` | print the agent guide |
+
+Developing: `npm test` runs the fast checks (no browser). `npm run test:browser` tests export and the studio page. `npm run qa` draws every style and variant in a headless browser and reports errors and static shots.
 
 ## Voices
 
@@ -121,9 +125,7 @@ The review tools can look at pictures and measure audio levels. They can't tell 
 
 - more character options (hands, outfits, more animals, lip-sync from the audio itself)
 - imported images and logos as shots; more variants of the styles above
-- a small local web page to edit the storyboard with live preview
 - other scores, with length and key as settings
-- a small local web page
 
 ## License
 
