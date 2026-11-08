@@ -1,0 +1,35 @@
+{
+ "title": "The Only Limit",
+ "idea": "A short film about how limitless AI is, and how the human mind is the only limit.",
+ "audience": "General audience on social media",
+ "length": "85 seconds",
+ "tone": [
+  "suspense",
+  "wonder",
+  "emotional"
+ ],
+ "avoid": [
+  "piano",
+  "cheesy inspirational music"
+ ],
+ "styles": [
+  "isometric",
+  "paper cut",
+  "3d data chart",
+  "synthwave",
+  "3d explainer",
+  "maths diagram",
+  "cartoon explainer",
+  "domino reveal",
+  "glow atom"
+ ],
+ "music": {
+  "bpm": 128,
+  "mood": "suspenseful, builds to an emotional drop"
+ },
+ "voice": {
+  "provider": "kokoro",
+  "voice": "bf_emma",
+  "pace": "slow, dramatic"
+ }
+}

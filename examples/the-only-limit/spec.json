@@ -1,0 +1,495 @@
+{
+ "version": 1,
+ "meta": {
+  "title": "The Only Limit",
+  "eyebrow": "A short film · about 85 seconds",
+  "lede": "A short film about artificial intelligence, and the mind that points it somewhere.",
+  "fine": "Plays with music and a spoken narration. Headphones recommended.",
+  "endTitle": "The only limit is the human mind.",
+  "endLede": "What will you ask?",
+  "titleLines": [
+   "The only limit",
+   "is the",
+   "human mind."
+  ],
+  "titleAccent": 1
+ },
+ "bpm": 128,
+ "bars": 46,
+ "endCardBar": 44.6,
+ "score": {
+  "preset": "anthem-46"
+ },
+ "shots": [
+  [
+   1,
+   3,
+   "atom",
+   "spark"
+  ],
+  [
+   3,
+   5,
+   "math",
+   "sine"
+  ],
+  [
+   5,
+   7,
+   "cartoon",
+   "follow"
+  ],
+  [
+   7,
+   9,
+   "chart",
+   "learn"
+  ],
+  [
+   9,
+   11,
+   "explainer",
+   "neural"
+  ],
+  [
+   11,
+   12,
+   "iso",
+   "city"
+  ],
+  [
+   12,
+   13,
+   "chart",
+   "skyline"
+  ],
+  [
+   13,
+   13.5,
+   "paper",
+   "land1"
+  ],
+  [
+   13.5,
+   14,
+   "paper",
+   "land2"
+  ],
+  [
+   14,
+   14.5,
+   "synth",
+   "sun"
+  ],
+  [
+   14.5,
+   15,
+   "synth",
+   "eq"
+  ],
+  [
+   15,
+   15.5,
+   "atom",
+   "molecule"
+  ],
+  [
+   15.5,
+   16,
+   "math",
+   "descent"
+  ],
+  [
+   16,
+   16.5,
+   "cartoon",
+   "heart"
+  ],
+  [
+   16.5,
+   17,
+   "explainer",
+   "cube"
+  ],
+  [
+   17,
+   18,
+   "iso",
+   "city2"
+  ],
+  [
+   18,
+   19,
+   "chart",
+   "skyline2"
+  ],
+  [
+   19,
+   19.25,
+   "domino",
+   "wave"
+  ],
+  [
+   19.25,
+   19.5,
+   "atom",
+   "molecule"
+  ],
+  [
+   19.5,
+   19.75,
+   "synth",
+   "sun"
+  ],
+  [
+   19.75,
+   20,
+   "iso",
+   "cubes"
+  ],
+  [
+   20,
+   20.25,
+   "math",
+   "sine"
+  ],
+  [
+   20.25,
+   20.5,
+   "paper",
+   "land1"
+  ],
+  [
+   20.5,
+   20.75,
+   "cartoon",
+   "follow"
+  ],
+  [
+   20.75,
+   21,
+   "chart",
+   "learn"
+  ],
+  [
+   21,
+   24,
+   "paper",
+   "window"
+  ],
+  [
+   24,
+   26,
+   "atom",
+   "wait"
+  ],
+  [
+   26,
+   27,
+   "cartoon",
+   "wonder"
+  ],
+  [
+   27,
+   28,
+   "math",
+   "prompt"
+  ],
+  [
+   28,
+   29,
+   "domino",
+   "topple"
+  ],
+  [
+   29,
+   29.25,
+   "synth",
+   "eq"
+  ],
+  [
+   29.25,
+   29.5,
+   "atom",
+   "molecule"
+  ],
+  [
+   29.5,
+   29.75,
+   "iso",
+   "cubes"
+  ],
+  [
+   29.75,
+   30,
+   "domino",
+   "cascade"
+  ],
+  [
+   30,
+   30.25,
+   "chart",
+   "skyline2"
+  ],
+  [
+   30.25,
+   30.5,
+   "paper",
+   "land2"
+  ],
+  [
+   30.5,
+   30.75,
+   "math",
+   "descent"
+  ],
+  [
+   30.75,
+   31,
+   "explainer",
+   "cube"
+  ],
+  [
+   31,
+   31.5,
+   "cartoon",
+   "heart"
+  ],
+  [
+   31.5,
+   32,
+   "synth",
+   "sun"
+  ],
+  [
+   32,
+   32.5,
+   "iso",
+   "city2"
+  ],
+  [
+   32.5,
+   33,
+   "atom",
+   "spark"
+  ],
+  [
+   33,
+   33.5,
+   "chart",
+   "skyline"
+  ],
+  [
+   33.5,
+   34,
+   "paper",
+   "land1"
+  ],
+  [
+   34,
+   36,
+   "atom",
+   "universe"
+  ],
+  [
+   36,
+   40,
+   "domino",
+   "title"
+  ],
+  [
+   40,
+   47,
+   "atom",
+   "prompt"
+  ]
+ ],
+ "narration": [
+  {
+   "text": "Everything begins... with a question.",
+   "at": [
+    1,
+    1
+   ],
+   "file": "voice/00.mp3"
+  },
+  {
+   "text": "Behind the magic... there is only mathematics.",
+   "at": [
+    3,
+    1
+   ],
+   "file": "voice/01.mp3"
+  },
+  {
+   "text": "Once, a machine could only follow instructions.",
+   "at": [
+    5,
+    1
+   ],
+   "file": "voice/02.mp3"
+  },
+  {
+   "text": "Then we taught it... to learn.",
+   "at": [
+    7,
+    1
+   ],
+   "file": "voice/03.mp3"
+  },
+  {
+   "text": "Layer by layer... it began to understand.",
+   "at": [
+    9,
+    1
+   ],
+   "file": "voice/04.mp3"
+  },
+  {
+   "text": "Now it can paint.",
+   "at": [
+    13,
+    0
+   ],
+   "file": "voice/05.mp3"
+  },
+  {
+   "text": "Compose.",
+   "at": [
+    14,
+    0
+   ],
+   "file": "voice/06.mp3"
+  },
+  {
+   "text": "Discover.",
+   "at": [
+    15,
+    0
+   ],
+   "file": "voice/07.mp3"
+  },
+  {
+   "text": "Heal.",
+   "at": [
+    16,
+    0
+   ],
+   "file": "voice/08.mp3"
+  },
+  {
+   "text": "And build... whole worlds.",
+   "at": [
+    17,
+    0
+   ],
+   "file": "voice/09.mp3"
+  },
+  {
+   "text": "But for all it can do... it wants nothing of its own.",
+   "at": [
+    21,
+    1
+   ],
+   "file": "voice/10.mp3"
+  },
+  {
+   "text": "It waits... for a question.",
+   "at": [
+    24,
+    1
+   ],
+   "file": "voice/11.mp3"
+  },
+  {
+   "text": "Somebody has to wonder first.",
+   "at": [
+    26,
+    0.5
+   ],
+   "file": "voice/12.mp3"
+  },
+  {
+   "text": "Somebody has to dare.",
+   "at": [
+    27,
+    1.5
+   ],
+   "file": "voice/13.mp3"
+  },
+  {
+   "text": "The machine will follow you... anywhere.",
+   "at": [
+    29,
+    1
+   ],
+   "file": "voice/14.mp3"
+  },
+  {
+   "text": "But only as far as you can imagine.",
+   "at": [
+    31,
+    2
+   ],
+   "file": "voice/15.mp3"
+  },
+  {
+   "text": "The only limit... is the human mind.",
+   "at": [
+    36,
+    1
+   ],
+   "file": "voice/16.mp3"
+  },
+  {
+   "text": "What will you ask?",
+   "at": [
+    42,
+    1
+   ],
+   "file": "voice/17.mp3"
+  }
+ ],
+ "prompts": [
+  {
+   "bar": 1,
+   "beat": 1,
+   "text": "what if",
+   "big": true
+  },
+  {
+   "bar": 3,
+   "beat": 0,
+   "hide": true
+  },
+  {
+   "bar": 24,
+   "beat": 0.5,
+   "text": "",
+   "big": true
+  },
+  {
+   "bar": 26,
+   "beat": 0.3,
+   "text": "what if",
+   "big": true
+  },
+  {
+   "bar": 28,
+   "beat": 0.8,
+   "hide": true
+  },
+  {
+   "bar": 40,
+   "beat": 0,
+   "text": "",
+   "big": true
+  },
+  {
+   "bar": 42,
+   "beat": 0.5,
+   "text": "what will you ask?",
+   "big": true
+  }
+ ]
+}

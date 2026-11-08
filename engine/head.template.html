@@ -1,0 +1,97 @@
+<title>{{TITLE}}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400;600;800&family=IBM+Plex+Mono:wght@400&family=Instrument+Serif:ital@0;1&display=swap">
+<style>
+/* Concept: a letterboxed night sky of particles that reshapes itself through what AI can make, then pulls into one point and breaks open. */
+:root{
+  --ink:#04050b; --ink2:#0b1024; --bone:#f3ead9; --ember:#ffae5c; --ice:#86e6ff; --dim:#9aa0b5;
+  --serif:'Instrument Serif',Georgia,'Times New Roman',serif;
+  --sans:'Hanken Grotesk',system-ui,-apple-system,'Segoe UI',sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,Menlo,monospace;
+  --bar:clamp(24px,calc((100vh - 41.84vw)/2),12vh);
+  --gut:max(16px,env(safe-area-inset-left,0px));
+  --gutr:max(16px,env(safe-area-inset-right,0px));
+  color-scheme:dark;
+}
+html,body{height:100%}
+body{margin:0;background:var(--ink);color:var(--bone);font-family:var(--sans);overflow:hidden;-webkit-tap-highlight-color:transparent}
+#stage{position:absolute;inset:0;overflow:hidden;background:var(--ink)}
+#c{position:absolute;inset:0;width:100%;height:100%;display:block}
+.vig{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 50%,rgba(4,5,11,0) 42%,rgba(4,5,11,.72) 100%)}
+.grain{position:absolute;inset:-40px;pointer-events:none;opacity:.07;background-size:128px 128px;animation:gr .7s steps(6) infinite}
+@keyframes gr{0%{transform:translate(0,0)}20%{transform:translate(-18px,12px)}40%{transform:translate(14px,-22px)}60%{transform:translate(-26px,-8px)}80%{transform:translate(20px,18px)}100%{transform:translate(0,0)}}
+#flash{position:absolute;inset:0;background:var(--bone);opacity:0;pointer-events:none;z-index:4}
+#flash.go{animation:fl 1.1s ease-out}
+@keyframes fl{0%{opacity:.0}8%{opacity:.85}100%{opacity:0}}
+.bar{position:absolute;left:0;right:0;height:var(--bar);background:#000;z-index:6}
+.bar.top{top:0}.bar.bot{bottom:0}
+.hud{position:absolute;top:0;left:0;right:0;z-index:9;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:8px var(--gutr) 8px var(--gut);font-family:var(--mono);font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--dim)}
+.hud .tog{display:flex;gap:8px}
+.hud button{font:inherit;letter-spacing:.14em;text-transform:uppercase;color:var(--dim);background:rgba(4,5,11,.55);border:1px solid rgba(243,234,217,.25);border-radius:999px;min-height:32px;padding:0 14px;cursor:pointer}
+.hud button[aria-pressed="true"]{color:var(--ember);border-color:rgba(255,174,92,.7)}
+.hud button:focus-visible,.btn:focus-visible{outline:2px solid var(--ice);outline-offset:3px}
+.hud button[disabled]{opacity:.4;cursor:default}
+#cap::before{content:"";position:fixed;left:0;right:0;bottom:0;height:34%;z-index:-1;background:linear-gradient(to top,rgba(4,5,11,.72),rgba(4,5,11,0));pointer-events:none}
+#cap{position:absolute;z-index:7;left:0;right:0;bottom:calc(var(--bar) + 4vh);margin:0;padding:0 var(--gutr) 0 var(--gut);text-align:center;font-family:var(--serif);font-style:italic;font-size:clamp(22px,min(4.6vw,7.5vh),52px);line-height:1.18;text-wrap:balance;color:var(--bone);text-shadow:0 2px 24px rgba(0,0,0,.9);pointer-events:none}
+#cap span{display:inline-block;white-space:pre;opacity:0;filter:blur(6px);transform:translateY(8px);transition:opacity .9s ease,filter .9s ease,transform .9s ease}
+#cap.in span{opacity:1;filter:none;transform:none}
+#cap:not(.in) span{transition-delay:0ms!important}
+.ov{position:absolute;inset:0;z-index:8;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:clamp(10px,2.4vh,22px);padding:calc(var(--bar) + 10px) var(--gutr) calc(var(--bar) + 10px) var(--gut);transition:opacity 1.4s ease,visibility 1.4s}
+.ov.gone{opacity:0;visibility:hidden;pointer-events:none}
+.eyebrow{font-family:var(--mono);font-size:11px;letter-spacing:.24em;text-transform:uppercase;color:var(--ember);margin:0}
+h1,h2{font-family:var(--serif);font-weight:400;margin:0;line-height:.95;text-wrap:balance}
+h1{font-size:clamp(44px,min(12vw,18vh),132px);letter-spacing:-.01em}
+h2{font-size:clamp(34px,min(8.5vw,13vh),96px);font-style:italic}
+.ov p.lede{margin:0;max-width:34ch;font-size:clamp(14px,2.1vh + 1vw,18px);line-height:1.5;color:var(--dim);text-wrap:balance}
+.btn{font-family:var(--sans);font-weight:600;font-size:15px;letter-spacing:.06em;color:var(--ink);background:var(--bone);border:0;border-radius:999px;min-height:48px;padding:0 30px;cursor:pointer;display:inline-flex;align-items:center;gap:12px;transition:transform .25s ease,background .25s ease}
+.btn:hover{background:var(--ember);transform:scale(1.04)}
+.btn svg{width:14px;height:14px;fill:currentColor}
+.fine{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--dim);margin:0;max-width:40ch;text-wrap:balance}
+@media (prefers-reduced-motion:reduce){.grain{animation:none}}
+
+#bloom,#streak{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;mix-blend-mode:screen;z-index:2}
+#bloom{opacity:.6}
+#streak{opacity:.22}
+#prompt{position:absolute;z-index:7;left:0;right:0;top:calc(var(--bar) + 5vh);margin:0;padding:0 var(--gutr) 0 var(--gut);text-align:center;font-family:var(--mono);font-size:clamp(12px,min(2.4vw,3.6vh),20px);letter-spacing:.12em;color:var(--ember);text-shadow:0 0 3px #04050b,0 0 10px #04050b,0 0 18px rgba(255,174,92,.55);pointer-events:none;min-height:1.4em;transition:top .9s ease,font-size .9s ease,opacity .6s ease}
+#prompt::after{content:"";display:inline-block;width:.55em;height:1.05em;margin-left:.3em;background:var(--ember);vertical-align:-.15em;animation:blink 1.06s steps(1) infinite;box-shadow:0 0 14px rgba(255,174,92,.9)}
+#prompt:empty::before{content:"\200b"}
+#prompt.big{top:calc(50% - .8em);font-size:clamp(20px,min(5vw,8vh),54px);letter-spacing:.06em}
+#prompt.off{opacity:0}
+#end::before{content:"";position:absolute;inset:0;z-index:-1;background:radial-gradient(ellipse at 50% 50%,rgba(4,5,11,.82) 0%,rgba(4,5,11,.55) 55%,rgba(4,5,11,.2) 100%)}
+@keyframes blink{0%,49%{opacity:1}50%,100%{opacity:0}}
+@media (prefers-reduced-motion:reduce){#prompt::after{animation:none}}
+</style>
+
+<div id="stage">
+  <canvas id="c"></canvas>
+  <canvas id="bloom"></canvas><canvas id="streak"></canvas>
+  <div id="flash"></div>
+  <div class="vig"></div>
+  <div class="grain" id="grain"></div>
+  <div class="bar top"></div><div class="bar bot"></div>
+  <header class="hud">
+    <span id="tc">TC 00:00</span>
+    <div class="tog">
+      <button id="bMusic" type="button" aria-pressed="true">Music</button>
+      <button id="bVoice" type="button" aria-pressed="true">Voice</button>
+    </div>
+  </header>
+  <p id="prompt" class="big off" aria-hidden="true"></p>
+  <p id="cap" aria-live="polite"></p>
+
+  <section id="intro" class="ov">
+    <p class="eyebrow">{{EYEBROW}}</p>
+    <h1>{{TITLE}}</h1>
+    <p class="lede">{{LEDE}}</p>
+    <button id="begin" class="btn" type="button"><svg viewBox="0 0 14 14" aria-hidden="true"><path d="M2 1l11 6-11 6z"/></svg>Begin</button>
+    <p class="fine">{{FINE}}</p>
+  </section>
+
+  <section id="end" class="ov gone">
+    <h2>{{END_TITLE}}</h2>
+    <p class="lede">{{END_LEDE}}</p>
+    <button id="again" class="btn" type="button">Watch again</button>
+  </section>
+</div>
+
