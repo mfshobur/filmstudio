@@ -10,7 +10,7 @@ I started this to make one film, "The Only Limit" (it's in `examples/`), and the
 
 It draws everything itself with canvas graphics. That means flat or glowing 2D scenes, simple 3D charts and shapes, paper-cut and isometric looks, a robot mascot. It cannot make photos, real people, or a specific product. If you need those, this is the wrong tool.
 
-Right now there are twelve visual styles, with a few variants of each:
+Right now there are seventeen visual styles, with a few variants of each:
 
 | style | what it looks like |
 |---|---|
@@ -26,6 +26,11 @@ Right now there are twelve visual styles, with a few variants of each:
 | `type` | kinetic typography: your words animate on the beat |
 | `board` | whiteboard: icons and handwriting drawn by a marker |
 | `shadow` | shadow puppets: pierced silhouettes on a lamp-lit screen (wayang kulit, Reiniger) |
+| `pixel` | 16-colour pixel art: skyline, runner, CRT text |
+| `glitch` | VHS and RGB-split distortion over any other style |
+| `ink` | Chinese ink wash: mountains, bamboo, brushed text |
+| `comic` | halftone comic panels, bursts, speed lines |
+| `gen` | flow fields, Voronoi, mandala, metaballs |
 | `stage` | optional: characters in front of any of the above |
 
 Characters are optional. If your story needs one, you describe it in the project (body type, colors, hair, face, accessories) and pick how it's drawn: cartoon outline, flat, paper cut-out, shadow-puppet silhouette, neon glow or hand-drawn. `examples/character-demo` shows six. A film that doesn't use characters never has one.
@@ -98,7 +103,7 @@ The review tools can look at pictures and measure audio levels. They can't tell 
 ## Roadmap
 
 - more character options (hands, outfits, more animals, lip-sync from the audio itself)
-- more styles: pixel art, glitch, ink wash, halftone comics, generative patterns
+- more styles: vaporwave, Memphis, low-poly, voxel, maps and timelines, origami
 - a small local web page to edit the storyboard with live preview
 - other scores, with length and key as settings
 - ElevenLabs voices, MP4 export, an MCP server

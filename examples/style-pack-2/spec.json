@@ -1,0 +1,161 @@
+{
+ "version": 1,
+ "meta": {
+  "title": "Style pack 2",
+  "titleLines": [
+   "More",
+   "styles",
+   "ahead."
+  ],
+  "titleAccent": 1,
+  "endTitle": "More styles ahead.",
+  "endLede": ""
+ },
+ "bpm": 128,
+ "bars": 46,
+ "endCardBar": 44.6,
+ "score": {
+  "preset": "anthem-46"
+ },
+ "shots": [
+  [
+   1,
+   4.0,
+   "pixel",
+   "city"
+  ],
+  [
+   4.0,
+   7.0,
+   "pixel",
+   "hero"
+  ],
+  [
+   7.0,
+   10.0,
+   "pixel",
+   "text",
+   {
+    "text": "LEVEL UP\nPRESS START"
+   }
+  ],
+  [
+   10.0,
+   13.0,
+   "glitch",
+   "vhs",
+   {
+    "background": [
+     "synth",
+     "sun"
+    ],
+    "intensity": 0.7
+   }
+  ],
+  [
+   13.0,
+   16.0,
+   "glitch",
+   "rgb",
+   {
+    "background": [
+     "paper",
+     "land1"
+    ],
+    "intensity": 0.6
+   }
+  ],
+  [
+   16.0,
+   19.0,
+   "glitch",
+   "corrupt",
+   {
+    "background": [
+     "chart",
+     "skyline"
+    ],
+    "intensity": 0.8,
+    "text": "ERROR"
+   }
+  ],
+  [
+   19.0,
+   22.0,
+   "ink",
+   "mountains"
+  ],
+  [
+   22.0,
+   25.0,
+   "ink",
+   "bamboo"
+  ],
+  [
+   25.0,
+   28.0,
+   "ink",
+   "calligraphy",
+   {
+    "text": "still water"
+   }
+  ],
+  [
+   28.0,
+   31.0,
+   "comic",
+   "panels",
+   {
+    "captions": [
+     "Once...",
+     "then...",
+     "boom!"
+    ]
+   }
+  ],
+  [
+   31.0,
+   34.0,
+   "comic",
+   "burst",
+   {
+    "sfx": "WOW!"
+   }
+  ],
+  [
+   34.0,
+   37.0,
+   "comic",
+   "speed",
+   {
+    "sfx": "ZOOM!"
+   }
+  ],
+  [
+   37.0,
+   40.0,
+   "gen",
+   "flow"
+  ],
+  [
+   40.0,
+   43.0,
+   "gen",
+   "voronoi"
+  ],
+  [
+   43.0,
+   46.0,
+   "gen",
+   "mandala"
+  ],
+  [
+   46.0,
+   47,
+   "gen",
+   "blobs"
+  ]
+ ],
+ "narration": [],
+ "prompts": []
+}

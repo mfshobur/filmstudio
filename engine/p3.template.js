@@ -4,7 +4,7 @@ var BPM={{BPM}},SPB=60/BPM,TOTAL_BARS={{BARS}};
 var TITLE_LINES={{TITLE_LINES}},TITLE_ACCENT={{TITLE_ACCENT}};
 function bb(bar){return (bar-1)*4}
 var SH={{SHOTS}};
-var BRIGHT={paper:1,cartoon:1,iso:.5,board:1,shadow:.5};
+var BRIGHT={paper:1,cartoon:1,iso:.5,board:1,shadow:.5,ink:1,comic:1,pixel:.5};
 function isBright(sh){
   if(sh[2]==='board')return !(sh[4]&&sh[4].palette&&sh[4].palette.bg&&lum(sh[4].palette.bg)<.4);
   if(sh[2]==='type'&&sh[4]&&sh[4].palette&&sh[4].palette.bg)return lum(sh[4].palette.bg)>.6;
@@ -17,6 +17,11 @@ var DRAW={
   type:function(v){kinetic(v)},
   board:function(v){whiteboard(v)},
   shadow:function(v){shadowScene(v)},
+  pixel:function(v){pixelScene(v)},
+  glitch:function(v){glitchScene(v)},
+  ink:function(v){inkScene(v)},
+  comic:function(v){comicScene(v)},
+  gen:function(v){genScene(v)},
   atom:atom,
   math:function(v){v==='descent'?mathDescent():v==='prompt'?mathPrompt():mathSine()},
   cartoon:function(v){v==='heart'?cartoonHeart():v==='wonder'?cartoonWonder():cartoonFollow()},

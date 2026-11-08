@@ -19,6 +19,11 @@ Run `filmstudio styles` for the live list. Rule: **change style when the idea ch
 | Steps, lists, definitions, simple maths | board/icons, board/equation |
 | Playful rhythm on the beat | type/wave |
 | Myth, folk tale, ceremonial or timeless feel | shadow/scene, shadow/gunungan |
+| Calm, nature, wisdom, philosophy | ink/mountains, ink/bamboo, ink/calligraphy |
+| Games, retro tech, nostalgia | pixel/city, pixel/hero, pixel/text |
+| Action, humour, impact words | comic/panels, comic/burst, comic/speed |
+| A break, an error, violent cut | glitch/vhs, glitch/rgb, glitch/corrupt |
+| A feeling or idea with no literal picture | gen/flow, gen/voronoi, gen/mandala, gen/blobs |
 | Calm ending | atom/prompt |
 
 ## Pacing rules
@@ -31,4 +36,4 @@ Run `filmstudio styles` for the live list. Rule: **change style when the idea ch
 Optional. Add a `stage` shot (see `guide characters`) only when the story needs a figure. Never required.
 
 ## Not available yet (planned)
-Pixel art, glitch/VHS, ink wash, halftone comic, generative flow fields and more. See the repo roadmap. If the user asks for one, say it is planned and pick the nearest existing style.
+Vaporwave, Memphis, Bauhaus poster type, ASCII, claymorphism, origami, low-poly, voxel, maps and timelines, multiplane glass depth, stop-motion jitter. If the user asks for one, say it is planned and pick the nearest existing style.
