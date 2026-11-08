@@ -31,7 +31,7 @@ async function review(dir, spec, opts = {}) {
         const abs = chunk.map(f => path.resolve(f));
         fs.writeFileSync(list, abs.map(f => "file '" + f + "'\nduration 1").join('\n') + "\nfile '" + abs[abs.length - 1] + "'\n");
         const sheet = path.resolve(out, 'sheet' + (s + 1) + '.png');
-        const r = spawnSync('ffmpeg', ['-loglevel', 'error', '-y', '-f', 'concat', '-safe', '0', '-i', list, '-vf', 'scale=480:-1,tile=4x4', '-frames:v', '1', sheet]);
+        const r = spawnSync('ffmpeg', ['-loglevel', 'error', '-y', '-f', 'concat', '-safe', '0', '-i', list, '-vf', 'scale=' + (h > w ? 240 : 480) + ':-1,tile=4x4', '-frames:v', '1', sheet]);
         if (r.status === 0) sheets.push(sheet); fs.rmSync(list, { force: true });
       }
     }

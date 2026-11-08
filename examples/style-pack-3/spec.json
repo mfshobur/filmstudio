@@ -1,0 +1,191 @@
+{
+ "version": 1,
+ "meta": {
+  "title": "Style pack 3",
+  "titleLines": [
+   "The",
+   "list",
+   "is done."
+  ],
+  "titleAccent": 1,
+  "endTitle": "The list is done.",
+  "endLede": ""
+ },
+ "bpm": 128,
+ "bars": 46,
+ "endCardBar": 44.6,
+ "score": {
+  "preset": "anthem-46"
+ },
+ "shots": [
+  [
+   1,
+   3.5,
+   "vapor",
+   "grid",
+   {
+    "text": "dream"
+   }
+  ],
+  [
+   3.5,
+   6.0,
+   "vapor",
+   "windows",
+   {
+    "text": "mind not found"
+   }
+  ],
+  [
+   6.0,
+   8.5,
+   "memphis",
+   "pattern",
+   {
+    "text": "POP!"
+   }
+  ],
+  [
+   8.5,
+   11.0,
+   "poster",
+   "swiss",
+   {
+    "title": "Less but better",
+    "sub": "A short note on design"
+   }
+  ],
+  [
+   11.0,
+   13.5,
+   "poster",
+   "bauhaus",
+   {
+    "title": "Form follows idea"
+   }
+  ],
+  [
+   13.5,
+   16.0,
+   "ascii",
+   "rain"
+  ],
+  [
+   16.0,
+   18.5,
+   "ascii",
+   "text",
+   {
+    "text": "hello, world\nbuild something"
+   }
+  ],
+  [
+   18.5,
+   21.0,
+   "ascii",
+   "plasma"
+  ],
+  [
+   21.0,
+   23.5,
+   "clay",
+   "shapes"
+  ],
+  [
+   23.5,
+   26.0,
+   "clay",
+   "text",
+   {
+    "text": "hello"
+   }
+  ],
+  [
+   26.0,
+   28.5,
+   "origami",
+   "boat"
+  ],
+  [
+   28.5,
+   31.0,
+   "origami",
+   "fold",
+   {
+    "text": "fold by fold"
+   }
+  ],
+  [
+   31.0,
+   33.5,
+   "lowpoly",
+   "terrain"
+  ],
+  [
+   33.5,
+   36.0,
+   "lowpoly",
+   "orb"
+  ],
+  [
+   36.0,
+   38.5,
+   "voxel",
+   "island"
+  ],
+  [
+   38.5,
+   41.0,
+   "map",
+   "route",
+   {
+    "from": "Home",
+    "to": "Dream",
+    "distance": "1,200 km"
+   }
+  ],
+  [
+   41.0,
+   43.5,
+   "map",
+   "timeline",
+   {
+    "events": [
+     {
+      "year": "2020",
+      "label": "first idea"
+     },
+     {
+      "year": "2023",
+      "label": "prototype"
+     },
+     {
+      "year": "2026",
+      "label": "launch"
+     }
+    ]
+   }
+  ],
+  [
+   43.5,
+   46.0,
+   "multiplane",
+   "forest"
+  ],
+  [
+   46.0,
+   47,
+   "stopmo",
+   "boil",
+   {
+    "background": [
+     "paper",
+     "land1"
+    ],
+    "fps": 8
+   }
+  ]
+ ],
+ "narration": [],
+ "prompts": []
+}

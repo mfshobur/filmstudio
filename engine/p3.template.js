@@ -4,7 +4,7 @@ var BPM={{BPM}},SPB=60/BPM,TOTAL_BARS={{BARS}};
 var TITLE_LINES={{TITLE_LINES}},TITLE_ACCENT={{TITLE_ACCENT}};
 function bb(bar){return (bar-1)*4}
 var SH={{SHOTS}};
-var BRIGHT={paper:1,cartoon:1,iso:.5,board:1,shadow:.5,ink:1,comic:1,pixel:.5};
+var BRIGHT={paper:1,cartoon:1,iso:.5,board:1,shadow:.5,ink:1,comic:1,pixel:.5,memphis:1,poster:1,clay:1,origami:1,voxel:1,multiplane:1,map:.5};
 function isBright(sh){
   if(sh[2]==='board')return !(sh[4]&&sh[4].palette&&sh[4].palette.bg&&lum(sh[4].palette.bg)<.4);
   if(sh[2]==='type'&&sh[4]&&sh[4].palette&&sh[4].palette.bg)return lum(sh[4].palette.bg)>.6;
@@ -22,6 +22,17 @@ var DRAW={
   ink:function(v){inkScene(v)},
   comic:function(v){comicScene(v)},
   gen:function(v){genScene(v)},
+  vapor:function(v){vaporScene(v)},
+  memphis:function(v){memphisScene(v)},
+  poster:function(v){posterScene(v)},
+  ascii:function(v){asciiScene(v)},
+  clay:function(v){clayScene(v)},
+  origami:function(v){origamiScene(v)},
+  lowpoly:function(v){lowpolyScene(v)},
+  voxel:function(v){voxelScene(v)},
+  map:function(v){mapScene(v)},
+  multiplane:function(v){multiplaneScene(v)},
+  stopmo:function(v){stopmoScene(v)},
   atom:atom,
   math:function(v){v==='descent'?mathDescent():v==='prompt'?mathPrompt():mathSine()},
   cartoon:function(v){v==='heart'?cartoonHeart():v==='wonder'?cartoonWonder():cartoonFollow()},

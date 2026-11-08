@@ -24,6 +24,16 @@ Run `filmstudio styles` for the live list. Rule: **change style when the idea ch
 | Action, humour, impact words | comic/panels, comic/burst, comic/speed |
 | A break, an error, violent cut | glitch/vhs, glitch/rgb, glitch/corrupt |
 | A feeling or idea with no literal picture | gen/flow, gen/voronoi, gen/mandala, gen/blobs |
+| Dreamlike nostalgia, internet culture | vapor/grid, vapor/windows |
+| Bold graphic statement | poster/swiss, poster/bauhaus, memphis/pattern |
+| Code, hackers, data | ascii/rain, ascii/text, ascii/plasma |
+| Friendly product feel | clay/shapes, clay/text |
+| Journeys, craft, transformation | origami/boat, origami/fold, map/route |
+| Time and milestones | map/timeline |
+| Games, worlds, building | voxel/island, pixel/hero |
+| Landscapes, planets | lowpoly/terrain, lowpoly/orb |
+| Gentle, poetic depth | multiplane/forest |
+| Handmade stop-motion charm over another style | stopmo/boil |
 | Calm ending | atom/prompt |
 
 ## Pacing rules
@@ -35,5 +45,5 @@ Run `filmstudio styles` for the live list. Rule: **change style when the idea ch
 ## Characters
 Optional. Add a `stage` shot (see `guide characters`) only when the story needs a figure. Never required.
 
-## Not available yet (planned)
-Vaporwave, Memphis, Bauhaus poster type, ASCII, claymorphism, origami, low-poly, voxel, maps and timelines, multiplane glass depth, stop-motion jitter. If the user asks for one, say it is planned and pick the nearest existing style.
+## Not available yet
+Genuinely photographic or realistic content, real maps, logos and user images (asset import is planned). If the user asks for one, say so and pick the nearest existing style.

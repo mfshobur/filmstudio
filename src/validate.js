@@ -43,6 +43,8 @@ function validate(spec, dir) {
       if (!STYLES[st]) err(p, 'unknown style "' + st + '"', 'Known styles: ' + Object.keys(STYLES).join(', '));
       else if (!STYLES[st].variants.includes(v)) err(p, 'unknown variant "' + v + '" for style "' + st + '"', 'Variants of ' + st + ': ' + STYLES[st].variants.join(', '));
       if (st === 'glitch' && s[4] && s[4].background && !(Array.isArray(s[4].background) && STYLES[s[4].background[0]] && s[4].background[0] !== 'glitch' && STYLES[s[4].background[0]].variants.includes(s[4].background[1]))) err(p + '[4].background', 'background must be [style,variant] of a non-glitch style', 'e.g. ["synth","sun"]');
+      if (st === 'stopmo') { const bgp = s[4] && s[4].background; if (!(Array.isArray(bgp) && STYLES[bgp[0]] && bgp[0] !== 'stopmo' && STYLES[bgp[0]].variants.includes(bgp[1]))) err(p + '[4].background', 'stopmo needs params.background = [style,variant] of another style', 'e.g. [5,7,"stopmo","boil",{"background":["paper","land1"]}]'); }
+      if (st === 'map') { const mp = s[4]; if (v === 'timeline' && !(mp && Array.isArray(mp.events) && mp.events.length)) err(p + '[4].events', 'timeline needs params.events', 'e.g. {"events":[{"year":"2020","label":"start"}]}'); }
       if (st === 'ink' && v === 'calligraphy' && !(s[4] && String(s[4].text || '').trim())) err(p, 'calligraphy needs a 5th element {text}', 'Example: [5,7,"ink","calligraphy",{"text":"still water"}]');
       if (st === 'type' || st === 'board') {
         const pr = s[4];
