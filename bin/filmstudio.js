@@ -77,13 +77,13 @@ const HELP = `filmstudio <command> [project-dir] [options]   (all output is JSON
     }
     if (cmd === 'export') {
       const v = validate(spec, dir); if (!v.ok) fail('spec has errors; fix them first', { errors: v.errors });
-      const sz = flags.size ? String(flags.size).split('x').map(Number) : null;
+      const sz = flags.size ? String(flags.size).split('x').map(Number) : (spec.format ? require('../src/registry').sizeFor(spec.format, 640) : null);
       const r = await require('../src/exporter').exportFilm(dir, spec, { fps: flags.fps ? +flags.fps : 12, size: sz, fromBar: flags['from-bar'] ? +flags['from-bar'] : null, toBar: flags['to-bar'] ? +flags['to-bar'] : null, noAudio: !!flags['no-audio'], noBars: !!flags['no-bars'], audioRate: flags['audio-rate'] ? +flags['audio-rate'] : null, log: m => console.error(m) });
       return out(Object.assign({ ok: true }, r));
     }
     if (cmd === 'voice-check') { const r = require('../src/voicecheck').voiceCheck(dir, spec); out(r); return process.exit(r.ok ? 0 : 2); }
     if (cmd === 'review') {
-      const sz = flags.size ? String(flags.size).split('x').map(Number) : [];
+      const sz = flags.size ? String(flags.size).split('x').map(Number) : (spec.format ? require('../src/registry').sizeFor(spec.format, 800) : []);
       const r = await require('../src/review').review(dir, spec, { beats: flags.beats ? String(flags.beats).split(',').map(Number) : null, width: sz[0], height: sz[1], motion: !!flags.motion });
       return out(Object.assign({ ok: r.pageErrors.length === 0 && r.drawErrors.length === 0, hint: 'Open build/review/sheet1.png and look for washed-out exposure, cropped labels, overflowing shapes. See `filmstudio guide review`.' }, r));
     }

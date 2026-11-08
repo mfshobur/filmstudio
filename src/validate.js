@@ -19,6 +19,7 @@ function validate(spec, dir) {
   const preset = (spec.score && spec.score.preset) || 'anthem-46';
   if (!SCORES[preset]) err('score.preset', 'unknown score preset "' + preset + '"', 'Available: ' + Object.keys(SCORES).join(', '));
   else if (SCORES[preset].bars !== bars) err('bars', 'score preset "' + preset + '" is ' + SCORES[preset].bars + ' bars long, spec has ' + bars, 'Set bars to ' + SCORES[preset].bars + '. Film length is fixed by the score: seconds = ' + SCORES[preset].bars + ' x 240 / bpm. To change the length, change bpm (e.g. bpm 184 gives 60 s, 123 gives 90 s, 92 gives 120 s), not bars.');
+  if (spec.format != null && !require('./registry').FORMATS[spec.format]) err('format', 'unknown format "' + spec.format + '"', 'Use one of: ' + Object.keys(require('./registry').FORMATS).join(', ') + '. Leave it out for 16:9.');
   if (spec.score && spec.score.transpose != null && !(Number.isInteger(spec.score.transpose) && spec.score.transpose >= -6 && spec.score.transpose <= 6)) err('score.transpose', 'transpose must be a whole number of semitones from -6 to 6', 'Use 0 for the default A minor; +3 gives C minor.');
   if (!spec.meta || !spec.meta.title) err('meta.title', 'meta.title is required', 'Add a short title.');
   if (spec.meta && spec.meta.titleLines && !Array.isArray(spec.meta.titleLines)) err('meta.titleLines', 'must be an array of strings', 'e.g. ["The only limit","is the","human mind."]');

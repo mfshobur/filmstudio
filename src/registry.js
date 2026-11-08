@@ -32,6 +32,9 @@ const STYLES = {
   image:     { variants: ['kenburns', 'pop', 'polaroid', 'cutout', 'logo'], params: true, use: 'YOUR OWN picture or logo (png, jpg, webp, gif, svg), embedded in the film. params {src:"assets/photo.jpg", caption?, bg?:"#hex" or [style,variant], pan?:"left|right|up|down"}. kenburns = slow zoom/pan full screen, pop = bounces in with a shadow, polaroid = tilted instant photo (caption written on it), cutout = paper cut-out with white edge, logo = clean centred logo that pulses on the beat.' },
   domino:    { variants: ['wave', 'title', 'topple', 'cascade'], use: 'reveals and chain reactions. "title" flips tiles to reveal meta.titleLines; "topple" is a slow suspense row.' },
 };
+const FORMATS = { '16:9': [16, 9], '9:16': [9, 16], '1:1': [1, 1], '4:5': [4, 5] };
+/* default pixel size for a format; `long` is the longer side */
+function sizeFor(format, long) { const f = FORMATS[format] || FORMATS['16:9'], L = long || 640, k = L / Math.max(f[0], f[1]); return [Math.round(f[0] * k / 2) * 2, Math.round(f[1] * k / 2) * 2]; }
 const SCORES = {
   'anthem-46': { bars: 46, bpm: 128, note: 'Energetic: suspense intro, build, drum-driven montage, breakdown, drop, outro. A minor. No piano.' },
   'calm-46': { bars: 46, bpm: 100, note: 'Same shape and melody but no hard drums: soft heartbeat pulse, gentle bass and cello, glass lead. For calm, reflective or sleepy films. Try bpm 90 to 105.' },
@@ -48,4 +51,4 @@ const MOODS = {
 Object.keys(MOODS).forEach(k => { if (STYLES[k]) STYLES[k].moods = MOODS[k]; });
 const ICON_NAMES = ['bulb', 'heart', 'house', 'book', 'rocket', 'chart', 'person', 'tree', 'cloud', 'star', 'gear', 'check'];
 const PUPPET_KINDS = ['hero', 'demon', 'clown', 'gunungan', 'bird', 'tree', 'mountain', 'house', 'deer'];
-module.exports = { STYLES, SCORES, ICON_NAMES, PUPPET_KINDS };
+module.exports = { FORMATS, sizeFor, STYLES, SCORES, ICON_NAMES, PUPPET_KINDS };

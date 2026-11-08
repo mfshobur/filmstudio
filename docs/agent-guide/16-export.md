@@ -9,6 +9,12 @@ filmstudio export --from-bar 13 --to-bar 21         # only bars 13 to 20 (good f
 filmstudio export --no-audio                        # silent video
 filmstudio export --no-bars                         # remove the cinematic letterbox bars
 ```
+## How long it takes
+Measured on a 4 GB Android phone (proot, software rendering): a 5.6 s range at 360x640, 8 fps took 76 s including the audio mix, so budget roughly 12 to 15 times the film length at that setting. A laptop is much faster. Always test with `--from-bar 1 --to-bar 3` first.
+
+## Video shape
+Set `"format"` in spec.json: `"16:9"` (default, wide), `"9:16"` (Reels/TikTok/Shorts), `"1:1"` or `"4:5"`. `export` and `review` then default to that shape (`--size` still overrides). The shot styles adapt to any shape; when the user wants a vertical film, run `review` and check titles and charts at that shape before exporting. The studio page has a picker on the Idea tab.
+
 Needs ffmpeg and the browser tools (`filmstudio doctor` shows `can.review`). Narration clips must already exist (`filmstudio voice`); clips that are missing are simply absent from the mix.
 
 ## Time and size
