@@ -18,6 +18,7 @@ Run `filmstudio styles` for the live list. Rule: **change style when the idea ch
 | A key sentence, statistic or quote | type/words, type/stack, type/focus |
 | Steps, lists, definitions, simple maths | board/icons, board/equation |
 | Playful rhythm on the beat | type/wave |
+| Myth, folk tale, ceremonial or timeless feel | shadow/scene, shadow/gunungan |
 | Calm ending | atom/prompt |
 
 ## Pacing rules
@@ -30,4 +31,4 @@ Run `filmstudio styles` for the live list. Rule: **change style when the idea ch
 Optional. Add a `stage` shot (see `guide characters`) only when the story needs a figure. Never required.
 
 ## Not available yet (planned)
-Pixel art, glitch/VHS, ink wash, shadow puppets, halftone comic, generative flow fields and more. See the repo roadmap. If the user asks for one, say it is planned and pick the nearest existing style.
+Pixel art, glitch/VHS, ink wash, halftone comic, generative flow fields and more. See the repo roadmap. If the user asks for one, say it is planned and pick the nearest existing style.

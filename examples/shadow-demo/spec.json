@@ -1,0 +1,122 @@
+{
+ "version": 1,
+ "meta": {
+  "title": "Shadow demo",
+  "titleLines": [
+   "Shadows",
+   "and",
+   "light."
+  ],
+  "titleAccent": 1,
+  "endTitle": "Shadows and light.",
+  "endLede": ""
+ },
+ "bpm": 128,
+ "bars": 46,
+ "endCardBar": 44.6,
+ "score": {
+  "preset": "anthem-46"
+ },
+ "shots": [
+  [
+   1,
+   12.5,
+   "shadow",
+   "scene",
+   {
+    "tone": "warm",
+    "puppets": [
+     {
+      "kind": "mountain",
+      "x": -0.5,
+      "scale": 0.9
+     },
+     {
+      "kind": "tree",
+      "x": 0.7,
+      "scale": 0.9
+     },
+     {
+      "kind": "hero",
+      "x": -0.35,
+      "move": "sway"
+     },
+     {
+      "kind": "demon",
+      "x": 0.35,
+      "flip": true
+     },
+     {
+      "kind": "bird",
+      "x": 0.0,
+      "y": -0.3
+     }
+    ]
+   }
+  ],
+  [
+   12.5,
+   24.0,
+   "shadow",
+   "gunungan",
+   {
+    "tone": "warm"
+   }
+  ],
+  [
+   24.0,
+   35.5,
+   "shadow",
+   "scene",
+   {
+    "tone": "cool",
+    "puppets": [
+     {
+      "kind": "house",
+      "x": 0.5,
+      "scale": 0.9
+     },
+     {
+      "kind": "clown",
+      "x": -0.4,
+      "scale": 0.7
+     },
+     {
+      "kind": "hero",
+      "x": -0.8,
+      "walkTo": 0.0
+     }
+    ],
+    "title": "A small village"
+   }
+  ],
+  [
+   35.5,
+   47,
+   "shadow",
+   "scene",
+   {
+    "tone": "red",
+    "puppets": [
+     {
+      "kind": "hero",
+      "x": -0.3
+     },
+     {
+      "kind": "hero",
+      "x": 0.3,
+      "flip": true,
+      "move": "bow"
+     },
+     {
+      "kind": "deer",
+      "x": 0.0,
+      "scale": 0.6
+     }
+    ]
+   }
+  ]
+ ],
+ "narration": [],
+ "prompts": []
+}

@@ -1,7 +1,7 @@
 'use strict';
 const fs = require('fs');
 const path = require('path');
-const { STYLES, SCORES, ICON_NAMES } = require('./registry');
+const { STYLES, SCORES, ICON_NAMES, PUPPET_KINDS } = require('./registry');
 
 const ACTIONS = ['idle', 'walk', 'wave', 'point', 'think', 'celebrate', 'talk'];
 const EMOTIONS = ['happy', 'sad', 'surprised', 'thinking', 'angry', 'neutral'];
@@ -51,6 +51,7 @@ function validate(spec, dir) {
           else if (!String(pr.text || '').trim()) err(p + '[4].text', 'equation needs params.text', 'Lines separated by \n.');
         }
       }
+      if (st === 'shadow' && s[4] && Array.isArray(s[4].puppets)) s[4].puppets.forEach((pp, k) => { if (!PUPPET_KINDS.includes(pp.kind)) err(p + '[4].puppets[' + k + '].kind', 'unknown puppet kind "' + pp.kind + '"', 'Kinds: ' + PUPPET_KINDS.join(', ')); });
       if (st === 'stage') {
         const params = s[4], chars = spec.characters || {};
         if (!params || typeof params !== 'object') err(p, 'stage shots need a 5th element with params', 'Example: [5,7,"stage","scene",{"background":["paper","land1"],"cast":[{"char":"mira","x":0,"action":"wave"}]}]');
