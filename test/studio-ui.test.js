@@ -17,7 +17,7 @@ const { launch } = require('../src/browser'), { createStudio } = require('../src
     const n0 = specNow().shots.length;
     await page.click('#addShot'); await page.waitForTimeout(1200);
     assert.strictEqual(specNow().shots.length, n0 + 1, 'add shot persists');
-    assert.ok(/error/.test(await page.textContent('#side')), 'overrunning shot should show an error');
+    assert.ok(!/\d+ errors?/.test(await page.textContent('#side')), 'add shot splits the last shot and stays valid');
     const last = n0; await page.selectOption('.shot[data-i="' + last + '"] select[data-f="2"]', 'ink'); await page.waitForTimeout(1200);
     assert.strictEqual(specNow().shots[last][2], 'ink', 'style change persists');
     await page.click('.shot[data-i="' + last + '"] [data-a=del]'); await page.waitForTimeout(1200);
