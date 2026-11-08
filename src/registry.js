@@ -35,8 +35,8 @@ const STYLES = {
 const FORMATS = { '16:9': [16, 9], '9:16': [9, 16], '1:1': [1, 1], '4:5': [4, 5] };
 /* default pixel size for a format; `long` is the longer side */
 function sizeFor(format, long) { const f = FORMATS[format] || FORMATS['16:9'], L = long || 640, k = L / Math.max(f[0], f[1]); return [Math.round(f[0] * k / 2) * 2, Math.round(f[1] * k / 2) * 2]; }
-/* film lengths the built-in scores support: 46 bars, or any even number from 40 to 78 (the montage stretches) */
-const BARS_MIN = 40, BARS_MAX = 78;
+/* film lengths the built-in scores support: 46 bars, or any even number from 24 to 78 (the montage stretches; below 40 a shorter arrangement) */
+const BARS_MIN = 24, BARS_MAX = 78;
 function barsOk(b) { return Number.isInteger(b) && b % 2 === 0 && b >= BARS_MIN && b <= BARS_MAX; }
 /* choose bars and bpm for a target length, staying near the preset's natural tempo */
 function planLength(seconds, preset) {

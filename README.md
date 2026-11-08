@@ -47,7 +47,7 @@ Right now there are twenty-nine visual styles, with a few variants of each. A pi
 
 Characters are optional. If your story needs one, you describe it in the project (body type, colors, hair, face, accessories) and pick how it's drawn: cartoon outline, flat, paper cut-out, shadow-puppet silhouette, neon glow or hand-drawn. `examples/character-demo` shows six. A film that doesn't use characters never has one.
 
-There are two music scores, both 46 bars in A minor with no piano: `anthem-46` (energetic) and `calm-46` (no hard drums). The score is 46 bars by default; set `bars` to any even number from 40 to 78 and the drum-driven middle section stretches or shrinks. Film length is bars x 240 / bpm (`filmstudio length 60` suggests the numbers). Shorter than about 48 s means a very fast tempo, because the intro, break and outro have a fixed size. You can transpose the key. More styles, characters and scores are the next things to build. See the roadmap below.
+There are two music scores, both 46 bars in A minor with no piano: `anthem-46` (energetic) and `calm-46` (no hard drums). The score is 46 bars by default; set `bars` to any even number from 24 to 78. Longer films stretch the drum-driven middle section; below 40 bars a shorter arrangement drops the first half of the build, the break and the early climax. Film length is bars x 240 / bpm (`filmstudio length 60` suggests the numbers). The shortest film at a natural tempo is 24 bars, about 45 s; 30 s means 192 bpm. You can transpose the key. More styles, characters and scores are the next things to build. See the roadmap below.
 
 ## Install
 

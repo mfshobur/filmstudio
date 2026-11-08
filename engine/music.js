@@ -1,8 +1,15 @@
 /* ---------- the score: 128 BPM, A minor, 46 bars ---------- */
 /* film bar -> score bar. The score is 46 bars; the montage (score bars 13-20, four 2-bar units) stretches or shrinks
-   so a film can be 40 to 78 bars (even numbers). The last montage unit (19-20, riser + roll into the break) always plays. */
+   so a film can be 40 to 78 bars (even numbers); below 40 (24 to 38) a shorter arrangement drops the first build half, the break and the early climax. The last montage unit (19-20, riser + roll into the break) always plays. */
 function filmScoreSeq(L){
-  L=L||46;var u=Math.max(1,Math.round((L-38)/2)),seq=[],i;
+  L=L||46;var seq=[],i,u;
+  if(L<40){ /* short cut: intro 1-4, last build bars 9-12, montage units, the roll and breath 27-28, then the drop and outro 35-46 */
+    u=Math.max(1,Math.round((L-22)/2));
+    for(i=1;i<=4;i++)seq.push(i);for(i=9;i<=12;i++)seq.push(i);
+    for(i=0;i<u-1;i++){var b0=13+(i%3)*2;seq.push(b0,b0+1)}
+    seq.push(19,20,27,28);for(i=35;i<=46;i++)seq.push(i);return seq;
+  }
+  u=Math.max(1,Math.round((L-38)/2));
   for(i=1;i<=12;i++)seq.push(i);
   for(i=0;i<u-1;i++){var base=13+(i%3)*2;seq.push(base,base+1)}
   seq.push(19,20);
