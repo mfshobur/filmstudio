@@ -19,6 +19,8 @@ Changing only `bpm` (with bars 46) still works too; the table below uses that.
 
 **Seconds per bar = 240 / bpm** (bpm 128: 1.9 s; 184: 1.3 s; 100: 2.4 s). A 2 to 5 second narration line is therefore about 2 bars at 128 bpm but 3 to 4 bars at 184. Space lines by clip length, not a fixed bar count, and run `voice` then `validate` to catch overlaps.
 
+**Energetic and short (Reels, ads):** the shortest films use 40 bars at 160 to 200 bpm. That is fast: 2 to 3 second narration lines become 2 bars, so keep lines to 5 to 8 words, put the hook in the first bar, and let the montage be the product shots. Say plainly to the user that I (the agent) cannot hear how fast it feels, and offer a slower version (`filmstudio length <more seconds>`).
+
 **Calm and short together:** `calm-46` is tuned for 90 to 105 bpm, so a calm film of 60 s (bpm 184) plays the gentle score at nearly double speed. If the user wants calm, prefer a longer film (about 105 to 120 s), or say plainly that 60 s calm will feel brisk and let them choose.
 
 ## spec.json fields

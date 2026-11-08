@@ -53,3 +53,6 @@ Optional. Add a `stage` shot (see `guide characters`) only when the story needs 
 
 ## Not available yet
 Genuinely photographic or realistic content, real maps, logos and user images (asset import is planned). If the user asks for one, say so and pick the nearest existing style.
+
+
+Params for every style, with an example that is known to draw: `filmstudio guide params`.
