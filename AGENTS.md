@@ -10,6 +10,7 @@ filmstudio new my-film            # or: --example the-only-limit
 # write brief.json, treatment.md, spec.json   (guide: interview, storyboard, style-grammar)
 filmstudio validate               # fix every error using its "fix" hint
 filmstudio voice                  # narration (kokoro), resumable
+filmstudio voice-check            # measure the clips: clipping, glitches, pace, flat delivery
 filmstudio build                  # -> build/film.html (self-contained)
 filmstudio review                 # look at build/review/sheet*.png
 filmstudio audio-check            # loudness, clipping, dynamics

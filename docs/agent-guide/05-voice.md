@@ -10,10 +10,13 @@ Requires model files: run `filmstudio doctor` for the exact setup steps.
 Put `voice/00.mp3`, `voice/01.mp3` ... (one per narration line, mp3/wav/m4a/ogg), then `filmstudio voice --provider file`.
 
 ## Judging a voice (you cannot hear)
-Audio language models are poor judges. Use numbers plus the user:
-- clip lengths from `durations.json`: text of N words should take about N x 0.35 to 0.5 s at speed 0.86. Much longer means a stall; much shorter means clipped.
-- run `audio-check` and listen with the user: ask them to play the film and name the line and the symptom (crackle, cut-out, robotic, too quiet).
-- Phase 3 adds automatic checks (word error rate, predicted naturalness, emotion).
+Audio language models are poor judges. Use `filmstudio voice-check` plus the user.
+
+`voice-check` measures every clip and flags: clipping or a peak near full scale; isolated clicks and glitches; very quiet clips; long silence at the start, end or inside a clip; very slow (under 1.0 words/s) or very fast (over 4.2) reading; flat delivery (pitch varies under 0.9 semitones); a clip whose loudness differs by more than 6 dB from the others; a clip whose pitch is far from the others (the voice drifted). Typical healthy Kokoro clips: peak -2 to -5 dB, median pitch about 180 Hz with 2 to 4 semitones of variation, 2 to 3.9 words/s.
+
+It cannot judge taste, accent or emotion. After it passes, ask the user to play the film with headphones and name the line and the symptom (crackle, cut-out, robotic, too quiet). Re-run `voice --force` for a flagged clip, or change that line's `speed`/text.
+- clip lengths are in `voice/durations.json`; `validate` catches clips that overlap the next line.
+- Not built yet: word-error-rate and predicted-naturalness scores (they need large models).
 
 ## Safety and licensing
 Voice cloning and celebrity voices need the speaker's consent. Mention AI-generated narration to viewers when publishing. Kokoro is Apache-2.0.

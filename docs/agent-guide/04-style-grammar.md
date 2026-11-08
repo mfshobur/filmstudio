@@ -46,7 +46,7 @@ Run `filmstudio styles` for the live list. Rule: **change style when the idea ch
 - Alternate warm (paper, cartoon, clay) and cool (synth, atom, math) shots so adjacent cuts contrast.
 
 ## Choosing by mood
-Run `filmstudio styles --mood calm` (moods: calm, energetic, playful, serious, warm, nostalgic, mysterious, techy, night, nature, bold, retro, dreamy, friendly, tense). For a calm or night film (sleep, bedtime, meditation) start from: `paper/land2`, `paper/window`, `ink/mountains`, `multiplane/forest`, `gen/flow`, `atom/wait`, `shadow/scene` (cool tone), `origami/boat`, `lowpoly/terrain`, `clay/shapes`, `board/icons`. Pair with `calm-46`. A gallery image of every variant is in `docs/gallery/` when present.
+Run `filmstudio styles --mood calm` (moods: calm, energetic, playful, serious, warm, nostalgic, mysterious, techy, night, nature, bold, retro, dreamy, friendly, tense). For a calm or night film (sleep, bedtime, meditation) start from: `paper/land2`, `paper/window`, `ink/mountains`, `multiplane/forest`, `gen/flow`, `atom/wait`, `shadow/scene` (cool tone), `origami/boat`, `lowpoly/terrain`, `clay/shapes`, `board/icons`. Pair with `calm-46`. A picture of every variant is in `docs/gallery/` (`docs/gallery/<style>-<variant>.jpg`, indexed in `docs/gallery/README.md`); open the ones you are considering before you choose.
 
 ## Characters
 Optional. Add a `stage` shot (see `guide characters`) only when the story needs a figure. Never required.

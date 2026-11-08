@@ -8,6 +8,8 @@ const { sampleParams, SAMPLE_CHARACTERS } = require('../src/samples');
 const { compile } = require('../src/build');
 const { validate } = require('../src/validate');
 const { review } = require('../src/review');
+const { spawnSync } = require('child_process');
+const galleryDir = process.argv.includes('--gallery') ? path.resolve(process.argv[process.argv.indexOf('--gallery') + 1]) : null;
 (async () => {
   const sz = process.argv.includes('--size') ? process.argv[process.argv.indexOf('--size') + 1].split('x').map(Number) : [640, 360];
   const dir = fs.mkdtempSync(path.join(process.env.FILMSTUDIO_QA_TMP || os.tmpdir(), 'fs-qa-'));
@@ -26,6 +28,7 @@ const { review } = require('../src/review');
     const v = validate(spec, dir); if (!v.ok) { console.log(JSON.stringify({ ok: false, stage: 'validate', errors: v.errors }, null, 1)); process.exit(1); }
     fs.mkdirSync(path.join(dir, 'build'), { recursive: true }); fs.writeFileSync(path.join(dir, 'build', 'film.html'), compile(spec, dir));
     const r = await review(dir, spec, { width: sz[0], height: sz[1], motion: true, motionEarly: true });
+    if (galleryDir) { fs.mkdirSync(galleryDir, { recursive: true }); r.frames.forEach((f, i) => { const out = path.join(galleryDir, r.labels[i] + '.jpg'); spawnSync('ffmpeg', ['-loglevel', 'error', '-y', '-i', path.resolve(dir, f), '-vf', 'scale=360:-1', '-q:v', '5', out]); }); }
     const res = { dir, sheets: r.sheets, pageErrors: r.pageErrors, drawErrors: r.drawErrors, staticShots: r.staticShots, motion: r.motion };
     fs.writeFileSync(cf, JSON.stringify(res)); results.push(res); process.stderr.write('done batch ' + b0 + '\n');
   }

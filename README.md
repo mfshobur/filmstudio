@@ -10,7 +10,7 @@ I started this to make one film, "The Only Limit" (it's in `examples/`), and the
 
 It draws everything itself with canvas graphics. That means flat or glowing 2D scenes, simple 3D charts and shapes, paper-cut and isometric looks, a robot mascot. It cannot make photos, real people, or a specific product. If you need those, this is the wrong tool.
 
-Right now there are twenty-nine visual styles, with a few variants of each:
+Right now there are twenty-nine visual styles, with a few variants of each. A picture of every variant is in [docs/gallery](docs/gallery/README.md).
 
 | style | what it looks like |
 |---|---|
@@ -97,6 +97,7 @@ All commands print JSON.
 | `new <dir> [--example name]` | create a project folder |
 | `validate` | check `spec.json` |
 | `voice` | generate narration with Kokoro, or import your own audio (`--provider file`) |
+| `voice-check` | measure narration clips for clipping, glitches, silence, pace and flat delivery |
 | `build` | write `build/film.html` |
 | `review` | screenshot each shot, make contact sheets; `--size 400x800` for portrait, `--motion` to check shots animate |
 | `audio-check` | render the score offline and report loudness, clipping, dynamics |

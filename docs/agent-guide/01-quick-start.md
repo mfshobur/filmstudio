@@ -9,7 +9,7 @@ You are an AI agent using `filmstudio` to make a short generated film (procedura
 4. **Write `treatment.md`:** 5 to 10 lines: hook, build, turn, payoff, last image. Pick the message first.
 5. **Write the storyboard into `spec.json`** (see `guide storyboard`): shots, narration lines with start times, prompts. Use the style grammar to choose styles.
 6. **Validate:** `filmstudio validate`. Fix every error; each has a `fix` hint. Warnings are advice.
-7. **Voice:** `filmstudio voice` (default provider kokoro). Then `validate` again, because real clip lengths can overlap.
+7. **Voice:** `filmstudio voice` (default provider kokoro), then `filmstudio voice-check` (fix any flagged clip), then `validate` again, because real clip lengths can overlap.
 8. **Build and review:** `filmstudio build`, then `filmstudio review` and LOOK at `build/review/sheet*.png` (see `guide review`). Fix what looks wrong and rebuild.
 9. **Check the music:** `filmstudio audio-check`. Fix flags (clipping, flat dynamics).
 10. **Deliver:** the finished film is `build/film.html` (self-contained; open in any browser). Tell the user what you made, what you could not check (you cannot hear audio), and ask for notes.

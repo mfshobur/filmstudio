@@ -11,7 +11,7 @@ async function review(dir, spec, opts = {}) {
   const out = path.join(dir, 'build', 'review'); fs.rmSync(out, { recursive: true, force: true }); fs.mkdirSync(out, { recursive: true });
   const seen = new Set(), targets = [];
   if (opts.beats) opts.beats.forEach(b => targets.push({ beat: b, name: 'beat-' + b }));
-  else spec.shots.forEach((s, idx) => { const k = s[4] ? s[2] + '-' + (idx + 1) : s[2] + '-' + s[3]; if (seen.has(k)) return; seen.add(k); targets.push({ beat: (s[0] - 1) * 4 + (s[1] - s[0]) * 4 * 0.55, start: (s[0] - 1) * 4, name: k }); });
+  else spec.shots.forEach((s, idx) => { const k = s[4] ? s[2] + '-' + (idx + 1) : s[2] + '-' + s[3]; if (seen.has(k)) return; seen.add(k); targets.push({ beat: (s[0] - 1) * 4 + (s[1] - s[0]) * 4 * 0.55, start: (s[0] - 1) * 4, name: k, label: s[2] + '-' + s[3] }); });
   const w = opts.width || 640, h = opts.height || 360;
   const b = await launch(); const errors = [];
   try {
@@ -46,7 +46,7 @@ async function review(dir, spec, opts = {}) {
       }
     }
     const staticShots = motion.filter(m => m.diff < 0.001 && m.changedCells === 0).map(m => m.name);
-    return { frames: files, sheets, pageErrors: errors, drawErrors, motion: opts.motion ? motion : undefined, staticShots: opts.motion ? staticShots : undefined };
+    return { frames: files, labels: targets.map(t => t.label || t.name), sheets, pageErrors: errors, drawErrors, motion: opts.motion ? motion : undefined, staticShots: opts.motion ? staticShots : undefined };
   } finally { await b.close().catch(() => {}); }
 }
 module.exports = { review };
