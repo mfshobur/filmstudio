@@ -20,7 +20,7 @@ const out = o => console.log(JSON.stringify(o, null, 2));
 const fail = (msg, extra) => { out(Object.assign({ ok: false, error: msg }, extra || {})); process.exit(1); };
 const readSpec = dir => { const f = path.join(dir, 'spec.json'); if (!fs.existsSync(f)) fail('spec.json not found in ' + path.resolve(dir), { fix: 'Run `filmstudio new <dir>` first, or cd into a project folder.' }); try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch (e) { fail('spec.json is not valid JSON: ' + e.message); } };
 const HELP = `filmstudio <command> [project-dir] [options]   (all output is JSON)
-  new <dir> [--example the-only-limit]   create a project folder
+  new <dir> [--example name] [--length 60] [--preset calm-46] [--format 9:16]   create a project (length in seconds sets bars and bpm)
   validate [dir]                         check spec.json, with fix hints
   voice [dir] [--provider kokoro|elevenlabs|file] [--force] [--yes]   generate or import narration (elevenlabs is paid: needs --yes)
   export [dir] [--fps 12] [--size 640x360] [--from-bar 1 --to-bar 47] [--no-audio] [--no-bars]   render build/film.mp4 (slow on small devices; resumable)
@@ -64,7 +64,17 @@ const HELP = `filmstudio <command> [project-dir] [options]   (all output is JSON
       fs.mkdirSync(target, { recursive: true });
       if (flags.example) { const ex = path.join(ROOT, 'examples', String(flags.example)); if (!fs.existsSync(ex)) fail('no such example', { examples: fs.readdirSync(path.join(ROOT, 'examples')) }); fs.cpSync(ex, target, { recursive: true, filter: s => !s.includes(path.sep + 'build') }); }
       else { fs.cpSync(path.join(ROOT, 'examples', 'starter'), target, { recursive: true }); fs.mkdirSync(path.join(target, 'voice'), { recursive: true }); }
-      return out({ ok: true, created: target, next: flags.example ? 'cd there, then `filmstudio validate`, `filmstudio build`.' : 'A valid starter spec.json (shots only, no narration) is in place. Edit the shots, meta text and add narration, then `validate`. See `filmstudio guide quick-start`.' });
+      let applied;
+      if (!flags.example && (flags.length || flags.preset || flags.format)) {
+        const R = require('../src/registry'), sp = path.join(target, 'spec.json'), spc = JSON.parse(fs.readFileSync(sp, 'utf8'));
+        if (flags.preset) { if (!R.SCORES[String(flags.preset)]) fail('unknown preset', { presets: Object.keys(R.SCORES) }); spc.score = Object.assign({}, spc.score, { preset: String(flags.preset) }); spc.bpm = R.SCORES[String(flags.preset)].bpm; }
+        if (flags.format) { if (!R.FORMATS[String(flags.format)]) fail('unknown format', { formats: Object.keys(R.FORMATS) }); if (flags.format !== '16:9') spc.format = String(flags.format); }
+        if (flags.length) { const p = R.planLength(Number(flags.length), (spc.score || {}).preset); const k = p.bars / spc.bars; let prev = 1; const ns = [];
+          spc.shots.forEach((s, i) => { let e = i === spc.shots.length - 1 ? p.bars + 1 : Math.round((1 + (s[1] - 1) * k) * 4) / 4; if (e > prev) { ns.push([prev].concat([e], s.slice(2))); prev = e; } });
+          if (ns.length) ns[ns.length - 1][1] = p.bars + 1; spc.shots = ns; spc.bars = p.bars; spc.bpm = p.bpm; spc.endCardBar = Math.round((p.bars - 1.4) * 100) / 100; }
+        fs.writeFileSync(sp, JSON.stringify(spc, null, 1)); applied = { bars: spc.bars, bpm: spc.bpm, format: spc.format || '16:9', preset: (spc.score || {}).preset, shots: spc.shots.length, note: flags.length ? 'Starter shots were squeezed to fit; they are placeholders, replace them.' : undefined };
+      }
+      return out({ ok: true, created: target, applied, next: flags.example ? 'cd there, then `filmstudio validate`, `filmstudio build`.' : 'A valid starter spec.json (shots only, no narration) is in place. Edit the shots, meta text and add narration, then `validate`. See `filmstudio guide quick-start`.' });
     }
     const spec = readSpec(dir);
     if (cmd === 'validate') { const r = validate(spec, dir); out(r); return process.exit(r.ok ? 0 : 1); }

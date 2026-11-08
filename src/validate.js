@@ -80,7 +80,7 @@ function validate(spec, dir) {
     real.forEach((s, i) => { const beats = (s[1] - s[0]) * 4; if (beats > 12 && i < real.length - 1 && !(s[2] === 'domino' && s[3] === 'title')) warn('shots[' + i + ']', 'shot lasts ' + beats + ' beats; long holds lose attention', 'Cut away at least every 8 to 12 beats (the final shot may be longer).'); });
     real.forEach((s, i) => { if (i && real[i - 1][2] === s[2] && real[i - 1][3] === s[3] && s[2] !== 'stage') warn('shots[' + i + ']', 'same style/variant "' + s[2] + '/' + s[3] + '" twice in a row', 'Alternate styles so each cut reads as a change.'); });
     const distinct = new Set(real.map(s => s[2])).size; if (distinct > 12) warn('shots', distinct + ' different styles in one film looks scattered', 'Keep it to about 12 or fewer, chosen to fit the story.');
-    if (preset === 'anthem-46' || preset === 'calm-46') { const mont = real.filter(s => s[0] >= 13 && s[0] < 13 + 8 + (bars - 46)).length; if (mont < 6) warn('shots', 'only ' + mont + ' shots in the montage (bars 13 to 20); the score builds to quick cuts there', 'Use 8 to 16 shots of 0.25 to 0.5 bar in bars 13-20.'); }
+    if (preset === 'anthem-46' || preset === 'calm-46') { const mb = 8 + (bars - 46), mont = real.filter(s => s[0] >= 13 && s[0] < 13 + mb).length, need = Math.min(6, Math.ceil(mb * 0.75)); if (mb > 0 && mont < need) warn('shots', 'only ' + mont + ' shots in the montage (bars 13 to ' + (12 + mb) + '); the score builds to quick cuts there', 'Use ' + Math.ceil(mb * 1.5) + ' to ' + mb * 2 + ' shots of 0.25 to 0.5 bar in bars 13-' + (12 + mb) + '.'); }
   }
   // narration
   let durations = null;
@@ -107,7 +107,7 @@ function validate(spec, dir) {
   }
   (spec.prompts || []).forEach((p, i) => { if (!(p.bar >= 1 && p.bar <= bars)) err('prompts[' + i + '].bar', 'bar outside 1..' + bars, ''); });
   if (spec.endCardBar != null && !(spec.endCardBar >= bars - 4 && spec.endCardBar <= bars + 1)) warn('endCardBar', 'end card should appear near the end', 'Use about ' + (bars - 1.4) + '.');
-  const info = Number.isInteger(bars) && bpm ? { seconds: Math.round(bars * 240 / bpm * 10) / 10, bars, bpm, shots: Array.isArray(sh) ? sh.length : 0, narrationLines: n.length, preset } : null;
+  const info = Number.isInteger(bars) && bpm ? { seconds: Math.round(bars * 240 / bpm * 10) / 10, bars, bpm, shots: Array.isArray(sh) ? sh.length : 0, narrationLines: n.length, preset, format: spec.format || '16:9' } : null;
   return { ok: errors.length === 0, info, errors, warnings };
 }
 module.exports = { validate };
