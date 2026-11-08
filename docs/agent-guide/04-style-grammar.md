@@ -23,5 +23,8 @@ Run `filmstudio styles` for the live list. Rule: **change style when the idea ch
 - Do not repeat the same style/variant twice in a row.
 - Each style should earn at least one appearance; do not use more than 9 distinct styles in 90 s.
 
+## Characters
+Optional. Add a `stage` shot (see `guide characters`) only when the story needs a figure. Never required.
+
 ## Not available yet (planned)
 Kinetic typography, whiteboard, pixel art, glitch/VHS, ink wash, shadow puppets, halftone comic, generative flow fields and more. See the repo roadmap. If the user asks for one, say it is planned and pick the nearest existing style.

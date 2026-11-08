@@ -1,0 +1,331 @@
+{
+ "version": 1,
+ "meta": {
+  "title": "Character demo",
+  "eyebrow": "filmstudio example",
+  "lede": "Six custom characters in six different skins. Characters are optional.",
+  "titleLines": [
+   "Characters",
+   "are",
+   "optional."
+  ],
+  "titleAccent": 1,
+  "endTitle": "Characters are optional.",
+  "endLede": ""
+ },
+ "bpm": 128,
+ "bars": 46,
+ "endCardBar": 44.6,
+ "score": {
+  "preset": "anthem-46"
+ },
+ "characters": {
+  "mira": {
+   "type": "human",
+   "skin": "outline",
+   "hair": "bob",
+   "face": {
+    "eyes": "round",
+    "blush": true
+   },
+   "accessories": [
+    "glasses"
+   ],
+   "palette": {
+    "skin": "#f2c9a0",
+    "hair": "#3a2a2a",
+    "top": "#e76f51",
+    "bottom": "#264653",
+    "shoes": "#2b2d42",
+    "accent": "#ffd166"
+   }
+  },
+  "bolt": {
+   "type": "robot",
+   "skin": "flat",
+   "face": {
+    "eyes": "round"
+   },
+   "palette": {
+    "skin": "#e8eefc",
+    "top": "#4361ee",
+    "accent": "#ffd166"
+   }
+  },
+  "pip": {
+   "type": "blob",
+   "skin": "glow",
+   "face": {
+    "eyes": "dot"
+   },
+   "palette": {
+    "top": "#86e6ff",
+    "accent": "#ffae5c"
+   }
+  },
+  "sam": {
+   "type": "stick",
+   "skin": "silhouette",
+   "palette": {
+    "silhouette": "#0a0a12"
+   }
+  },
+  "momo": {
+   "type": "animal",
+   "ears": "bear",
+   "skin": "paper",
+   "face": {
+    "eyes": "anime",
+    "blush": true
+   },
+   "palette": {
+    "skin": "#d9a066",
+    "top": "#2a9d8f",
+    "bottom": "#1d3557",
+    "shoes": "#6d4c41",
+    "accent": "#ffb703"
+   }
+  },
+  "kai": {
+   "type": "human",
+   "skin": "sketch",
+   "hair": "spiky",
+   "face": {
+    "eyes": "sleepy"
+   },
+   "palette": {
+    "skin": "#c68642",
+    "hair": "#1b1b2f",
+    "top": "#06d6a0",
+    "bottom": "#3a3a5c",
+    "shoes": "#e63946",
+    "accent": "#ffd166"
+   }
+  }
+ },
+ "shots": [
+  [
+   1,
+   6.75,
+   "stage",
+   "scene",
+   {
+    "background": [
+     "paper",
+     "land1"
+    ],
+    "cast": [
+     {
+      "char": "mira",
+      "x": 0,
+      "action": "wave",
+      "emotion": "happy"
+     }
+    ],
+    "props": []
+   }
+  ],
+  [
+   6.75,
+   12.5,
+   "stage",
+   "scene",
+   {
+    "background": [
+     "synth",
+     "sun"
+    ],
+    "cast": [
+     {
+      "char": "bolt",
+      "x": -0.5,
+      "walkTo": 0.4,
+      "emotion": "happy"
+     },
+     {
+      "char": "kai",
+      "x": 0.7,
+      "action": "idle",
+      "emotion": "surprised",
+      "flip": true
+     }
+    ],
+    "props": []
+   }
+  ],
+  [
+   12.5,
+   18.25,
+   "stage",
+   "scene",
+   {
+    "background": [
+     "atom",
+     "wait"
+    ],
+    "cast": [
+     {
+      "char": "pip",
+      "x": 0,
+      "action": "idle",
+      "emotion": "thinking",
+      "scale": 1.2
+     }
+    ],
+    "props": [
+     {
+      "type": "qmark",
+      "x": 0.5,
+      "y": -0.6
+     }
+    ]
+   }
+  ],
+  [
+   18.25,
+   24.0,
+   "stage",
+   "scene",
+   {
+    "background": [
+     "paper",
+     "land2"
+    ],
+    "cast": [
+     {
+      "char": "sam",
+      "x": -0.2,
+      "action": "point"
+     },
+     {
+      "char": "momo",
+      "x": 0.5,
+      "action": "idle",
+      "emotion": "surprised",
+      "flip": true
+     }
+    ],
+    "props": []
+   }
+  ],
+  [
+   24.0,
+   29.75,
+   "stage",
+   "scene",
+   {
+    "background": [
+     "math",
+     "sine"
+    ],
+    "cast": [
+     {
+      "char": "mira",
+      "x": -0.5,
+      "action": "talk",
+      "say": true,
+      "emotion": "happy"
+     },
+     {
+      "char": "bolt",
+      "x": 0.5,
+      "action": "think",
+      "emotion": "thinking",
+      "flip": true
+     }
+    ],
+    "props": [
+     {
+      "type": "bubble",
+      "text": "why?",
+      "x": -0.45,
+      "y": -0.75
+     }
+    ]
+   }
+  ],
+  [
+   29.75,
+   35.5,
+   "stage",
+   "scene",
+   {
+    "background": [
+     "iso",
+     "city"
+    ],
+    "cast": [
+     {
+      "char": "momo",
+      "x": -0.7,
+      "walkTo": 0.6,
+      "emotion": "happy",
+      "scale": 0.8
+     }
+    ],
+    "props": []
+   }
+  ],
+  [
+   35.5,
+   41.25,
+   "stage",
+   "scene",
+   {
+    "background": [
+     "cartoon",
+     "wonder"
+    ],
+    "cast": [
+     {
+      "char": "kai",
+      "x": 0,
+      "action": "celebrate",
+      "emotion": "happy"
+     }
+    ],
+    "props": [
+     {
+      "type": "star",
+      "x": -0.6,
+      "y": -0.6
+     },
+     {
+      "type": "star",
+      "x": 0.6,
+      "y": -0.5
+     }
+    ]
+   }
+  ],
+  [
+   41.25,
+   47,
+   "stage",
+   "scene",
+   {
+    "background": [
+     "paper",
+     "window"
+    ],
+    "cast": [
+     {
+      "char": "pip",
+      "x": 0.5,
+      "action": "wave",
+      "emotion": "happy"
+     }
+    ],
+    "props": [
+     {
+      "type": "heart",
+      "x": 0.5,
+      "y": -0.7
+     }
+    ]
+   }
+  ]
+ ],
+ "narration": [],
+ "prompts": []
+}

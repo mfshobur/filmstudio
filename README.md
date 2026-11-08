@@ -23,6 +23,9 @@ Right now there are nine visual styles, with a few variants of each:
 | `paper` | layered paper landscapes, a window scene |
 | `synth` | neon sunset grid |
 | `domino` | tiles flipping to reveal a title |
+| `stage` | optional: characters in front of any of the above |
+
+Characters are optional. If your story needs one, you describe it in the project (body type, colors, hair, face, accessories) and pick how it's drawn: cartoon outline, flat, paper cut-out, shadow-puppet silhouette, neon glow or hand-drawn. `examples/character-demo` shows six. A film that doesn't use characters never has one.
 
 There is one music score (46 bars at 128 BPM, A minor, no piano) and the film length is tied to it for now. More styles, characters and scores are the next things to build. See the roadmap below.
 
@@ -91,7 +94,7 @@ The review tools can look at pictures and measure audio levels. They can't tell 
 
 ## Roadmap
 
-- characters you can customise (a rigged 2D figure with expressions, walks, gestures, talking mouth)
+- more character options (hands, outfits, more animals, lip-sync from the audio itself)
 - more styles: kinetic type, whiteboard, pixel art, glitch, ink wash, shadow puppets, halftone comics, generative patterns
 - a small local web page to edit the storyboard with live preview
 - other scores, with length and key as settings

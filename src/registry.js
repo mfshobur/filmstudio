@@ -9,6 +9,7 @@ const STYLES = {
   iso:       { variants: ['city', 'city2', 'cubes'], use: 'building, cities, products, progress. Isometric blocks that rise in a wave.' },
   paper:     { variants: ['land1', 'land2', 'window'], use: 'warmth, humanity, nature, art. Layered paper landscapes; "window" is a quiet human silhouette scene.' },
   synth:     { variants: ['sun', 'eq'], use: 'energy, music, nightlife, tech nostalgia. Neon sunset grid; "eq" adds an equalizer skyline.' },
+  stage:     { variants: ['scene'], optional: true, use: 'OPTIONAL. Characters (defined in spec.characters) in front of any other style as the background. Use only when the story needs a character. 5th shot element carries params: {background:[style,variant], cast:[{char,x,action,emotion,say,walkTo}], props:[...]}.' },
   domino:    { variants: ['wave', 'title', 'topple', 'cascade'], use: 'reveals and chain reactions. "title" flips tiles to reveal meta.titleLines; "topple" is a slow suspense row.' },
 };
 const SCORES = { 'anthem-46': { bars: 46, bpm: 128, note: 'Suspense intro, build, montage, breakdown, drop, outro. A minor. No piano.' } };

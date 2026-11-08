@@ -3,6 +3,10 @@ const fs = require('fs');
 const path = require('path');
 const { STYLES, SCORES } = require('./registry');
 
+const ACTIONS = ['idle', 'walk', 'wave', 'point', 'think', 'celebrate', 'talk'];
+const EMOTIONS = ['happy', 'sad', 'surprised', 'thinking', 'angry', 'neutral'];
+const TYPES = ['human', 'robot', 'blob', 'stick', 'animal'];
+const SKINS = ['outline', 'flat', 'paper', 'silhouette', 'glow', 'sketch'];
 function validate(spec, dir) {
   const errors = [], warnings = [];
   const err = (p, message, fix) => errors.push({ path: p, message, fix });
@@ -17,6 +21,12 @@ function validate(spec, dir) {
   else if (SCORES[preset].bars !== bars) err('bars', 'score preset "' + preset + '" is ' + SCORES[preset].bars + ' bars long, spec has ' + bars, 'Set bars to ' + SCORES[preset].bars + ' (parametric scores arrive in a later phase).');
   if (!spec.meta || !spec.meta.title) err('meta.title', 'meta.title is required', 'Add a short title.');
   if (spec.meta && spec.meta.titleLines && !Array.isArray(spec.meta.titleLines)) err('meta.titleLines', 'must be an array of strings', 'e.g. ["The only limit","is the","human mind."]');
+  // characters (optional)
+  Object.entries(spec.characters || {}).forEach(([id, c]) => {
+    const p = 'characters.' + id;
+    if (c.type && !TYPES.includes(c.type)) err(p + '.type', 'unknown type "' + c.type + '"', 'Types: ' + TYPES.join(', '));
+    if (c.skin && !SKINS.includes(c.skin)) err(p + '.skin', 'unknown skin "' + c.skin + '"', 'Skins: ' + SKINS.join(', '));
+  });
   // shots
   const sh = spec.shots;
   if (!Array.isArray(sh) || !sh.length) err('shots', 'shots must be a non-empty array of [startBar,endBar,style,variant]', 'See `filmstudio guide storyboard`.');
@@ -24,7 +34,7 @@ function validate(spec, dir) {
     let prev = 1;
     sh.forEach((s, i) => {
       const p = 'shots[' + i + ']';
-      if (!Array.isArray(s) || s.length !== 4) return err(p, 'each shot must be [startBar,endBar,style,variant]', 'Example: [13,13.5,"synth","sun"]');
+      if (!Array.isArray(s) || (s.length !== 4 && s.length !== 5)) return err(p, 'each shot must be [startBar,endBar,style,variant] (a 5th element holds params for "stage")', 'Example: [13,13.5,"synth","sun"]');
       const [a, b, st, v] = s;
       if (typeof a !== 'number' || typeof b !== 'number') return err(p, 'start and end must be numbers (bars)', 'Bars are 1-based; 0.25 = one beat.');
       if (Math.abs(a - prev) > 1e-9) err(p, 'starts at bar ' + a + ' but the previous shot ended at ' + prev, 'Shots must be contiguous: set start to ' + prev + '.');
@@ -32,6 +42,14 @@ function validate(spec, dir) {
       if (((b - a) * 4) % 1 !== 0) err(p, 'shot length must be a whole number of beats (multiples of 0.25 bar)', 'Round to the nearest 0.25.');
       if (!STYLES[st]) err(p, 'unknown style "' + st + '"', 'Known styles: ' + Object.keys(STYLES).join(', '));
       else if (!STYLES[st].variants.includes(v)) err(p, 'unknown variant "' + v + '" for style "' + st + '"', 'Variants of ' + st + ': ' + STYLES[st].variants.join(', '));
+      if (st === 'stage') {
+        const params = s[4], chars = spec.characters || {};
+        if (!params || typeof params !== 'object') err(p, 'stage shots need a 5th element with params', 'Example: [5,7,"stage","scene",{"background":["paper","land1"],"cast":[{"char":"mira","x":0,"action":"wave"}]}]');
+        else {
+          if (params.background && !(Array.isArray(params.background) && STYLES[params.background[0]] && STYLES[params.background[0]].variants.includes(params.background[1]) && params.background[0] !== 'stage')) err(p + '[4].background', 'background must be [style,variant] of a non-stage style', 'e.g. ["paper","land1"]');
+          (params.cast || []).forEach((c, k) => { if (!chars[c.char]) err(p + '[4].cast[' + k + '].char', 'unknown character "' + c.char + '"', 'Define it under spec.characters (see `filmstudio guide characters`).'); if (c.action && !ACTIONS.includes(c.action)) err(p + '[4].cast[' + k + '].action', 'unknown action "' + c.action + '"', 'Actions: ' + ACTIONS.join(', ')); if (c.emotion && !EMOTIONS.includes(c.emotion)) err(p + '[4].cast[' + k + '].emotion', 'unknown emotion "' + c.emotion + '"', 'Emotions: ' + EMOTIONS.join(', ')); });
+        }
+      }
       prev = b;
     });
     if (Number.isInteger(bars) && Math.abs(prev - (bars + 1)) > 1e-9) err('shots', 'last shot ends at bar ' + prev + ' but the film is ' + bars + ' bars (should end at ' + (bars + 1) + ')', 'Extend or trim the last shot.');

@@ -25,6 +25,8 @@ function compile(spec, projectDir) {
     SHOTS: JSON.stringify(spec.shots),
     VO_AT: JSON.stringify(narr.map(n => n.at)),
     VO_TXT: JSON.stringify(narr.map(n => n.text)),
+    VO_DUR: JSON.stringify(narr.map(n => n.dur || 0)),
+    CHARACTERS: JSON.stringify(spec.characters || {}),
     PROMPTS: JSON.stringify(prompts),
     VO: hasVoice ? JSON.stringify(vo.map(v => v || '')) : 'null',
   };
@@ -42,7 +44,7 @@ function compile(spec, projectDir) {
   });
   const rd = f => fs.readFileSync(path.join(ENGINE, f), 'utf8');
   const head = fill(rd('head.template.html'), htmlVals);
-  const js = rd('p1.js') + rd('music.js') + rd('p2.js') + rd('p2b.js') + fill(rd('p3.template.js'), vals);
+  const js = rd('p1.js') + rd('music.js') + rd('p2.js') + rd('p2b.js') + rd('p2c.js').replace('CHARS_DATA', () => vals.CHARACTERS) + fill(rd('p3.template.js'), vals);
   return head + '<script>\n' + js + '\n</script>\n';
 }
 module.exports = { compile };

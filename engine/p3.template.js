@@ -6,6 +6,7 @@ function bb(bar){return (bar-1)*4}
 var SH={{SHOTS}};
 var BRIGHT={paper:1,cartoon:1,iso:.5};
 var DRAW={
+  stage:function(v){stage()},
   atom:atom,
   math:function(v){v==='descent'?mathDescent():v==='prompt'?mathPrompt():mathSine()},
   cartoon:function(v){v==='heart'?cartoonHeart():v==='wonder'?cartoonWonder():cartoonFollow()},
@@ -14,6 +15,7 @@ var DRAW={
 /* narration: [bar, beat offset] for each clip, in order */
 var VO_AT={{VO_AT}};
 var VO_TXT={{VO_TXT}};
+var VO_DUR={{VO_DUR}};
 var PROMPTS={{PROMPTS}};
 var VO={{VO}};
 var VOB=[];
@@ -85,7 +87,7 @@ function frame(){
   if(!W||!H){resize();requestAnimationFrame(frame);return}
   if(beat<0){idx=0;sh=SH[0];F.tb=3+((now-idleT)/SPB)%5;F.dur=8;F.p=.4;F.beat=0}
   else{idx=findShot(beat);sh=SH[idx];var b0=bb(sh[0]),dur=bb(sh[1])-b0,tb=beat-b0;F.dur=dur;F.p=clamp(tb/dur,0,1);F.tb=tb+(dur<=2?3:0);F.beat=beat}
-  F.T=F.tb*SPB;
+  F.T=F.tb*SPB;F.params=sh[4]||null;
   var bar=Math.floor(Math.max(0,beat)/4)+1,calm=(bar<5||(bar>=21&&bar<=28)||bar>=41)?.5:1,bf=((beat<0?F.tb:beat)%1+1)%1;
   F.k=Math.exp(-bf*5)*calm;
   if(idx!==lastShot){lastShot=idx;shotStartBeat=beat<0?0:bb(sh[0]);bcv.style.opacity=String(BRIGHT[sh[2]]!==undefined?(BRIGHT[sh[2]]>.9?.1:.28):.6)}
