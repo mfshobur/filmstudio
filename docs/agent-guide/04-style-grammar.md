@@ -15,6 +15,9 @@ Run `filmstudio styles` for the live list. Rule: **change style when the idea ch
 | Tension, waiting | atom/wait, domino/topple |
 | Chain reaction, fast energy | domino/cascade, domino/wave |
 | Final reveal of the message | domino/title (uses meta.titleLines) |
+| A key sentence, statistic or quote | type/words, type/stack, type/focus |
+| Steps, lists, definitions, simple maths | board/icons, board/equation |
+| Playful rhythm on the beat | type/wave |
 | Calm ending | atom/prompt |
 
 ## Pacing rules
@@ -27,4 +30,4 @@ Run `filmstudio styles` for the live list. Rule: **change style when the idea ch
 Optional. Add a `stage` shot (see `guide characters`) only when the story needs a figure. Never required.
 
 ## Not available yet (planned)
-Kinetic typography, whiteboard, pixel art, glitch/VHS, ink wash, shadow puppets, halftone comic, generative flow fields and more. See the repo roadmap. If the user asks for one, say it is planned and pick the nearest existing style.
+Pixel art, glitch/VHS, ink wash, shadow puppets, halftone comic, generative flow fields and more. See the repo roadmap. If the user asks for one, say it is planned and pick the nearest existing style.

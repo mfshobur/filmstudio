@@ -1,7 +1,7 @@
 'use strict';
 const fs = require('fs');
 const path = require('path');
-const { STYLES, SCORES } = require('./registry');
+const { STYLES, SCORES, ICON_NAMES } = require('./registry');
 
 const ACTIONS = ['idle', 'walk', 'wave', 'point', 'think', 'celebrate', 'talk'];
 const EMOTIONS = ['happy', 'sad', 'surprised', 'thinking', 'angry', 'neutral'];
@@ -42,6 +42,15 @@ function validate(spec, dir) {
       if (((b - a) * 4) % 1 !== 0) err(p, 'shot length must be a whole number of beats (multiples of 0.25 bar)', 'Round to the nearest 0.25.');
       if (!STYLES[st]) err(p, 'unknown style "' + st + '"', 'Known styles: ' + Object.keys(STYLES).join(', '));
       else if (!STYLES[st].variants.includes(v)) err(p, 'unknown variant "' + v + '" for style "' + st + '"', 'Variants of ' + st + ': ' + STYLES[st].variants.join(', '));
+      if (st === 'type' || st === 'board') {
+        const pr = s[4];
+        if (!pr || typeof pr !== 'object') err(p, st + ' shots need a 5th element with params', st === 'type' ? 'Example: [5,6,"type","words",{"text":"Ask bigger questions"}]' : 'Example: [5,7,"board","icons",{"items":[{"icon":"bulb","label":"idea"}]}]');
+        else if (st === 'type' && !String(pr.text || '').trim()) err(p + '[4].text', 'type shots need params.text', 'Give the words to animate.');
+        else if (st === 'board') {
+          if (v === 'icons') { if (!Array.isArray(pr.items) || !pr.items.length) err(p + '[4].items', 'icons needs params.items', 'Example: [{"icon":"bulb","label":"idea"}]'); else pr.items.forEach((it, k) => { if (!ICON_NAMES.includes(it.icon)) err(p + '[4].items[' + k + '].icon', 'unknown icon "' + it.icon + '"', 'Icons: ' + ICON_NAMES.join(', ')); }); }
+          else if (!String(pr.text || '').trim()) err(p + '[4].text', 'equation needs params.text', 'Lines separated by \n.');
+        }
+      }
       if (st === 'stage') {
         const params = s[4], chars = spec.characters || {};
         if (!params || typeof params !== 'object') err(p, 'stage shots need a 5th element with params', 'Example: [5,7,"stage","scene",{"background":["paper","land1"],"cast":[{"char":"mira","x":0,"action":"wave"}]}]');

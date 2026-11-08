@@ -1,0 +1,173 @@
+{
+ "version": 1,
+ "meta": {
+  "title": "Style pack demo",
+  "eyebrow": "filmstudio example",
+  "lede": "Kinetic typography and whiteboard.",
+  "titleLines": [
+   "Words",
+   "and",
+   "drawings."
+  ],
+  "titleAccent": 1,
+  "endTitle": "Words and drawings.",
+  "endLede": ""
+ },
+ "bpm": 128,
+ "bars": 46,
+ "endCardBar": 44.6,
+ "score": {
+  "preset": "anthem-46"
+ },
+ "shots": [
+  [
+   1,
+   6.75,
+   "type",
+   "words",
+   {
+    "text": "Ask bigger questions",
+    "emphasize": [
+     2
+    ],
+    "perBeat": 1.0
+   }
+  ],
+  [
+   6.75,
+   12.5,
+   "type",
+   "stack",
+   {
+    "text": "The only limit is the human mind",
+    "emphasize": [
+     5,
+     6
+    ],
+    "font": "serif",
+    "perBeat": 0.8
+   }
+  ],
+  [
+   12.5,
+   18.25,
+   "type",
+   "wave",
+   {
+    "text": "Everything moves with the beat",
+    "font": "sans"
+   }
+  ],
+  [
+   18.25,
+   24.0,
+   "type",
+   "focus",
+   {
+    "text": "Think. Imagine. Build.",
+    "palette": {
+     "bg": "#1d0b3b",
+     "fg": "#fff1c9",
+     "accent": "#ff4fa3"
+    },
+    "font": "sans",
+    "perBeat": 1.2,
+    "emphasize": [
+     2
+    ]
+   }
+  ],
+  [
+   24.0,
+   29.75,
+   "board",
+   "icons",
+   {
+    "title": "How a good idea grows",
+    "items": [
+     {
+      "icon": "bulb",
+      "label": "idea"
+     },
+     {
+      "icon": "book",
+      "label": "learn"
+     },
+     {
+      "icon": "gear",
+      "label": "build"
+     },
+     {
+      "icon": "rocket",
+      "label": "launch"
+     }
+    ]
+   }
+  ],
+  [
+   29.75,
+   35.5,
+   "board",
+   "icons",
+   {
+    "items": [
+     {
+      "icon": "person",
+      "label": "you"
+     },
+     {
+      "icon": "heart",
+      "label": "care"
+     },
+     {
+      "icon": "house",
+      "label": "home"
+     },
+     {
+      "icon": "tree",
+      "label": "grow"
+     },
+     {
+      "icon": "cloud",
+      "label": "dream"
+     },
+     {
+      "icon": "check",
+      "label": "done"
+     }
+    ]
+   }
+  ],
+  [
+   35.5,
+   41.25,
+   "board",
+   "equation",
+   {
+    "title": "A tiny proof",
+    "text": "2 + 2 = 4\nso 4 - 2 = 2\nit adds up"
+   }
+  ],
+  [
+   41.25,
+   47,
+   "type",
+   "stack",
+   {
+    "text": "Every limit you can name started as a question",
+    "palette": {
+     "bg": "#f7f4ea",
+     "fg": "#1b1b2f",
+     "accent": "#e63946"
+    },
+    "font": "serif",
+    "perBeat": 0.6,
+    "emphasize": [
+     6
+    ]
+   }
+  ]
+ ],
+ "narration": [],
+ "prompts": []
+}

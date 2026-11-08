@@ -44,7 +44,7 @@ function compile(spec, projectDir) {
   });
   const rd = f => fs.readFileSync(path.join(ENGINE, f), 'utf8');
   const head = fill(rd('head.template.html'), htmlVals);
-  const js = rd('p1.js') + rd('music.js') + rd('p2.js') + rd('p2b.js') + rd('p2c.js').replace('CHARS_DATA', () => vals.CHARACTERS) + fill(rd('p3.template.js'), vals);
+  const js = rd('p1.js') + rd('music.js') + rd('p2.js') + rd('p2b.js') + rd('p2c.js').replace('CHARS_DATA', () => vals.CHARACTERS) + rd('p2d.js') + fill(rd('p3.template.js'), vals);
   return head + '<script>\n' + js + '\n</script>\n';
 }
 module.exports = { compile };

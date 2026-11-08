@@ -4,9 +4,18 @@ var BPM={{BPM}},SPB=60/BPM,TOTAL_BARS={{BARS}};
 var TITLE_LINES={{TITLE_LINES}},TITLE_ACCENT={{TITLE_ACCENT}};
 function bb(bar){return (bar-1)*4}
 var SH={{SHOTS}};
-var BRIGHT={paper:1,cartoon:1,iso:.5};
+var BRIGHT={paper:1,cartoon:1,iso:.5,board:1};
+function isBright(sh){
+  if(sh[2]==='board')return !(sh[4]&&sh[4].palette&&sh[4].palette.bg&&lum(sh[4].palette.bg)<.4);
+  if(sh[2]==='type'&&sh[4]&&sh[4].palette&&sh[4].palette.bg)return lum(sh[4].palette.bg)>.6;
+  if(sh[2]==='stage'&&sh[4]&&sh[4].background)return BRIGHT[sh[4].background[0]]>.9;
+  return BRIGHT[sh[2]]>.9;
+}
+function lum(hex){var m=/^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex||'');if(!m)return .5;return (parseInt(m[1],16)*.299+parseInt(m[2],16)*.587+parseInt(m[3],16)*.114)/255}
 var DRAW={
   stage:function(v){stage()},
+  type:function(v){kinetic(v)},
+  board:function(v){whiteboard(v)},
   atom:atom,
   math:function(v){v==='descent'?mathDescent():v==='prompt'?mathPrompt():mathSine()},
   cartoon:function(v){v==='heart'?cartoonHeart():v==='wonder'?cartoonWonder():cartoonFollow()},
@@ -90,7 +99,7 @@ function frame(){
   F.T=F.tb*SPB;F.params=sh[4]||null;
   var bar=Math.floor(Math.max(0,beat)/4)+1,calm=(bar<5||(bar>=21&&bar<=28)||bar>=41)?.5:1,bf=((beat<0?F.tb:beat)%1+1)%1;
   F.k=Math.exp(-bf*5)*calm;
-  if(idx!==lastShot){lastShot=idx;shotStartBeat=beat<0?0:bb(sh[0]);bcv.style.opacity=String(BRIGHT[sh[2]]!==undefined?(BRIGHT[sh[2]]>.9?.1:.28):.6)}
+  if(idx!==lastShot){lastShot=idx;shotStartBeat=beat<0?0:bb(sh[0]);bcv.style.opacity=String(isBright(sh)?.1:BRIGHT[sh[2]]!==undefined?.28:.6)}
   var age=beat<0?9:beat-shotStartBeat,punch=1+.05*Math.max(0,1-age/.5);
   reset();g.save();g.translate(CX,CY);g.scale(punch,punch);g.translate(-CX,-CY);
   try{DRAW[sh[2]](sh[3])}catch(e){}
