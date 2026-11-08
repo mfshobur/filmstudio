@@ -26,5 +26,7 @@ Scores are 46 bars: **seconds = 11040 / bpm** (bpm 128 = 86 s, 184 = 60 s, 100 =
 - Honest limits: procedural graphics only, not photoreal footage, no real maps, no user images yet. See `filmstudio styles` for the 28 styles and `guide style-grammar` for when to use each.
 - If anything fails to start: `filmstudio doctor`.
 
+Prefer native tools? `filmstudio mcp` exposes the same commands over MCP (see `filmstudio guide harnesses`).
+
 ## Where things are
 `bin/filmstudio.js` CLI, `src/` commands, `engine/` browser engine and score, `examples/the-only-limit/` a finished project, `docs/agent-guide/` the guide, `skills/film-maker/` the Claude Code skill.

@@ -102,6 +102,7 @@ All commands print JSON.
 | `build` | write `build/film.html` |
 | `review` | screenshot each shot, make contact sheets; `--size 400x800` for portrait, `--motion` to check shots animate |
 | `audio-check` | render the score offline and report loudness, clipping, dynamics |
+| `mcp` | run an MCP server (11 tools, the guide as resources) for agent tools that prefer native tool calls |
 | `doctor` | check this machine |
 
 Developing: `npm test` runs the fast checks (no browser). `npm run qa` draws every style and variant in a headless browser and reports errors and static shots.
@@ -122,7 +123,7 @@ The review tools can look at pictures and measure audio levels. They can't tell 
 - imported images and logos as shots; more variants of the styles above
 - a small local web page to edit the storyboard with live preview
 - other scores, with length and key as settings
-- an MCP server, a small local web page
+- a small local web page
 
 ## License
 

@@ -29,6 +29,7 @@ const HELP = `filmstudio <command> [project-dir] [options]   (all output is JSON
   review [dir] [--beats 10,20] [--size 400x800] [--motion]   screenshot every style variant + contact sheets
   audio-check [dir]                      render the score offline; report loudness, clipping, dynamics
   doctor [--deep]                        check this machine
+  mcp [--root dir]                       run an MCP server on stdio (tools + the guide as resources)
   styles [--mood calm]                   list shot styles and variants (filter by mood)
   guide [topic]                          print the agent guide (no topic = list topics)`;
 
@@ -45,6 +46,7 @@ const HELP = `filmstudio <command> [project-dir] [options]   (all output is JSON
       if (!want.length) fail('no guide topic "' + pos[1] + '"', { topics: topics.map(f => f.replace(/\.md$/, '')) });
       return console.log(want.map(f => fs.readFileSync(path.join(gdir, f), 'utf8')).join('\n\n---\n\n'));
     }
+    if (cmd === 'mcp') { require('../src/mcp').serve(flags.root ? String(flags.root) : null); return; }
     if (cmd === 'doctor') return out(await require('../src/doctor').doctor({ deep: !!flags.deep }));
     if (cmd === 'new') {
       const target = path.resolve(pos[1] || 'my-film'); if (fs.existsSync(target) && fs.readdirSync(target).length) fail('folder not empty: ' + target);
