@@ -88,7 +88,7 @@ A.setMusic=function(on){A.music=on;if(A.ok)A.musicOut.gain.setTargetAtTime(on?.4
 A.setVoice=function(on){A.voice=on;if(A.ok)A.vgain.gain.setTargetAtTime(on?1.25:0,A.ctx.currentTime,.1)};
 
 /* ================= CLOCK + FILM LOOP ================= */
-var playing=false,FORCE=null,rt0=0,lastShot=-1,shotStartBeat=0,promptIdx=0,capIdx=-1,capTimer=null,lastBar=0,idleT=performance.now()/1000;
+var EXPORTING=false,capShown=-2,playing=false,FORCE=null,rt0=0,lastShot=-1,shotStartBeat=0,promptIdx=0,capIdx=-1,capTimer=null,lastBar=0,idleT=performance.now()/1000;
 function nowBeat(){
   if(FORCE!==null)return FORCE;
   if(!playing)return -1;
@@ -107,12 +107,21 @@ function caption(text){
   var el=$('#cap');el.classList.remove('in');clearTimeout(capTimer);
   capTimer=setTimeout(function(){el.innerHTML='';if(!text)return;String(text).split(' ').forEach(function(w,k){var s=document.createElement('span');s.textContent=w+' ';s.style.transitionDelay=(k*70)+'ms';el.appendChild(s)});requestAnimationFrame(function(){requestAnimationFrame(function(){el.classList.add('in')})})},text?60:0);
 }
+/* export mode: overlays (typed prompt, caption, end card) are computed purely from the beat so frames are reproducible */
+function syncOverlays(beat){
+  var pi=-1,i,pe=$('#prompt');for(i=0;i<PROMPTS.length;i++)if(beat>=PROMPTS[i][0])pi=i;
+  if(pi<0||PROMPTS[pi][1]===null){pe.classList.add('off');pe.textContent=''}
+  else{var Pp=PROMPTS[pi],per=(Pp[2]?85:48)/1000,typed=Math.floor((beat-Pp[0])*SPB/per);pe.classList.remove('off');pe.classList.toggle('big',!!Pp[2]);pe.textContent=Pp[1].slice(0,Math.max(0,Math.min(Pp[1].length,typed)))}
+  var ci=-1;for(i=0;i<VO_AT.length;i++){var s0=bb(VO_AT[i][0])+VO_AT[i][1],d0=(VO_DUR[i]||2.5)/SPB;if(beat>=s0&&beat<s0+d0+.6)ci=i}
+  if(ci!==capShown){capShown=ci;var el=$('#cap');el.innerHTML='';el.classList.remove('in');if(ci>=0){String(VO_TXT[ci]).split(' ').forEach(function(w){var s=document.createElement('span');s.textContent=w+' ';el.appendChild(s)});el.classList.add('in')}}
+  var en=$('#end');if(beat>=bb({{END_BAR}}))en.classList.remove('gone');else en.classList.add('gone');
+}
 var DRAW_ERRS=[];
 var GRABC=document.createElement('canvas');GRABC.width=48;GRABC.height=27;
 var lastT=performance.now()/1000,ema=.016,slowN=0;
 function frame(){
   var now=performance.now()/1000,beat=nowBeat(),idx,sh;
-  var dtf=Math.min(.2,now-lastT);lastT=now;ema=ema*.97+dtf*.03;if(ema>.045&&QUAL<2&&++slowN>90){QUAL++;slowN=0;ema=.02;resize()}
+  var dtf=Math.min(.2,now-lastT);lastT=now;ema=ema*.97+dtf*.03;if(!EXPORTING&&ema>.045&&QUAL<2&&++slowN>90){QUAL++;slowN=0;ema=.02;resize()}
   if(!W||!H){resize();requestAnimationFrame(frame);return}
   if(beat<0){idx=0;sh=SH[0];F.tb=3+((now-idleT)/SPB)%5;F.dur=8;F.p=.4;F.beat=0}
   else{idx=findShot(beat);sh=SH[idx];var b0=bb(sh[0]),dur=bb(sh[1])-b0,tb=beat-b0;F.dur=dur;F.p=clamp(tb/dur,0,1);F.tb=tb+(dur<=2?3:0);F.beat=beat}
@@ -126,10 +135,11 @@ function frame(){
   g.restore();reset();
   if(age<.14&&beat>=0){var rn=R(idx*7+3);for(var q=0;q<3;q++){var ys=rn()*H*.8,hs=H*(.04+rn()*.08),off=(rn()-.5)*U*.5;g.drawImage(cv,0,ys*DPR,cv.width,hs*DPR,off,ys,W,hs)}}
   if(age<.3&&beat>=0){g.globalAlpha=(1-age/.3)*(sh[1]-sh[0]>=1?.55:.3);g.fillStyle=PAL.bone;g.fillRect(0,0,W,H);g.globalAlpha=1}
+  if(EXPORTING)syncOverlays(beat);
   if(QUAL<2){bg.globalCompositeOperation='copy';bg.drawImage(cv,0,0,bcv.width,bcv.height);sg.globalCompositeOperation='copy';sg.drawImage(cv,0,0,scv.width,scv.height)}
   if(playing&&FORCE===null){
     while(promptIdx<PROMPTS.length&&beat>=PROMPTS[promptIdx][0]){prompt(PROMPTS[promptIdx][1],PROMPTS[promptIdx][2]);promptIdx++}
-    var ci=-1;for(var v=0;v<VO_AT.length;v++){var s0=bb(VO_AT[v][0])+VO_AT[v][1],d0=(VOB[v]?VOB[v].duration:2.5)/SPB;if(beat>=s0&&beat<s0+d0+.6){ci=v}}
+    var ci=-1;for(var v=0;v<VO_AT.length;v++){var s0=bb(VO_AT[v][0])+VO_AT[v][1],d0=(VOB[v]?VOB[v].duration:(VO_DUR[v]||2.5))/SPB;if(beat>=s0&&beat<s0+d0+.6){ci=v}}
     if(ci!==capIdx){capIdx=ci;caption(ci>=0?VO_TXT[ci]:'')}
     if(bar!==lastBar){lastBar=bar;$('#tc').textContent=BPM+' BPM · BAR '+Math.min(bar,TOTAL_BARS)}
     if(beat>=bb({{END_BAR}})&&$('#end').classList.contains('gone'))$('#end').classList.remove('gone');
@@ -154,7 +164,7 @@ var bM=$('#bMusic'),bV=$('#bVoice');
 bM.addEventListener('click',function(){var on=bM.getAttribute('aria-pressed')!=='true';bM.setAttribute('aria-pressed',on);A.setMusic(on)});
 bV.addEventListener('click',function(){var on=bV.getAttribute('aria-pressed')!=='true';bV.setAttribute('aria-pressed',on);A.setVoice(on)});
 document.addEventListener('visibilitychange',function(){if(!A.ctx)return;if(document.hidden)A.ctx.suspend();else A.ctx.resume()});
-window.__film={errors:function(){return DRAW_ERRS},grab:function(){var x=GRABC.getContext('2d');x.drawImage(cv,0,0,48,27);var d=x.getImageData(0,0,48,27).data,o=[];for(var i=0;i<d.length;i+=4)o.push(d[i]+d[i+1]+d[i+2]);return o},seek:function(b){FORCE=b},free:function(){FORCE=null},vready:function(){return VOB.filter(Boolean).length},shots:SH.length};
+window.__film={setBeat:function(b){EXPORTING=true;FORCE=b},spb:SPB,bars:TOTAL_BARS,errors:function(){return DRAW_ERRS},grab:function(){var x=GRABC.getContext('2d');x.drawImage(cv,0,0,48,27);var d=x.getImageData(0,0,48,27).data,o=[];for(var i=0;i<d.length;i+=4)o.push(d[i]+d[i+1]+d[i+2]);return o},seek:function(b){FORCE=b},free:function(){FORCE=null},vready:function(){return VOB.filter(Boolean).length},shots:SH.length};
 try{if(document.fonts&&document.fonts.load){document.fonts.load('italic 90px "Instrument Serif"');document.fonts.load('800 20px "Hanken Grotesk"');document.fonts.load('20px "IBM Plex Mono"')}}catch(e){}
 requestAnimationFrame(frame);
 })();

@@ -20,6 +20,7 @@
  },
  "scripts": {
   "test": "node test/run.js && node test/providers.test.js",
-  "qa": "node tools/qa-all.js"
+  "qa": "node tools/qa-all.js",
+  "test:browser": "node test/export.test.js"
  }
 }

@@ -1,0 +1,16 @@
+<!doctype html><meta charset="utf-8"><body><script>
+{{MUSIC}}
+/* renders bars b0..b1 of the score offline and returns mono float32 PCM as base64 (includes a reverb/pad tail) */
+window.renderPcm=async function(b0,b1,BPM,SC,sr,cuts){
+  var barSec=60/BPM*4,nb=b1-b0+1,tail=3.2,dur=nb*barSec+tail,len=Math.floor(sr*dur);
+  var c=new OfflineAudioContext(1,len,sr);
+  var comp=c.createDynamicsCompressor();comp.threshold.value=-16;comp.ratio.value=3;var mg=c.createGain();mg.gain.value=1;comp.connect(mg);mg.connect(c.destination);
+  var out=c.createGain();out.gain.value=.42;out.connect(comp);
+  var M=createMusic(c,out,BPM,SC);M.cuts={};
+  Object.keys(cuts||{}).forEach(function(k){var kb=+k-(b0-1)*4;if(kb>=0)M.cuts[kb+(b0-1)*4]=cuts[k]});
+  for(var s=(b0-1)*16;s<b1*16;s++){try{M.step(s,.05+(s-(b0-1)*16)*M.s16)}catch(e){}}
+  var buf=await c.startRendering(),d=buf.getChannelData(0),u8=new Uint8Array(d.buffer,d.byteOffset,d.byteLength),bin='';
+  for(var i=0;i<u8.length;i+=32768)bin+=String.fromCharCode.apply(null,u8.subarray(i,i+32768));
+  return {b64:btoa(bin),samples:d.length,lead:.05};
+};
+</script>

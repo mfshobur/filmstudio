@@ -23,6 +23,7 @@ const HELP = `filmstudio <command> [project-dir] [options]   (all output is JSON
   new <dir> [--example the-only-limit]   create a project folder
   validate [dir]                         check spec.json, with fix hints
   voice [dir] [--provider kokoro|elevenlabs|file] [--force] [--yes]   generate or import narration (elevenlabs is paid: needs --yes)
+  export [dir] [--fps 12] [--size 640x360] [--from-bar 1 --to-bar 47] [--no-audio] [--no-bars]   render build/film.mp4 (slow on small devices; resumable)
   voice-check [dir]                      measure narration clips: clipping, glitches, silence, pace, flat delivery
   build [dir]                            write build/film.html
   review [dir] [--beats 10,20] [--size 400x800] [--motion]   screenshot every style variant + contact sheets
@@ -62,6 +63,12 @@ const HELP = `filmstudio <command> [project-dir] [options]   (all output is JSON
     if (cmd === 'voice') {
       const r = await require('../src/voice').voice(dir, spec, { provider: flags.provider, force: !!flags.force, yes: !!flags.yes, log: m => console.error(m) });
       return out(Object.assign({ ok: r.missing.length === 0 }, r));
+    }
+    if (cmd === 'export') {
+      const v = validate(spec, dir); if (!v.ok) fail('spec has errors; fix them first', { errors: v.errors });
+      const sz = flags.size ? String(flags.size).split('x').map(Number) : null;
+      const r = await require('../src/exporter').exportFilm(dir, spec, { fps: flags.fps ? +flags.fps : 12, size: sz, fromBar: flags['from-bar'] ? +flags['from-bar'] : null, toBar: flags['to-bar'] ? +flags['to-bar'] : null, noAudio: !!flags['no-audio'], noBars: !!flags['no-bars'], audioRate: flags['audio-rate'] ? +flags['audio-rate'] : null, log: m => console.error(m) });
+      return out(Object.assign({ ok: true }, r));
     }
     if (cmd === 'voice-check') { const r = require('../src/voicecheck').voiceCheck(dir, spec); out(r); return process.exit(r.ok ? 0 : 2); }
     if (cmd === 'review') {
