@@ -27,7 +27,7 @@ const HELP = `filmstudio <command> [project-dir] [options]   (all output is JSON
   review [dir] [--beats 10,20] [--size 400x800] [--motion]   screenshot every style variant + contact sheets
   audio-check [dir]                      render the score offline; report loudness, clipping, dynamics
   doctor [--deep]                        check this machine
-  styles                                 list shot styles and variants
+  styles [--mood calm]                   list shot styles and variants (filter by mood)
   guide [topic]                          print the agent guide (no topic = list topics)`;
 
 (async () => {
@@ -35,7 +35,7 @@ const HELP = `filmstudio <command> [project-dir] [options]   (all output is JSON
   const cmd = pos[0], dir = pos[1] || '.';
   try {
     if (!cmd || cmd === 'help' || flags.help) return console.log(HELP);
-    if (cmd === 'styles') return out(Object.fromEntries(Object.entries(STYLES).map(([k, v]) => [k, { variants: v.variants, use: v.use }])));
+    if (cmd === 'styles') return out(Object.fromEntries(Object.entries(STYLES).filter(([k, v]) => !flags.mood || (v.moods || []).includes(String(flags.mood))).map(([k, v]) => [k, { variants: v.variants, moods: v.moods, use: v.use }])));
     if (cmd === 'guide') {
       const gdir = path.join(ROOT, 'docs', 'agent-guide'), topics = fs.readdirSync(gdir).filter(f => f.endsWith('.md')).sort();
       if (!pos[1]) return out({ topics: topics.map(f => f.replace(/\.md$/, '')), hint: 'Run `filmstudio guide <topic>`, or `guide all` for everything.' });
@@ -48,11 +48,8 @@ const HELP = `filmstudio <command> [project-dir] [options]   (all output is JSON
       const target = path.resolve(pos[1] || 'my-film'); if (fs.existsSync(target) && fs.readdirSync(target).length) fail('folder not empty: ' + target);
       fs.mkdirSync(target, { recursive: true });
       if (flags.example) { const ex = path.join(ROOT, 'examples', String(flags.example)); if (!fs.existsSync(ex)) fail('no such example', { examples: fs.readdirSync(path.join(ROOT, 'examples')) }); fs.cpSync(ex, target, { recursive: true, filter: s => !s.includes(path.sep + 'build') }); }
-      else {
-        fs.mkdirSync(path.join(target, 'voice'), { recursive: true });
-        fs.writeFileSync(path.join(target, 'brief.json'), JSON.stringify({ title: '', idea: '', audience: '', length: '60 seconds', tone: [], avoid: [], styles: [], music: { mood: '' }, voice: { provider: 'kokoro', voice: 'bf_emma', pace: 'calm' } }, null, 1));
-      }
-      return out({ ok: true, created: target, next: flags.example ? 'cd there, then `filmstudio validate`, `filmstudio build`.' : 'Fill brief.json (or tell your agent the idea), then read `filmstudio guide quick-start`.' });
+      else { fs.cpSync(path.join(ROOT, 'examples', 'starter'), target, { recursive: true }); fs.mkdirSync(path.join(target, 'voice'), { recursive: true }); }
+      return out({ ok: true, created: target, next: flags.example ? 'cd there, then `filmstudio validate`, `filmstudio build`.' : 'A valid starter spec.json (shots only, no narration) is in place. Edit the shots, meta text and add narration, then `validate`. See `filmstudio guide quick-start`.' });
     }
     const spec = readSpec(dir);
     if (cmd === 'validate') { const r = validate(spec, dir); out(r); return process.exit(r.ok ? 0 : 1); }

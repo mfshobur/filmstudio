@@ -1,0 +1,15 @@
+{
+ "title": "",
+ "idea": "",
+ "audience": "",
+ "length": "~86 seconds at bpm 128 (change bpm to change length: seconds = 11040 / bpm)",
+ "tone": [],
+ "avoid": [],
+ "styles": [],
+ "voice": {
+  "provider": "kokoro",
+  "voice": "bf_emma",
+  "pace": "calm"
+ },
+ "_note": "brief.json is for you and the user. filmstudio never reads it; spec.json is what gets built."
+}

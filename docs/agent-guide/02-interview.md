@@ -10,10 +10,10 @@ Goal: get enough to make a good film in **at most 3 questions**. Everything else
 ## Defaults when not stated
 | Field | Default |
 |---|---|
-| length | 60 to 90 seconds (bars = seconds x bpm / 240) |
+| length | about 86 s at the default bpm 128. It is set by bpm, not bars: seconds = 11040 / bpm. If the user wants about 60 s use bpm 184; 90 s = 123; 120 s = 92 |
 | tone | calm, curious, a little suspense |
 | styles | let the style grammar choose (see `guide style-grammar`) |
-| music | the built-in `anthem-46` score at 128 BPM |
+| music | `anthem-46` (energetic) at 128 BPM; use `calm-46` at about 100 BPM when the tone is gentle, reflective or sleepy |
 | voice | kokoro `bf_emma`, pace slow and clear |
 | format | 16:9 landscape |
 | language | the language the user wrote in (note: Kokoro voices here are English; use provider `file` for other languages) |

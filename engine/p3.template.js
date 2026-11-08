@@ -1,10 +1,10 @@
 
 /* ================= TIMELINE (bars, 128 BPM) ================= */
 var BPM={{BPM}},SPB=60/BPM,TOTAL_BARS={{BARS}};
-var TITLE_LINES={{TITLE_LINES}},TITLE_ACCENT={{TITLE_ACCENT}};
+var TITLE_LINES={{TITLE_LINES}},TITLE_ACCENT={{TITLE_ACCENT}},SCORE={{SCORE}};
 function bb(bar){return (bar-1)*4}
 var SH={{SHOTS}};
-var BRIGHT={paper:1,cartoon:1,iso:.5,board:1,shadow:.5,ink:1,comic:1,pixel:.5,memphis:1,poster:1,clay:1,origami:1,voxel:1,multiplane:1,map:.5};
+var BRIGHT={paper:1,cartoon:1,iso:.5,board:1,shadow:.5,ink:1,comic:1,pixel:.5,image:.5,memphis:1,poster:1,clay:1,origami:1,voxel:1,multiplane:1,map:.5};
 function isBright(sh){
   if(sh[2]==='board')return !(sh[4]&&sh[4].palette&&sh[4].palette.bg&&lum(sh[4].palette.bg)<.4);
   if(sh[2]==='type'&&sh[4]&&sh[4].palette&&sh[4].palette.bg)return lum(sh[4].palette.bg)>.6;
@@ -17,6 +17,7 @@ var DRAW={
   type:function(v){kinetic(v)},
   board:function(v){whiteboard(v)},
   shadow:function(v){shadowScene(v)},
+  image:function(v){imageScene(v)},
   pixel:function(v){pixelScene(v)},
   glitch:function(v){glitchScene(v)},
   ink:function(v){inkScene(v)},
@@ -73,7 +74,7 @@ A.stopAll=function(){
 };
 A.run=function(cuts){
   var c=A.ctx;A.t0=c.currentTime+.8;
-  A.M=createMusic(c,A.musicOut,BPM);A.M.cuts=cuts;
+  A.M=createMusic(c,A.musicOut,BPM,SCORE);A.M.cuts=cuts;
   var next=0,M=A.M;
   function pump(){while(next<M.steps&&A.t0+next*M.s16<c.currentTime+1.4){try{M.step(next,A.t0+next*M.s16)}catch(e){}next++}if(next>=M.steps){clearInterval(A.timer);A.timer=null}}
   pump();A.timer=setInterval(pump,60);

@@ -21,6 +21,7 @@ const { review } = require('../src/review');
     part.forEach(([s, v], i) => { const e = i < part.length - 1 ? bar + 1 : 47; const p = sampleParams(s, v); shots.push(p ? [bar, e, s, v, p] : [bar, e, s, v]); bar = e; });
     const spec = { version: 1, meta: { title: 'QA all', titleLines: ['QA', 'all', 'styles'], titleAccent: 1 }, bpm: 128, bars: 46, endCardBar: 44.6, score: { preset: 'anthem-46' }, characters: SAMPLE_CHARACTERS, shots, narration: [], prompts: [] };
     const dir = fs.mkdtempSync(path.join(process.env.FILMSTUDIO_QA_TMP || os.tmpdir(), 'fs-qa-'));
+    fs.mkdirSync(path.join(dir, 'assets'), { recursive: true }); fs.writeFileSync(path.join(dir, 'assets', 'qa.png'), require('../src/png').testPicture(480, 300));
     fs.writeFileSync(path.join(dir, 'spec.json'), JSON.stringify(spec));
     const v = validate(spec, dir); if (!v.ok) { console.log(JSON.stringify({ ok: false, stage: 'validate', errors: v.errors }, null, 1)); process.exit(1); }
     fs.mkdirSync(path.join(dir, 'build'), { recursive: true }); fs.writeFileSync(path.join(dir, 'build', 'film.html'), compile(spec, dir));

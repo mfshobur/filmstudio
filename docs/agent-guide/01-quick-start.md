@@ -4,7 +4,7 @@ You are an AI agent using `filmstudio` to make a short generated film (procedura
 
 ## The 10 steps
 1. **Understand the idea.** If the user gave one sentence, that is enough. Ask at most 3 questions (see `guide interview`). Never ask about things you can default.
-2. **Create the project:** `filmstudio new my-film` (or `--example the-only-limit` to start from a finished film).
+2. **Create the project:** `filmstudio new my-film` gives a valid starter `spec.json` (shots, no narration) to edit; `--example the-only-limit` copies a finished film.
 3. **Write `brief.json`** from what the user said (title, idea, audience, length, tone, avoid, styles, voice).
 4. **Write `treatment.md`:** 5 to 10 lines: hook, build, turn, payoff, last image. Pick the message first.
 5. **Write the storyboard into `spec.json`** (see `guide storyboard`): shots, narration lines with start times, prompts. Use the style grammar to choose styles.
@@ -23,7 +23,7 @@ You are an AI agent using `filmstudio` to make a short generated film (procedura
 - Keep all work inside the project folder.
 
 ## Time and size guide
-Length in seconds = bars x 240 / bpm. At 128 BPM one bar is 1.875 s. A 46-bar film is about 86 s. Narration lines should be 2 to 5 seconds; cuts every 2 to 8 beats.
+Films are always 46 bars: **seconds = 11040 / bpm**. bpm 128 = 86 s; 184 = 60 s; 123 = 90 s; 100 = 110 s. Do not change `bars`; change `bpm` (see `guide storyboard`). Pick `score.preset` `anthem-46` (energetic) or `calm-46` (gentle). Narration lines should be 2 to 5 seconds; cuts every 2 to 8 beats.
 
 ## What this tool cannot do (tell the user honestly)
-It makes procedural 2D/3D animation, not photoreal footage, real people or specific products. Imported images arrive in a later version.
+It makes procedural 2D/3D animation, not photoreal footage or real people. The user's own pictures and logos can be shown with the `image` style (see `guide images`).

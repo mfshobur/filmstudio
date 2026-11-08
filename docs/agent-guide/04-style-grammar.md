@@ -35,12 +35,18 @@ Run `filmstudio styles` for the live list. Rule: **change style when the idea ch
 | Gentle, poetic depth | multiplane/forest |
 | Handmade stop-motion charm over another style | stopmo/boil |
 | Calm ending | atom/prompt |
+| Night, sleep, moon, stillness | paper/land2, paper/window, ink/mountains, multiplane/forest, shadow/scene (tone cool), gen/flow |
+| The user's own picture or logo | image/kenburns, image/pop, image/polaroid, image/cutout, image/logo |
 
-## Pacing rules
-- Never hold one shot longer than 8 beats except the outro.
-- In the montage, alternate warm (paper, cartoon) and cool (synth, atom, math) shots so adjacent cuts contrast.
+## Pacing rules (`validate` warns on these)
+- Do not hold one shot longer than 12 beats, except the last shot and the domino title reveal. Prefer 8 or fewer.
 - Do not repeat the same style/variant twice in a row.
-- Each style should earn at least one appearance; do not use more than 9 distinct styles in 90 s.
+- Use about 12 or fewer different styles in one film.
+- The montage (bars 13-20) needs at least 6 shots; 8 to 16 is typical.
+- Alternate warm (paper, cartoon, clay) and cool (synth, atom, math) shots so adjacent cuts contrast.
+
+## Choosing by mood
+Run `filmstudio styles --mood calm` (moods: calm, energetic, playful, serious, warm, nostalgic, mysterious, techy, night, nature, bold, retro, dreamy, friendly, tense). For a calm or night film (sleep, bedtime, meditation) start from: `paper/land2`, `paper/window`, `ink/mountains`, `multiplane/forest`, `gen/flow`, `atom/wait`, `shadow/scene` (cool tone), `origami/boat`, `lowpoly/terrain`, `clay/shapes`, `board/icons`. Pair with `calm-46`. A gallery image of every variant is in `docs/gallery/` when present.
 
 ## Characters
 Optional. Add a `stage` shot (see `guide characters`) only when the story needs a figure. Never required.

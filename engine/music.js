@@ -1,7 +1,8 @@
 /* ---------- the score: 128 BPM, A minor, 46 bars ---------- */
-function createMusic(c, out, BPM){
+function createMusic(c, out, BPM, opts){
+  opts = opts || {}; var CALM = !!opts.calm, TR = opts.transpose | 0;
   var spb=60/BPM, s16=spb/4, M={BPM:BPM,spb:spb,s16:s16,bars:46,steps:46*16};
-  function mtof(m){return 440*Math.pow(2,(m-69)/12)}
+  function mtof(m){return 440*Math.pow(2,(m+TR-69)/12)}
   /* buses */
   var master=c.createGain();master.gain.value=1;master.connect(out);
   var dry=c.createGain();dry.connect(master);
@@ -90,6 +91,12 @@ function createMusic(c, out, BPM){
     [-10,10].forEach(function(dt){var o=c.createOscillator();o.type='sawtooth';o.frequency.value=mtof(midi);o.detune.value=dt;lg.connect(o.detune);var og=c.createGain();og.gain.value=.5;o.connect(og);og.connect(lp);o.start(t);o.stop(t+dur+.5)});
   }
 
+  /* calm preset: no hard drums, softer low end, only heartbeat-soft kicks */
+  if(CALM){
+    var kick0=kick,bass0=bass,cello0=cello,pluck0=pluck,boom0=boom;
+    kick=function(t,v){kick0(t,v*.6,true)};clap=function(){};snare=function(){};hat=function(){};crash=function(){};
+    boom=function(t,v){boom0(t,v*.45)};bass=function(t,m,d,v){bass0(t,m,d,v*.7)};cello=function(t,m,d,v,cut){cello0(t,m,d,v*.55,cut)};pluck=function(t,m,v,cut){pluck0(t,m,v*.6,cut*.7)};
+  }
   /* harmony (MIDI) */
   var CH={
     Am:{pad:[45,52,57,60,64],root:33,tri:[57,60,64]},

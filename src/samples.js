@@ -2,6 +2,7 @@
 // Minimal valid params for every style/variant. Used by the QA script and as copy-paste examples.
 const SAMPLE_CHARACTERS = { mira: { type: 'human', skin: 'outline', hair: 'bob', face: { eyes: 'round', blush: true }, accessories: ['glasses'], palette: { skin: '#f2c9a0', hair: '#3a2a2a', top: '#e76f51', bottom: '#264653', shoes: '#2b2d42', accent: '#ffd166' } } };
 const P = {
+  image: () => ({ src: 'assets/qa.png', caption: 'A caption' }),
   type: () => ({ text: 'Ask bigger questions today', emphasize: [2] }),
   board: v => v === 'equation' ? { title: 'Proof', text: '2 + 2 = 4\nso 4 - 2 = 2' } : { title: 'Steps', items: [{ icon: 'bulb', label: 'idea' }, { icon: 'rocket', label: 'launch' }] },
   stage: () => ({ background: ['paper', 'land1'], cast: [{ char: 'mira', x: 0, action: 'wave', emotion: 'happy', say: true }], props: [{ type: 'bubble', text: 'hi', x: .3, y: -.7 }] }),

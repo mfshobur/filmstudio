@@ -10,7 +10,7 @@ I started this to make one film, "The Only Limit" (it's in `examples/`), and the
 
 It draws everything itself with canvas graphics. That means flat or glowing 2D scenes, simple 3D charts and shapes, paper-cut and isometric looks, a robot mascot. It cannot make photos, real people, or a specific product. If you need those, this is the wrong tool.
 
-Right now there are twenty-eight visual styles, with a few variants of each:
+Right now there are twenty-nine visual styles, with a few variants of each:
 
 | style | what it looks like |
 |---|---|
@@ -42,11 +42,12 @@ Right now there are twenty-eight visual styles, with a few variants of each:
 | `map` | a stylised route or a timeline |
 | `multiplane` | misty layered forest with glass-layer depth |
 | `stopmo` | stop-motion jitter over any other style |
+| `image` | your own pictures and logos (Ken Burns, pop, polaroid, cut-out, logo) |
 | `stage` | optional: characters in front of any of the above |
 
 Characters are optional. If your story needs one, you describe it in the project (body type, colors, hair, face, accessories) and pick how it's drawn: cartoon outline, flat, paper cut-out, shadow-puppet silhouette, neon glow or hand-drawn. `examples/character-demo` shows six. A film that doesn't use characters never has one.
 
-There is one music score (46 bars at 128 BPM, A minor, no piano) and the film length is tied to it for now. More styles, characters and scores are the next things to build. See the roadmap below.
+There are two music scores, both 46 bars in A minor with no piano: `anthem-46` (energetic) and `calm-46` (no hard drums). Film length comes from the tempo: seconds = 11040 / bpm, so 128 BPM is 86 s and 184 BPM is 60 s. You can transpose the key. More styles, characters and scores are the next things to build. See the roadmap below.
 
 ## Install
 

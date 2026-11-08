@@ -18,7 +18,8 @@ function validate(spec, dir) {
   if (!(Number.isInteger(bars) && bars >= 8 && bars <= 200)) err('bars', 'bars must be an integer from 8 to 200', 'bars = film length in seconds * bpm / 240.');
   const preset = (spec.score && spec.score.preset) || 'anthem-46';
   if (!SCORES[preset]) err('score.preset', 'unknown score preset "' + preset + '"', 'Available: ' + Object.keys(SCORES).join(', '));
-  else if (SCORES[preset].bars !== bars) err('bars', 'score preset "' + preset + '" is ' + SCORES[preset].bars + ' bars long, spec has ' + bars, 'Set bars to ' + SCORES[preset].bars + ' (parametric scores arrive in a later phase).');
+  else if (SCORES[preset].bars !== bars) err('bars', 'score preset "' + preset + '" is ' + SCORES[preset].bars + ' bars long, spec has ' + bars, 'Set bars to ' + SCORES[preset].bars + '. Film length is fixed by the score: seconds = ' + SCORES[preset].bars + ' x 240 / bpm. To change the length, change bpm (e.g. bpm 184 gives 60 s, 123 gives 90 s, 92 gives 120 s), not bars.');
+  if (spec.score && spec.score.transpose != null && !(Number.isInteger(spec.score.transpose) && spec.score.transpose >= -6 && spec.score.transpose <= 6)) err('score.transpose', 'transpose must be a whole number of semitones from -6 to 6', 'Use 0 for the default A minor; +3 gives C minor.');
   if (!spec.meta || !spec.meta.title) err('meta.title', 'meta.title is required', 'Add a short title.');
   if (spec.meta && spec.meta.titleLines && !Array.isArray(spec.meta.titleLines)) err('meta.titleLines', 'must be an array of strings', 'e.g. ["The only limit","is the","human mind."]');
   // characters (optional)
@@ -56,6 +57,13 @@ function validate(spec, dir) {
         }
       }
       if (st === 'shadow' && s[4] && Array.isArray(s[4].puppets)) s[4].puppets.forEach((pp, k) => { if (!PUPPET_KINDS.includes(pp.kind)) err(p + '[4].puppets[' + k + '].kind', 'unknown puppet kind "' + pp.kind + '"', 'Kinds: ' + PUPPET_KINDS.join(', ')); });
+      if (st === 'image') {
+        const ip = s[4], ext = ip && ip.src ? path.extname(String(ip.src)).toLowerCase() : '';
+        if (!ip || !ip.src) err(p, 'image shots need params.src', 'Put the file in the project (e.g. assets/photo.jpg) and use {"src":"assets/photo.jpg"}.');
+        else if (!['.png', '.jpg', '.jpeg', '.webp', '.gif', '.svg'].includes(ext)) err(p + '[4].src', 'unsupported image type "' + ext + '"', 'Use png, jpg, webp, gif or svg.');
+        else if (!fs.existsSync(path.resolve(dir, ip.src))) err(p + '[4].src', 'file not found: ' + ip.src, 'Copy the image into the project folder, relative to spec.json.');
+        else { const sz = fs.statSync(path.resolve(dir, ip.src)).size; if (sz > 8e6) err(p + '[4].src', 'image is ' + (sz / 1e6).toFixed(1) + ' MB (limit 8 MB)', 'Resize or compress it; the film embeds every image.'); else if (sz > 2e6) warn(p + '[4].src', 'image is ' + (sz / 1e6).toFixed(1) + ' MB; the film file will be large', 'Resize to about 1600 px wide.'); }
+      }
       if (st === 'stage') {
         const params = s[4], chars = spec.characters || {};
         if (!params || typeof params !== 'object') err(p, 'stage shots need a 5th element with params', 'Example: [5,7,"stage","scene",{"background":["paper","land1"],"cast":[{"char":"mira","x":0,"action":"wave"}]}]');
@@ -67,8 +75,11 @@ function validate(spec, dir) {
       prev = b;
     });
     if (Number.isInteger(bars) && Math.abs(prev - (bars + 1)) > 1e-9) err('shots', 'last shot ends at bar ' + prev + ' but the film is ' + bars + ' bars (should end at ' + (bars + 1) + ')', 'Extend or trim the last shot.');
-    const longest = Math.max(...sh.filter(Array.isArray).map(s => (s[1] - s[0]) * 4));
-    if (longest > 24) warn('shots', 'a shot lasts ' + longest + ' beats; long shots lose attention', 'Cut away at least every 8 beats.');
+    const real = sh.filter(Array.isArray);
+    real.forEach((s, i) => { const beats = (s[1] - s[0]) * 4; if (beats > 12 && i < real.length - 1 && !(s[2] === 'domino' && s[3] === 'title')) warn('shots[' + i + ']', 'shot lasts ' + beats + ' beats; long holds lose attention', 'Cut away at least every 8 to 12 beats (the final shot may be longer).'); });
+    real.forEach((s, i) => { if (i && real[i - 1][2] === s[2] && real[i - 1][3] === s[3] && s[2] !== 'stage') warn('shots[' + i + ']', 'same style/variant "' + s[2] + '/' + s[3] + '" twice in a row', 'Alternate styles so each cut reads as a change.'); });
+    const distinct = new Set(real.map(s => s[2])).size; if (distinct > 12) warn('shots', distinct + ' different styles in one film looks scattered', 'Keep it to about 12 or fewer, chosen to fit the story.');
+    if (preset === 'anthem-46' || preset === 'calm-46') { const mont = real.filter(s => s[0] >= 13 && s[0] < 21).length; if (mont < 6) warn('shots', 'only ' + mont + ' shots in the montage (bars 13 to 20); the score builds to quick cuts there', 'Use 8 to 16 shots of 0.25 to 0.5 bar in bars 13-20.'); }
   }
   // narration
   let durations = null;
@@ -95,6 +106,7 @@ function validate(spec, dir) {
   }
   (spec.prompts || []).forEach((p, i) => { if (!(p.bar >= 1 && p.bar <= bars)) err('prompts[' + i + '].bar', 'bar outside 1..' + bars, ''); });
   if (spec.endCardBar != null && !(spec.endCardBar >= bars - 4 && spec.endCardBar <= bars + 1)) warn('endCardBar', 'end card should appear near the end', 'Use about ' + (bars - 1.4) + '.');
-  return { ok: errors.length === 0, errors, warnings };
+  const info = Number.isInteger(bars) && bpm ? { seconds: Math.round(bars * 240 / bpm * 10) / 10, bars, bpm, shots: Array.isArray(sh) ? sh.length : 0, narrationLines: n.length, preset } : null;
+  return { ok: errors.length === 0, info, errors, warnings };
 }
 module.exports = { validate };
