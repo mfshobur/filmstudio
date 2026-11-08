@@ -29,8 +29,20 @@ async function voice(dir, spec, opts = {}) {
   const provider = opts.provider || (spec.voice && spec.voice.provider) || 'kokoro';
   const narr = spec.narration || [];
   const log = opts.log || (() => {});
-  if (provider === 'elevenlabs') throw new Error('The elevenlabs provider arrives in phase 3. Use --provider kokoro or --provider file for now.');
-  if (provider === 'file') {
+  if (provider === 'elevenlabs') {
+    const { synthesize } = require('./elevenlabs'), vs = spec.voice || {};
+    const pending = narr.map((n, i) => i).filter(i => opts.force || !fs.existsSync(path.join(vdir, num(i) + '.mp3')));
+    const chars = pending.reduce((a, i) => a + String(narr[i].text).length, 0);
+    if (pending.length && !opts.yes) { const e = new Error('This will send ' + chars + ' characters (' + pending.length + ' clips) to ElevenLabs, which uses your paid quota. Ask the user, then re-run with --yes.'); e.code = 'NEEDS_CONFIRMATION'; e.characters = chars; throw e; }
+    for (const i of pending) {
+      const r = await synthesize({ text: narr[i].text, voiceId: narr[i].voiceId || vs.voiceId, model: vs.model, settings: Object.assign({}, vs, narr[i].speed ? { speed: narr[i].speed } : {}) });
+      const raw = path.join(vdir, num(i) + '.raw.mp3'), m = path.join(vdir, num(i) + '.mp3');
+      fs.writeFileSync(raw, r.audio); fs.writeFileSync(path.join(vdir, num(i) + '.words.json'), JSON.stringify({ words: r.words, duration: r.duration }));
+      if (toMp3(raw, m)) fs.rmSync(raw, { force: true }); else fs.renameSync(raw, m);
+      log('ok voice/' + num(i) + '.mp3 (' + String(narr[i].text).length + ' chars)');
+    }
+    narr.forEach((n, i) => { const m = path.join(vdir, num(i) + '.mp3'); if (fs.existsSync(m)) n.file = 'voice/' + num(i) + '.mp3'; });
+  } else if (provider === 'file') {
     narr.forEach((n, i) => { const f = ['mp3', 'wav', 'm4a', 'ogg'].map(e => path.join(vdir, num(i) + '.' + e)).find(fs.existsSync); if (f) n.file = path.relative(dir, f); else log('missing audio for line ' + i + ': expected voice/' + num(i) + '.mp3'); });
   } else if (provider === 'kokoro') {
     const model = process.env.FILMSTUDIO_KOKORO_MODEL || path.join(os.homedir(), '.filmstudio', 'models', 'kokoro-v1.0.onnx');
@@ -51,8 +63,8 @@ async function voice(dir, spec, opts = {}) {
       fs.rmSync(jf, { force: true });
     }
     narr.forEach((n, i) => { const m = path.join(vdir, num(i) + '.mp3'); if (fs.existsSync(m)) n.file = 'voice/' + num(i) + '.mp3'; });
-  } else throw new Error('unknown voice provider "' + provider + '". Use kokoro or file.');
-  const durations = narr.map(n => n.file && fs.existsSync(path.resolve(dir, n.file)) ? probe(path.resolve(dir, n.file)) : null);
+  } else throw new Error('unknown voice provider "' + provider + '". Use kokoro, elevenlabs or file.');
+  const durations = narr.map((n, i) => { if (!(n.file && fs.existsSync(path.resolve(dir, n.file)))) return null; const d = probe(path.resolve(dir, n.file)); if (d) return d; try { const w = JSON.parse(fs.readFileSync(path.join(vdir, num(i) + '.words.json'), 'utf8')); return w.duration ? w.duration + 0.15 : null; } catch (e) { return null; } });
   fs.writeFileSync(path.join(vdir, 'durations.json'), JSON.stringify(durations));
   narr.forEach((n, i) => { if (durations[i]) n.dur = +durations[i].toFixed(2); });
   fs.writeFileSync(path.join(dir, 'spec.json'), JSON.stringify(spec, null, 1));

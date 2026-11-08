@@ -109,7 +109,7 @@ Developing: `npm test` runs the fast checks (no browser). `npm run qa` draws eve
 
 ## Voices
 
-Narration is Kokoro by default: free, runs locally, slow on weak hardware (about 40 seconds per short clip on a phone). You can also supply your own recorded audio. ElevenLabs support is planned. If you use a cloned or celebrity voice, get the speaker's consent, and say the narration is AI-generated when you publish.
+Narration is Kokoro by default: free, runs locally, slow on weak hardware (about 40 seconds per short clip on a phone). You can supply your own recorded audio, or use ElevenLabs (paid; set `ELEVENLABS_API_KEY`, add a `voiceId` to the spec; the tool shows the character count and waits for `--yes` before spending anything). The ElevenLabs path is tested against a local mock of the documented API, not the live service. If you use a cloned or celebrity voice, get the speaker's consent, and say the narration is AI-generated when you publish.
 
 ## An agent can't hear
 
@@ -121,7 +121,7 @@ The review tools can look at pictures and measure audio levels. They can't tell 
 - imported images and logos as shots; more variants of the styles above
 - a small local web page to edit the storyboard with live preview
 - other scores, with length and key as settings
-- ElevenLabs voices, MP4 export, an MCP server
+- MP4 export, an MCP server, a small local web page
 
 ## License
 

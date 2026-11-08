@@ -19,7 +19,7 @@
   }
  },
  "scripts": {
-  "test": "node test/run.js",
+  "test": "node test/run.js && node test/providers.test.js",
   "qa": "node tools/qa-all.js"
  }
 }

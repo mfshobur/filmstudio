@@ -22,7 +22,7 @@ const readSpec = dir => { const f = path.join(dir, 'spec.json'); if (!fs.existsS
 const HELP = `filmstudio <command> [project-dir] [options]   (all output is JSON)
   new <dir> [--example the-only-limit]   create a project folder
   validate [dir]                         check spec.json, with fix hints
-  voice [dir] [--provider kokoro|file] [--force]   generate or import narration, measure durations
+  voice [dir] [--provider kokoro|elevenlabs|file] [--force] [--yes]   generate or import narration (elevenlabs is paid: needs --yes)
   voice-check [dir]                      measure narration clips: clipping, glitches, silence, pace, flat delivery
   build [dir]                            write build/film.html
   review [dir] [--beats 10,20] [--size 400x800] [--motion]   screenshot every style variant + contact sheets
@@ -60,7 +60,7 @@ const HELP = `filmstudio <command> [project-dir] [options]   (all output is JSON
       return out({ ok: true, out: path.resolve(o), bytes: html.length, warnings: v.warnings, hasVoice: html.includes('var VO=[') });
     }
     if (cmd === 'voice') {
-      const r = await require('../src/voice').voice(dir, spec, { provider: flags.provider, force: !!flags.force, log: m => console.error(m) });
+      const r = await require('../src/voice').voice(dir, spec, { provider: flags.provider, force: !!flags.force, yes: !!flags.yes, log: m => console.error(m) });
       return out(Object.assign({ ok: r.missing.length === 0 }, r));
     }
     if (cmd === 'voice-check') { const r = require('../src/voicecheck').voiceCheck(dir, spec); out(r); return process.exit(r.ok ? 0 : 2); }
@@ -74,5 +74,5 @@ const HELP = `filmstudio <command> [project-dir] [options]   (all output is JSON
       return out(r);
     }
     fail('unknown command "' + cmd + '"', { help: HELP });
-  } catch (e) { fail(e.message, { code: e.code }); }
+  } catch (e) { fail(e.message, { code: e.code, characters: e.characters }); }
 })();
