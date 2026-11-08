@@ -31,7 +31,7 @@ const HELP = `filmstudio <command> [project-dir] [options]   (all output is JSON
   doctor [--deep]                        check this machine
   mcp [--root dir]                       run an MCP server on stdio (tools + the guide as resources)
   length <seconds> [--preset calm-46]    suggest bars and bpm for a target length
-  serve [dir] [--port 4173] [--host 127.0.0.1] [--token t]   local web page to edit the storyboard (token required off localhost)
+  serve [dir] [--port 4173] [--host 127.0.0.1] [--token t] [--allow-host name.ngrok.app]   local web page to edit the storyboard (token required off localhost)
   styles [--mood calm]                   list shot styles and variants (filter by mood)
   guide [topic]                          print the agent guide (no topic = list topics)`;
 
@@ -52,8 +52,9 @@ const HELP = `filmstudio <command> [project-dir] [options]   (all output is JSON
     if (cmd === 'length') { const sec = Number(pos[1]); if (!(sec > 0)) fail('usage: filmstudio length <seconds> [--preset anthem-46|calm-46]'); const r = require('../src/registry').planLength(sec, flags.preset ? String(flags.preset) : 'anthem-46'); return out(Object.assign(r, { set: 'In spec.json set "bars": ' + r.bars + ' and "bpm": ' + r.bpm + '.', note: Math.abs(r.seconds - sec) > 2 ? 'Closest this score can get to ' + sec + ' s without a very fast or slow tempo.' : undefined })); }
     if (cmd === 'serve') {
       const host = String(flags.host || '127.0.0.1'), local = ['127.0.0.1', 'localhost', '::1'].includes(host);
-      const token = flags.token ? String(flags.token) : (local ? null : require('crypto').randomBytes(16).toString('hex'));
-      const st = require('../src/studio').createStudio({ dir: path.resolve(dir), host, token });
+      const allow = flags['allow-host'] ? String(flags['allow-host']).split(',').map(x => x.trim()).filter(Boolean) : [];
+      const token = flags.token ? String(flags.token) : (local && !allow.length ? null : require('crypto').randomBytes(16).toString('hex'));
+      const st = require('../src/studio').createStudio({ dir: path.resolve(dir), host, token, allowHosts: allow });
       const port = Number(flags.port || 4173); await st.listen(port);
       console.log(JSON.stringify({ ok: true, url: 'http://' + (host === '0.0.0.0' ? 'localhost' : host) + ':' + port + '/' + (token ? '?token=' + token : ''), dir: path.resolve(dir), note: 'Ctrl+C to stop. Nothing is exposed beyond ' + host + '.' }, null, 2));
       return;

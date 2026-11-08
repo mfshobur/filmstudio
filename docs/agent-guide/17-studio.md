@@ -7,7 +7,7 @@ filmstudio serve path/to/project            # http://127.0.0.1:4173
 filmstudio serve path/to/project --port 5000
 ```
 
-Tell the user the URL it prints. The server listens on localhost only. To reach it from another device use `--host 0.0.0.0`; a token is then required (the URL printed includes it). Never expose it to the internet without the user's say-so, and don't print the token anywhere else.
+Tell the user the URL it prints. The server listens on localhost only. To reach it from another device use `--host 0.0.0.0`; a token is then required (the URL printed includes it). To reach it through a tunnel (ngrok, cloudflared), add `--allow-host <the tunnel's host name>`; that also forces a token. Never expose it to the internet without the user's say-so, and don't print the token anywhere else.
 
 ## What the user can do there
 - **Idea**: fill in the brief (title, what it's about, tone, styles), tempo/length, music preset, voice. Saved to `brief.json` and `spec.json`.
