@@ -12,7 +12,7 @@ You are an AI agent using `filmstudio` to make a short generated film (procedura
 7. **Voice:** `filmstudio voice` (default provider kokoro), then `filmstudio voice-check` (fix any flagged clip), then `validate` again, because real clip lengths can overlap.
 8. **Build and review:** `filmstudio build`, then `filmstudio review` and LOOK at `build/review/sheet*.png` (see `guide review`). Fix what looks wrong and rebuild.
 9. **Check the music:** `filmstudio audio-check`. Fix flags (clipping, flat dynamics).
-10. **Deliver:** the finished film is `build/film.html` (self-contained; open in any browser). Tell the user what you made, what you could not check (you cannot hear audio), and ask for notes.
+10. **Deliver:** the finished film is `build/film.html` (self-contained; open in any browser). If the user needs a video file, run `filmstudio export` (see `guide export`). Tell the user what you made, what you could not check (you cannot hear audio), and ask for notes.
 
 ## Rules you must follow
 - Run `filmstudio doctor` first if anything fails to start.

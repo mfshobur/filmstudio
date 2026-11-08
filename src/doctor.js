@@ -23,6 +23,6 @@ async function doctor(opts = {}) {
   add('memory', os.totalmem() > 3.5e9, (os.totalmem() / 1e9).toFixed(1) + ' GB RAM', 'Under 4 GB: run jobs in chunks, expect slow Kokoro (about 40 s per short clip) and slow MP4 export.', true);
   const ok = n => (checks.find(c => c.name === n) || {}).ok;
   const required = checks.filter(c => !c.optional);
-  return { ready: required.every(c => c.ok), can: { build: required.every(c => c.ok), review: !!ok('playwright-core') && !!ok('ffmpeg'), kokoroVoice: !!ok('ffmpeg') && !!ok('kokoro python packages') && !!ok('kokoro model files'), ownAudioVoice: !!ok('ffmpeg') }, checks };
+  return { ready: required.every(c => c.ok), can: { build: required.every(c => c.ok), review: !!ok('playwright-core') && !!ok('ffmpeg'), export: !!ok('playwright-core') && !!ok('ffmpeg'), kokoroVoice: !!ok('ffmpeg') && !!ok('kokoro python packages') && !!ok('kokoro model files'), ownAudioVoice: !!ok('ffmpeg') }, checks };
 }
 module.exports = { doctor };

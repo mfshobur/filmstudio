@@ -2,7 +2,7 @@
 
 You describe a short film to an AI coding agent. The agent uses filmstudio to make it: it writes a storyboard, records the narration, builds the film, takes screenshots of every shot to check them, and measures the audio.
 
-The result is one HTML file. Open it in a browser and it plays: animated scenes cut to a score that is generated live in the page, with a voice reading the narration.
+The result is one HTML file. Open it in a browser and it plays: animated scenes cut to a score that is generated live in the page, with a voice reading the narration. If you need a video file, `export` renders an MP4 (slow on small machines, but it resumes if it is interrupted).
 
 I started this to make one film, "The Only Limit" (it's in `examples/`), and then turned the pieces into something other people can reuse. Most of it was built and tested on an Android phone with 4 GB of RAM, which is why it copes with slow machines and jobs getting killed halfway.
 
@@ -97,6 +97,7 @@ All commands print JSON.
 | `new <dir> [--example name]` | create a project folder |
 | `validate` | check `spec.json` |
 | `voice` | generate narration with Kokoro, or import your own audio (`--provider file`) |
+| `export` | render `build/film.mp4` (frames from the real engine, offline-mixed audio); `--fps`, `--size`, `--from-bar/--to-bar` |
 | `voice-check` | measure narration clips for clipping, glitches, silence, pace and flat delivery |
 | `build` | write `build/film.html` |
 | `review` | screenshot each shot, make contact sheets; `--size 400x800` for portrait, `--motion` to check shots animate |
@@ -121,7 +122,7 @@ The review tools can look at pictures and measure audio levels. They can't tell 
 - imported images and logos as shots; more variants of the styles above
 - a small local web page to edit the storyboard with live preview
 - other scores, with length and key as settings
-- MP4 export, an MCP server, a small local web page
+- an MCP server, a small local web page
 
 ## License
 
