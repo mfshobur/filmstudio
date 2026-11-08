@@ -97,9 +97,11 @@ All commands print JSON.
 | `validate` | check `spec.json` |
 | `voice` | generate narration with Kokoro, or import your own audio (`--provider file`) |
 | `build` | write `build/film.html` |
-| `review` | screenshot each style variant and make contact sheets |
+| `review` | screenshot each shot, make contact sheets; `--size 400x800` for portrait, `--motion` to check shots animate |
 | `audio-check` | render the score offline and report loudness, clipping, dynamics |
 | `doctor` | check this machine |
+
+Developing: `npm test` runs the fast checks (no browser). `npm run qa` draws every style and variant in a headless browser and reports errors and static shots.
 | `styles` | list the styles and variants |
 | `guide [topic]` | print the agent guide |
 

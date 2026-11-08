@@ -11,7 +11,7 @@ async function review(dir, spec, opts = {}) {
   const out = path.join(dir, 'build', 'review'); fs.rmSync(out, { recursive: true, force: true }); fs.mkdirSync(out, { recursive: true });
   const seen = new Set(), targets = [];
   if (opts.beats) opts.beats.forEach(b => targets.push({ beat: b, name: 'beat-' + b }));
-  else spec.shots.forEach((s, idx) => { const k = s[4] ? s[2] + '-' + (idx + 1) : s[2] + '-' + s[3]; if (seen.has(k)) return; seen.add(k); targets.push({ beat: (s[0] - 1) * 4 + (s[1] - s[0]) * 4 * 0.55, name: k }); });
+  else spec.shots.forEach((s, idx) => { const k = s[4] ? s[2] + '-' + (idx + 1) : s[2] + '-' + s[3]; if (seen.has(k)) return; seen.add(k); targets.push({ beat: (s[0] - 1) * 4 + (s[1] - s[0]) * 4 * 0.55, start: (s[0] - 1) * 4, name: k }); });
   const w = opts.width || 640, h = opts.height || 360;
   const b = await launch(); const errors = [];
   try {
@@ -19,11 +19,21 @@ async function review(dir, spec, opts = {}) {
     p.on('pageerror', e => errors.push(e.message)); p.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
     await p.goto('file://' + path.resolve(film), { waitUntil: 'load' }); await p.waitForTimeout(2000);
     await p.addStyleTag({ content: '#intro{display:none!important}' });
-    let i = 0; const files = [];
+    let i = 0; const files = [], motion = [];
     for (const t of targets) {
       await p.evaluate(x => window.__film.seek(x), t.beat); await p.waitForTimeout(opts.settle || 900);
       const f = path.join(out, String(++i).padStart(2, '0') + '_' + t.name + '.png'); await p.screenshot({ path: f }); files.push(f);
+      if (opts.motion) {
+        const early = opts.motionEarly && t.start != null;
+        if (early) { await p.evaluate(x => window.__film.seek(x), t.start + 0.5); await p.waitForTimeout(opts.settle || 900); }
+        const A = await p.evaluate(() => window.__film.grab());
+        await p.evaluate(x => window.__film.seek(x), early ? t.start + 2.35 : t.beat + 0.4); await p.waitForTimeout(opts.settle || 900);
+        const B = await p.evaluate(() => window.__film.grab());
+        let d = 0, ch = 0; for (let k = 0; k < A.length; k++) { const e = Math.abs(A[k] - B[k]); d += e; if (e > 24) ch++; }
+        motion.push({ name: t.name, diff: +(d / (A.length * 765)).toFixed(4), changedCells: ch });
+      }
     }
+    const drawErrors = await p.evaluate(() => window.__film.errors());
     const sheets = [];
     if (!opts.noSheets && files.length && spawnSync('ffmpeg', ['-version']).status === 0) {
       for (let s = 0; s * 16 < files.length; s++) {
@@ -35,7 +45,8 @@ async function review(dir, spec, opts = {}) {
         if (r.status === 0) sheets.push(sheet); fs.rmSync(list, { force: true });
       }
     }
-    return { frames: files, sheets, pageErrors: errors };
+    const staticShots = motion.filter(m => m.diff < 0.001 && m.changedCells === 0).map(m => m.name);
+    return { frames: files, sheets, pageErrors: errors, drawErrors, motion: opts.motion ? motion : undefined, staticShots: opts.motion ? staticShots : undefined };
   } finally { await b.close().catch(() => {}); }
 }
 module.exports = { review };

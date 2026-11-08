@@ -17,4 +17,4 @@ Node 18+, ffmpeg, `playwright-core` + Chromium (for `review`, `audio-check`), an
 | `playwright-core not found` | `npm i playwright-core && npx playwright-core install chromium` |
 | `Kokoro model files not found` | follow `doctor` hint |
 | `spec has errors` | run `validate`, apply each `fix` |
-| review frames all dark | wait longer: `--settle` is not needed normally; check `pageErrors` |
+| review frames all dark | check `pageErrors` and `drawErrors` in the output; a failing shot logs its style/variant there |

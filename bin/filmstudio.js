@@ -24,7 +24,7 @@ const HELP = `filmstudio <command> [project-dir] [options]   (all output is JSON
   validate [dir]                         check spec.json, with fix hints
   voice [dir] [--provider kokoro|file] [--force]   generate or import narration, measure durations
   build [dir]                            write build/film.html
-  review [dir] [--beats 10,20] [--size 400x800]   screenshot every style variant + contact sheets
+  review [dir] [--beats 10,20] [--size 400x800] [--motion]   screenshot every style variant + contact sheets
   audio-check [dir]                      render the score offline; report loudness, clipping, dynamics
   doctor [--deep]                        check this machine
   styles                                 list shot styles and variants
@@ -67,8 +67,8 @@ const HELP = `filmstudio <command> [project-dir] [options]   (all output is JSON
     }
     if (cmd === 'review') {
       const sz = flags.size ? String(flags.size).split('x').map(Number) : [];
-      const r = await require('../src/review').review(dir, spec, { beats: flags.beats ? String(flags.beats).split(',').map(Number) : null, width: sz[0], height: sz[1] });
-      return out(Object.assign({ ok: r.pageErrors.length === 0, hint: 'Open build/review/sheet1.png and look for washed-out exposure, cropped labels, overflowing shapes. See `filmstudio guide review`.' }, r));
+      const r = await require('../src/review').review(dir, spec, { beats: flags.beats ? String(flags.beats).split(',').map(Number) : null, width: sz[0], height: sz[1], motion: !!flags.motion });
+      return out(Object.assign({ ok: r.pageErrors.length === 0 && r.drawErrors.length === 0, hint: 'Open build/review/sheet1.png and look for washed-out exposure, cropped labels, overflowing shapes. See `filmstudio guide review`.' }, r));
     }
     if (cmd === 'audio-check') {
       const r = await require('../src/audiocheck').audioCheck(dir, spec, { progress: (a, b) => console.error('rendered bar ' + a + '/' + b) });

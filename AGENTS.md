@@ -18,7 +18,7 @@ filmstudio audio-check            # loudness, clipping, dynamics
 - You cannot hear audio or judge taste: say so, use measurements, ask the user to listen and report timecodes.
 - Ask before paid APIs, model downloads, exposing a server, deleting files. Never write secrets into files.
 - Ask the user at most 3 questions, in one message; default the rest.
-- Honest limits: procedural graphics only, not photoreal footage. Planned styles are not available yet (see `filmstudio styles`).
+- Honest limits: procedural graphics only, not photoreal footage, no real maps, no user images yet. See `filmstudio styles` for the 28 styles and `guide style-grammar` for when to use each.
 - If anything fails to start: `filmstudio doctor`.
 
 ## Where things are
