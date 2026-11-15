@@ -12,7 +12,7 @@ const read = f => { try { return fs.readFileSync(f, 'utf8'); } catch (e) { retur
 /* ---------------- scaffolds ---------------- */
 function scaffold(dir, kind, name, opts = {}) {
   if (!NAME.test(String(name))) throw new Error('name "' + name + '" is not valid (letters, digits, dash, underscore; max 49)');
-  const sub = kind === 'scene' ? 'scenes' : kind === 'rig' ? 'rigs' : 'looks', f = path.join(dir, sub, name + '.js');
+  const sub = kind === 'scene' ? 'scenes' : kind === 'rig' ? 'rigs' : kind === 'lib' ? 'libs' : 'looks', f = path.join(dir, sub, name + '.js');
   if (fs.existsSync(f)) throw new Error(f + ' already exists');
   const look = opts.look || 'plain';
   const body = {
@@ -42,6 +42,11 @@ rig('${name}', {
     { id: 'arm', parent: 'body', pivot: [20, -140], d: 'M18 -142 L26 -140 L66 -104 L60 -96 L20 -128 Z' },
   ],
   pose: { arm: 0 },
+});
+`,
+    lib: `// libs/${name}.js: helper code shared by your scenes. Use it in a scene:  c.lib('${name}').box(c, x, y, w, h)
+lib('${name}', {
+  box(c, x, y, w, h, o) { c.rrect(x, y, w, h, c.u * 1.5, Object.assign({ fill: '@main', stroke: '@ink', lw: c.u * .4 }, o || {})); },
 });
 `,
     look: `// looks/${name}.js: a style guide in code (palette, background, effects). Use it with scene({ look: '${name}' }).
@@ -146,7 +151,7 @@ function lookCatalog(dir) {
 }
 
 /* ---------------- shared library (~/.filmstudio/library/<kind>/<name>/index.js + assets) ---------------- */
-const KINDS = { scene: 'scenes', rig: 'rigs', look: 'looks' };
+const KINDS = { scene: 'scenes', rig: 'rigs', look: 'looks', lib: 'libs' };
 const libRoot = () => process.env.FILMSTUDIO_LIBRARY ? path.resolve(process.env.FILMSTUDIO_LIBRARY) : path.join(os.homedir(), '.filmstudio', 'library');
 function libList(kind) {
   const out = [], kinds = kind ? [kind] : Object.keys(KINDS);
@@ -155,7 +160,7 @@ function libList(kind) {
 }
 function assetRefs(src) { const o = []; for (const m of String(src).matchAll(/\b(?:asset|image)\s*\(\s*(['"])([^'"]+)\1/g)) o.push(m[2]); return o; }
 function libSave(dir, kind, name) {
-  if (!KINDS[kind]) throw new Error('kind must be scene, rig or look'); if (!NAME.test(name)) throw new Error('bad name');
+  if (!KINDS[kind]) throw new Error('kind must be scene, rig, look or lib'); if (!NAME.test(name)) throw new Error('bad name');
   const f = path.join(dir, KINDS[kind], name + '.js'), src = read(f); if (src == null) throw new Error(f + ' does not exist');
   const lint = lintSource(src, kind); if (lint.errors.length) throw new Error('lint errors: ' + lint.errors.map(e => e.message).join('; '));
   const d = path.join(libRoot(), kind, name); fs.rmSync(d, { recursive: true, force: true }); fs.mkdirSync(d, { recursive: true }); fs.writeFileSync(path.join(d, 'index.js'), src);
@@ -173,4 +178,20 @@ function libUse(dir, kind, name, opts = {}) {
   return { wrote: f, assetsCopied: copied, assetsAlreadyThere: skipped };
 }
 
-module.exports = { scaffold, preview, check, lookCatalog, parseLooks, resolveLook, libList, libSave, libUse, libRoot, sampleBeats };
+/* what the studio's Scenes tab shows */
+function scenesInfo(dir) {
+  const S = require('./scenes'), info = n => { const f = path.join(dir, 'scenes', n + '.js'), src = read(f) || '', st = fs.statSync(f); return { name: n, bytes: st.size, mtime: st.mtimeMs, errors: lintSource(src, 'scene').errors }; };
+  const cat = lookCatalog(dir);
+  return { scenes: S.listDir(dir, 'scenes').map(info), rigs: S.listDir(dir, 'rigs'), libs: S.listDir(dir, 'libs'), looks: { builtin: Object.values(cat).filter(l => l.source === 'built-in').map(l => ({ name: l.name, desc: l.desc })), project: Object.values(cat).filter(l => l.source !== 'built-in').map(l => ({ name: l.name, desc: l.desc })) } };
+}
+/* newest change under scenes/ rigs/ libs/ looks/ (the studio watches this to refresh previews) */
+function scenesStamp(dir) { let m = 0; for (const sub of ['scenes', 'rigs', 'libs', 'looks']) { try { for (const f of fs.readdirSync(path.join(dir, sub))) { const t = fs.statSync(path.join(dir, sub, f)).mtimeMs; if (t > m) m = t; } } catch (e) { /* no such folder */ } } return m; }
+function previewHtml(dir, name, o = {}) {
+  const { compile } = require('./build'), beats = o.beats > 0 ? o.beats : 8, html = compile(previewSpec(name, beats, o.look ? { look: o.look } : {}), dir);
+  const inject = '<style>#intro,#end,.hud,.bar,#cap,#prompt{display:none!important}</style><script>(function(){var f=window.__film,spb=f.spb,beats=' + beats + ',t0=performance.now(),mode="play",pos=0;'
+    + 'function tick(){if(mode==="play")pos=(((performance.now()-t0)/1000)/spb)%beats;f.seek(pos);requestAnimationFrame(tick)}'
+    + 'window.addEventListener("message",function(e){var d=e.data||{};if(d.cmd==="pause")mode="pause";if(d.cmd==="play"){mode="play";t0=performance.now()-pos*spb*1000}if(d.cmd==="seek"){mode="pause";pos=Math.max(0,Math.min(beats,+d.beat||0))}});'
+    + 'setInterval(function(){try{parent.postMessage({type:"scene-state",pos:pos,beats:beats,mode:mode,errors:f.errors().slice(0,6)},"*")}catch(e){}},400);tick()})()</script>';
+  return html.includes('</body>') ? html.replace('</body>', inject + '</body>') : html + inject;
+}
+module.exports = { previewSpec, scenesInfo, scenesStamp, previewHtml, scaffold, preview, check, lookCatalog, parseLooks, resolveLook, libList, libSave, libUse, libRoot, sampleBeats };

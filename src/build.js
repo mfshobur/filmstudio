@@ -29,7 +29,7 @@ function compile(spec, projectDir) {
   const prompts = (spec.prompts || []).map(p => [bb(p.bar) + (p.beat || 0), p.hide ? null : (p.text || ''), p.big ? 1 : 0]);
   const sc = require('./scenes').collect(spec, projectDir);
   const vals = {
-    SCENES: JSON.stringify(sc.scenes), SCDATA: JSON.stringify(sc.data), RIGS: JSON.stringify(sc.rigs), LOOKS: JSON.stringify(sc.looks),
+    SCENES: JSON.stringify(sc.scenes), SCDATA: JSON.stringify(sc.data), RIGS: JSON.stringify(sc.rigs), LOOKS: JSON.stringify(sc.looks), LIBS: JSON.stringify(sc.libs),
     BPM: spec.bpm || 128,
     BARS: spec.bars || 46,
     END_BAR: spec.endCardBar || (spec.bars || 46) - 1.4,

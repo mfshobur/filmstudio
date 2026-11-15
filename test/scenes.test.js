@@ -46,11 +46,17 @@ t('compile puts scenes, rigs, looks and the runtime into the film, and the scrip
   const html = compile(spec(), d), js = html.slice(html.indexOf('<script>') + 8, html.lastIndexOf('</script>')); new Function(js);
   assert.ok(html.includes('"one":{"src"') && html.includes('function scDraw') && html.includes("scene:function(v){scDraw(v)}")); assert.ok(!/\{\{[A-Z_]+\}\}/.test(html));
 });
-t('a film without scenes builds exactly as before (empty scene tables)', () => { const html = compile(spec({ shots: [[1, 25, 'atom', 'spark']] }), proj()); assert.ok(html.includes('var SCENES={},SC_DATA={},RIGS_SRC={},LOOKS_SRC={};')); });
+t('a film without scenes builds exactly as before (empty scene tables)', () => { const html = compile(spec({ shots: [[1, 25, 'atom', 'spark']] }), proj()); assert.ok(html.includes('var SCENES={},SC_DATA={},RIGS_SRC={},LOOKS_SRC={},LIBS_SRC={};')); });
 t('scaffolds: scene, rig and look are created, lint clean, refuse to overwrite, and reject bad names', () => {
   const d = tmp('fs-scaf-');
-  for (const k of ['scene', 'rig', 'look']) { const f = T.scaffold(d, k, 'demo', { look: 'wayang' }); assert.deepStrictEqual(lintSource(fs.readFileSync(f, 'utf8'), k).errors, [], k); assert.throws(() => T.scaffold(d, k, 'demo'), /already exists/); }
+  for (const k of ['scene', 'rig', 'look', 'lib']) { const f = T.scaffold(d, k, 'demo', { look: 'wayang' }); assert.deepStrictEqual(lintSource(fs.readFileSync(f, 'utf8'), k).errors, [], k); assert.throws(() => T.scaffold(d, k, 'demo'), /already exists/); }
   assert.ok(/look: 'wayang'/.test(fs.readFileSync(path.join(d, 'scenes', 'demo.js'), 'utf8'))); assert.throws(() => T.scaffold(d, 'scene', '../x'), /not valid/); assert.throws(() => T.scaffold(d, 'scene', ''), /not valid/);
+});
+t('libs: collected into the film, linted (must call lib()), and library save/use accept them', () => {
+  const d = proj(); fs.mkdirSync(path.join(d, 'libs')); fs.writeFileSync(path.join(d, 'libs', 'ui.js'), "lib('ui', { box(c) { c.rect(0, 0, 1, 1); } });"); fs.writeFileSync(path.join(d, 'scenes', 'one.js'), GOOD);
+  assert.ok(collect(spec(), d).libs.ui); assert.ok(msgs('var x = 1;', 'lib').some(x => /never calls lib/.test(x))); assert.deepStrictEqual(msgs("lib('a', {});", 'lib'), []);
+  const lib = tmp('fs-lib2-'); process.env.FILMSTUDIO_LIBRARY = lib; T.libSave(d, 'lib', 'ui'); assert.deepStrictEqual(T.libList('lib'), [{ kind: 'lib', name: 'ui' }]); delete process.env.FILMSTUDIO_LIBRARY;
+  const html = compile(spec(), d); assert.ok(html.includes('"ui":"lib(') && html.includes('LIBS_SRC'));
 });
 t('the look catalog lists the built-in looks with palettes and picks up project looks', () => {
   const d = proj(); fs.mkdirSync(path.join(d, 'looks')); fs.writeFileSync(path.join(d, 'looks', 'mine.js'), "look('mine', { desc: 'my look', pal: { bg: '#123456' }, fx: [{ n: 'vignette' }], bg(c) { c.clear(c.pal.bg); } });");

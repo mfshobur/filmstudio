@@ -35,6 +35,7 @@ function lintSource(src, kind) {
     if (/\bwhile\s*\(\s*(true|1)\s*\)|\bfor\s*\(\s*;\s*;\s*\)/.test(stripped)) err(0, 'an endless loop would freeze the film', 'Use a bounded for loop.');
   }
   if (kind === 'rig' && !/\brig\s*\(/.test(stripped)) err(0, 'the file never calls rig("name", { parts: [...] })', 'Write: rig("rabbit", { parts: [ { id: "body", d: "M0 0L10 0L10 10Z" } ] });');
+  if (kind === 'lib' && !/\blib\s*\(/.test(stripped)) err(0, 'the file never calls lib("name", { ... })', 'Write: lib("ui", { box(c, x, y, w, h) { c.rrect(x, y, w, h, 8, { fill: "@main" }); } });');
   if (kind === 'look' && !/\blook\s*\(/.test(stripped)) err(0, 'the file never calls look("name", { pal: {...} })', 'Write: look("mylook", { pal: { bg: "#000" }, bg(c) { c.clear(c.pal.bg); } });');
   return { errors, warnings };
 }
@@ -46,16 +47,17 @@ function listDir(dir, sub) { try { return fs.readdirSync(path.join(dir, sub)).fi
 // Everything the film needs: { scenes:{name:{src}}, rigs:{name:src}, looks:{name:src}, data:{assetPath:dataURI} }
 function collect(spec, dir) {
   const names = [...new Set((spec.shots || []).filter(s => Array.isArray(s) && s[2] === 'scene').map(s => s[3]))];
-  const scenes = {}, rigs = {}, looks = {}, data = {};
+  const scenes = {}, rigs = {}, looks = {}, libs = {}, data = {};
   names.forEach(n => { if (NAME.test(n)) { const src = read(path.join(dir, 'scenes', n + '.js')); if (src != null) scenes[n] = { src }; } });
   listDir(dir, 'rigs').forEach(n => { rigs[n] = read(path.join(dir, 'rigs', n + '.js')); });
   listDir(dir, 'looks').forEach(n => { looks[n] = read(path.join(dir, 'looks', n + '.js')); });
-  const all = Object.values(scenes).map(s => s.src).concat(Object.values(rigs), Object.values(looks));
+  listDir(dir, 'libs').forEach(n => { libs[n] = read(path.join(dir, 'libs', n + '.js')); });
+  const all = Object.values(scenes).map(s => s.src).concat(Object.values(rigs), Object.values(looks), Object.values(libs));
   all.forEach(src => { for (const m of String(src).matchAll(/\b(?:asset|image)\s*\(\s*(['"])([^'"]+)\1/g)) {
     const rel = m[2], f = path.resolve(dir, rel), mime = MIME[path.extname(f).toLowerCase()];
     if (!data[rel] && mime && f.startsWith(path.resolve(dir) + path.sep) && fs.existsSync(f)) data[rel] = 'data:' + mime + ';base64,' + fs.readFileSync(f).toString('base64');
   } });
-  return { scenes, rigs, looks, data };
+  return { scenes, rigs, looks, libs, data };
 }
 
 // Validation of one scene shot: [{path,message,fix}] (empty when fine)

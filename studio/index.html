@@ -58,6 +58,14 @@ pre{margin:0;background:var(--panel2);border:1px solid var(--line);border-radius
 #banner{margin:10px max(16px,env(safe-area-inset-left)) 0;padding:10px 14px;border:1px solid var(--ember);border-radius:8px;background:var(--panel);font-size:14px}
 #banner .btn{margin-left:6px;padding:4px 10px;font-size:13px}
 .layout.wide{grid-template-columns:minmax(0,1fr);max-width:none}.layout.wide .side .card{position:static}
+.scwrap{display:grid;grid-template-columns:200px minmax(0,1fr);gap:14px}
+.sclist{display:flex;flex-direction:column;gap:6px;align-self:start}
+.scitem{display:flex;justify-content:space-between;align-items:center;gap:8px;text-align:left;background:var(--panel2);color:var(--bone);border:1px solid var(--line);border-radius:8px;padding:8px 10px;font:13px var(--mono);cursor:pointer}
+.scitem.on{border-color:var(--ember)}
+.scbar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:10px}.scbar label{font:12px var(--mono);color:var(--dim)}.scbar input[type=range]{flex:1;min-width:140px}
+.scframe{width:100%;aspect-ratio:16/9;border:1px solid var(--line);border-radius:8px;background:#000;display:block}
+.scsrc{max-height:380px;overflow:auto;background:var(--panel2);border:1px solid var(--line);border-radius:8px;padding:10px;font:12px/1.5 var(--mono);color:var(--bone);white-space:pre}
+@media(max-width:700px){.scwrap{grid-template-columns:1fr}}
 .pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
 .pcard{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel2);color:inherit;text-decoration:none}
 .pcard:hover,.pcard:focus-visible{border-color:var(--ember)}
@@ -79,7 +87,7 @@ pre{margin:0;background:var(--panel2);border:1px solid var(--line);border-radius
 (function(){
 'use strict';
 var S={p:null,tab:'idea',saveT:null,job:null,jobPoll:null,vcheck:null,hl:-1,msg:'',dirty:false,saving:null,again:false,inflight:0,pending:null,es:null,live:false};
-var TABS=[['idea','Idea'],['story','Storyboard'],['timeline','Timeline'],['voice','Voice'],['preview','Preview'],['review','Review'],['status','Status']];
+var TABS=[['idea','Idea'],['story','Storyboard'],['timeline','Timeline'],['scenes','Scenes'],['voice','Voice'],['preview','Preview'],['review','Review'],['status','Status']];
 var $=function(s,r){return (r||document).querySelector(s)};
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 /* In workspace mode a project lives under /p/<name>/; everything it fetches is relative to that base. */
@@ -129,6 +137,7 @@ function banner(html){var b=$('#banner');b.innerHTML=html;b.style.display=html?'
 function showConflict(){banner('<b>spec.json changed on disk</b> (an agent or another editor saved it). <button class="btn" data-act="reload">Load their version</button> <button class="btn" data-act="keep">Keep mine and overwrite</button>')}
 function liveDot(){document.querySelectorAll('.tl-live').forEach(function(e){e.classList.toggle('on',S.live)})}
 function onRemote(ev){
+  if(ev.type==='scenes'){if(S.tab==='scenes')mountScenes();return}
   if(ev.type==='spec'&&ev.rev===S.p.rev)return;
   if(ev.type==='spec'&&S.inflight){S.pending=ev;return}
   if(ev.type!=='spec'&&S.jobPoll)return;
@@ -147,6 +156,32 @@ var TLCTX={api:function(m,u,b,h){return api(m,u,b,h)},rev:function(){return S.p.
 function mountTimeline(){var el=$('#tlmount');if(!el)return;var go=function(){window.FilmTimeline.mount(el,TLCTX)};
   if(window.FilmTimeline)return go();
   var sc=document.createElement('script');sc.src=BASE+'studio/timeline.js';sc.onload=go;sc.onerror=function(){el.textContent='Could not load the timeline script.'};document.head.appendChild(sc)}
+/* ---------- scenes: files an agent writes; the preview reloads when they change ---------- */
+var SCS={sel:null,look:'',beats:8,info:null,playing:true};
+function vScenes(){return '<section class="card"><h2>Scenes</h2><div id="scmount"><p class="dim">loading scenes...</p></div></section>'}
+function scPreviewUrl(){return BASE+'api/scene/'+encodeURIComponent(SCS.sel)+'/preview.html?beats='+SCS.beats+(SCS.look?'&look='+encodeURIComponent(SCS.look):'')+'&v='+Date.now()}
+function mountScenes(){var el=$('#scmount');if(!el)return;api('GET','/api/scenes').then(function(info){SCS.info=info;drawScenes(el)}).catch(function(e){el.textContent='Could not load scenes: '+e.message})}
+function drawScenes(el){
+  var info=SCS.info,sc=info.scenes;
+  if(!sc.length){el.innerHTML='<p class="dim">No scenes yet. A scene is code your agent writes for one beat of the script and draws every frame. Ask your agent for one, or run <code>filmstudio scene new &lt;name&gt;</code> (guide: <code>filmstudio guide scenes</code>). It will show up here and update live.</p><p class="dim">Looks available: '+info.looks.builtin.map(function(l){return esc(l.name)}).join(', ')+'</p>';return}
+  if(!SCS.sel||!sc.some(function(x){return x.name===SCS.sel}))SCS.sel=sc[0].name;
+  var cur=sc.filter(function(x){return x.name===SCS.sel})[0];
+  var looks=info.looks.project.concat(info.looks.builtin).map(function(l){return '<option value="'+esc(l.name)+'"'+(SCS.look===l.name?' selected':'')+'>'+esc(l.name)+'</option>'}).join('');
+  el.innerHTML='<div class="scwrap"><div class="sclist">'+sc.map(function(x){return '<button class="scitem'+(x.name===SCS.sel?' on':'')+'" data-scene="'+esc(x.name)+'"><span>'+esc(x.name)+'</span><span class="pill '+(x.errors.length?'bad':'ok')+'">'+(x.errors.length?x.errors.length+' error'+(x.errors.length>1?'s':''):'ok')+'</span></button>'}).join('')
+    +'<p class="dim" style="margin:10px 0 0">'+info.rigs.length+' rig'+(info.rigs.length===1?'':'s')+', '+info.libs.length+' lib'+(info.libs.length===1?'':'s')+'</p></div>'
+    +'<div class="scmain"><div class="scbar"><label>look <select id="scLook"><option value="">(scene default)</option>'+looks+'</select></label><label>beats <input id="scBeats" type="number" min="2" max="64" value="'+SCS.beats+'" style="width:64px"></label><button class="btn" id="scPlay">'+(SCS.playing?'Pause':'Play')+'</button><input id="scSeek" type="range" min="0" max="1000" value="0" aria-label="position"></div>'
+    +'<iframe id="scFrame" class="scframe" title="scene preview" src="'+scPreviewUrl()+'"></iframe><div id="scErr" aria-live="polite"></div>'
+    +(cur.errors.length?'<div>'+cur.errors.map(function(e){return '<div class="msg e"><b>'+(e.line?'line '+e.line:'scenes/'+esc(cur.name)+'.js')+'</b>'+esc(e.message)+(e.fix?'<i>'+esc(e.fix)+'</i>':'')+'</div>'}).join('')+'</div>':'')
+    +'<p class="dim" style="margin:8px 0 4px">scenes/'+esc(cur.name)+'.js ('+cur.bytes+' bytes). Your agent edits this file; the preview reloads when it changes.</p><pre id="scSrc" class="scsrc">loading...</pre></div></div>';
+  el.querySelectorAll('.scitem').forEach(function(b){b.addEventListener('click',function(){SCS.sel=b.getAttribute('data-scene');drawScenes(el)})});
+  $('#scLook').addEventListener('change',function(ev){SCS.look=ev.target.value;$('#scFrame').src=scPreviewUrl()});
+  $('#scBeats').addEventListener('change',function(ev){SCS.beats=Math.max(2,Math.min(64,+ev.target.value||8));$('#scFrame').src=scPreviewUrl()});
+  $('#scPlay').addEventListener('click',function(ev){SCS.playing=!SCS.playing;ev.target.textContent=SCS.playing?'Pause':'Play';scMsg({cmd:SCS.playing?'play':'pause'})});
+  $('#scSeek').addEventListener('input',function(ev){SCS.playing=false;$('#scPlay').textContent='Play';scMsg({cmd:'seek',beat:(+ev.target.value/1000)*SCS.beats})});
+  fetch(BASE+'api/scene/'+encodeURIComponent(SCS.sel)+'/source').then(function(r){return r.text()}).then(function(t){var e=$('#scSrc');if(e)e.textContent=t}).catch(function(){});
+}
+function scMsg(m){var f=$('#scFrame');if(f&&f.contentWindow)f.contentWindow.postMessage(m,'*')}
+window.addEventListener('message',function(ev){var d=ev.data;if(!d||d.type!=='scene-state'||S.tab!=='scenes')return;var sk=$('#scSeek');if(sk&&SCS.playing)sk.value=Math.round(d.pos/d.beats*1000);var er=$('#scErr');if(er)er.innerHTML=(d.errors||[]).length?d.errors.map(function(e){return '<div class="msg e"><b>draw error</b>'+esc(e.message)+'</div>'}).join(''):''});
 function vTimeline(){return '<section class="card"><h2>Timeline</h2><div id="tlmount"><p class="dim">loading timeline...</p></div></section>'}
 var brT=null;function saveBrief(){clearTimeout(brT);brT=setTimeout(function(){api('PUT','/api/brief',S.p.brief).then(function(){setState('brief saved')})},500)}
 
@@ -160,8 +195,8 @@ function renderSide(){var v=S.p.validation,s='<section class="card"><h2>Check</h
     v.warnings.forEach(function(e){s+='<div class="msg w" data-jump="'+esc(e.path)+'"><b>'+esc(e.path||'spec')+'</b>'+esc(e.message)+(e.fix?'<i>'+esc(e.fix)+'</i>':'')+'</div>'})}
   $('#side').innerHTML=s+'</section>'}
 function markShots(){var v=S.p.validation;var bad={};if(v)v.errors.concat(v.warnings).forEach(function(e){var m=/^shots\[(\d+)\]/.exec(e.path||'');if(m)bad[m[1]]=1});document.querySelectorAll('.shot').forEach(function(el){el.classList.toggle('err',!!bad[el.dataset.i])})}
-function render(){document.querySelector('.layout').classList.toggle('wide',S.tab==='timeline');renderTabs();renderSide();var fn={idea:vIdea,story:vStory,timeline:vTimeline,voice:vVoice,preview:vPreview,review:vReview,status:vStatus}[S.tab];$('#view').innerHTML=fn();after()}
-function after(){if(S.tab==='story')markShots();if(S.tab==='timeline')mountTimeline();if(S.hl>=0){var el=$('.shot[data-i="'+S.hl+'"]');if(el){el.scrollIntoView({block:'center'});el.classList.add('hl');setTimeout(function(){el.classList.remove('hl')},1600)}S.hl=-1}}
+function render(){document.querySelector('.layout').classList.toggle('wide',S.tab==='timeline'||S.tab==='scenes');renderTabs();renderSide();var fn={idea:vIdea,story:vStory,timeline:vTimeline,scenes:vScenes,voice:vVoice,preview:vPreview,review:vReview,status:vStatus}[S.tab];$('#view').innerHTML=fn();after()}
+function after(){if(S.tab==='story')markShots();if(S.tab==='timeline')mountTimeline();if(S.tab==='scenes')mountScenes();if(S.hl>=0){var el=$('.shot[data-i="'+S.hl+'"]');if(el){el.scrollIntoView({block:'center'});el.classList.add('hl');setTimeout(function(){el.classList.remove('hl')},1600)}S.hl=-1}}
 
 /* ---------- IDEA ---------- */
 function sec(bpm){var b=(spec()||{}).bars||46;return bpm?Math.round(b*240/bpm*10)/10:0}

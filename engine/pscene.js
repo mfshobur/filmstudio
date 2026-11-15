@@ -39,13 +39,14 @@ function scTween(t,keys,ease){
 function scP2D(d){return d instanceof Path2D?d:(SC_PATHS[d]||(SC_PATHS[d]=new Path2D(d)))}
 function scFont(f){return f==='serif'?SERIF:f==='sans'?SANS:f==='mono'||!f?MONO:f}
 /* paint the current path (or a Path2D) with an options object: {fill,stroke,lw,alpha,blend,dash,rule,shadow:[color,blur,dx,dy]} */
+function scCol(v){return(typeof v==='string'&&v.charAt(0)==='@')?((SC_C.pal&&SC_C.pal[v.slice(1)])||'#f0f'):v}
 function scPaint(path,o){
   o=o||{};var a0=g.globalAlpha,c0=g.globalCompositeOperation;
   if(o.alpha!=null)g.globalAlpha=a0*o.alpha;if(o.blend)g.globalCompositeOperation=o.blend;
-  if(o.shadow){g.shadowColor=o.shadow[0];g.shadowBlur=o.shadow[1]||0;g.shadowOffsetX=o.shadow[2]||0;g.shadowOffsetY=o.shadow[3]||0}
-  if(o.fill){g.fillStyle=o.fill;if(path)g.fill(path,o.rule||'nonzero');else g.fill(o.rule||'nonzero')}
+  if(o.shadow){g.shadowColor=scCol(o.shadow[0]);g.shadowBlur=o.shadow[1]||0;g.shadowOffsetX=o.shadow[2]||0;g.shadowOffsetY=o.shadow[3]||0}
+  if(o.fill){g.fillStyle=scCol(o.fill);if(path)g.fill(path,o.rule||'nonzero');else g.fill(o.rule||'nonzero')}
   if(o.shadow){g.shadowColor='rgba(0,0,0,0)';g.shadowBlur=0}
-  if(o.stroke){g.strokeStyle=o.stroke;g.lineWidth=o.lw||2;if(o.dash)g.setLineDash(o.dash);if(path)g.stroke(path);else g.stroke();if(o.dash)g.setLineDash([])}
+  if(o.stroke){g.strokeStyle=scCol(o.stroke);g.lineWidth=o.lw||2;if(o.dash)g.setLineDash(o.dash);if(path)g.stroke(path);else g.stroke();if(o.dash)g.setLineDash([])}
   g.globalAlpha=a0;g.globalCompositeOperation=c0;
 }
 function scAt(x,y,o,fn){
@@ -89,6 +90,16 @@ function scRigDraw(def,pose,x,y,s,flip,opts){
   for(i=0;i<roots.length;i++)one(roots[i]);
   g.restore();
 }
+/* ---- libs: shared helper code between scenes (libs/<name>.js calls lib('name', { fn(c, ...) {...} })); scenes use c.lib('name') ---- */
+var SC_LIBS={};
+function scLibDef(name,o){SC_LIBS[name]=o;return o}
+/* path length (for draw-on effects), measured with a hidden SVG path */
+var SC_PLEN={},SC_SVGP=null;
+function scPathLen(d){
+  if(SC_PLEN[d]!=null)return SC_PLEN[d];
+  if(!SC_SVGP){var sv=document.createElementNS('http://www.w3.org/2000/svg','svg');SC_SVGP=document.createElementNS('http://www.w3.org/2000/svg','path');sv.appendChild(SC_SVGP)}
+  SC_SVGP.setAttribute('d',d);var L=SC_SVGP.getTotalLength();SC_PLEN[d]=L;return L;
+}
 /* ---- assets embedded at build (scene files mention them as c.asset('assets/x.svg')) ---- */
 function scAsset(src){
   var o=SC_ASSETS[src];
@@ -106,7 +117,7 @@ function scBuildCtx(){
   c.each=function(n,seed,fn){for(var i=0;i<n;i++)fn(i,R((seed|0)*7919+i*104729+1))};
   c.path=scP2D;
   c.paint=function(path,o){scPaint(path,o)};
-  c.clear=function(col){g.fillStyle=col;g.fillRect(0,0,c.W,c.H)};
+  c.clear=function(col){g.fillStyle=scCol(col);g.fillRect(0,0,c.W,c.H)};
   c.fill=function(col,o){scPaint(null,Object.assign({fill:col},o||{}))};
   c.circle=function(x,y,r,o){g.beginPath();g.arc(x,y,Math.max(0,r),0,6.2832);scPaint(null,o)};
   c.ellipse=function(x,y,rx,ry,o,rot){g.beginPath();g.ellipse(x,y,Math.max(0,rx),Math.max(0,ry),(rot||0)*Math.PI/180,0,6.2832);scPaint(null,o)};
@@ -118,7 +129,7 @@ function scBuildCtx(){
   c.grad=function(x1,y1,x2,y2,stops){var gr=g.createLinearGradient(x1,y1,x2,y2);stops.forEach(function(s){gr.addColorStop(s[0],s[1])});return gr};
   c.radial=function(x,y,r0,r1,stops){var gr=g.createRadialGradient(x,y,r0,x,y,r1);stops.forEach(function(s){gr.addColorStop(s[0],s[1])});return gr};
   c.glow=function(x,y,r,col,a){var gr=g.createRadialGradient(x,y,0,x,y,r);gr.addColorStop(0,col);gr.addColorStop(1,'rgba(0,0,0,0)');var a0=g.globalAlpha;g.globalAlpha=a0*(a==null?1:a);g.fillStyle=gr;g.globalCompositeOperation='lighter';g.fillRect(x-r,y-r,r*2,r*2);g.globalCompositeOperation='source-over';g.globalAlpha=a0};
-  c.text=function(s,x,y,size,col,align,font,weight){txt(String(s),x,y,size,col||c.look.pal.ink,align||'center',scFont(font),weight)};
+  c.text=function(s,x,y,size,col,align,font,weight){txt(String(s),x,y,size,scCol(col||'@ink'),align||'center',scFont(font),weight)};
   c.type=function(s,t0,cps){s=String(s);return s.slice(0,Math.max(0,Math.min(s.length,Math.floor((c.t-(t0||0))*(cps||14)))))};
   c.at=scAt;
   c.save=function(){g.save()};c.restore=function(){g.restore()};
@@ -130,6 +141,20 @@ function scBuildCtx(){
     api.pose=function(p){if(p)for(var k in p)pose[k]=p[k];return api};
     api.draw=function(x,y,s,flip){scRigDraw(def,pose,x,y,s==null?1:s,flip,opts);return api};
     return api;
+  };
+  c.lib=function(name){var L=SC_LIBS[name];if(!L)throw new Error('no lib "'+name+'" (libs/'+name+'.js)');return L};
+  c.measure=function(str,size,font,weight){g.font=(weight||'')+' '+size+'px '+scFont(font);return g.measureText(String(str)).width};
+  c.clip=function(x,y,w,h,fn,r){g.save();if(r)rr(x,y,w,h,r);else{g.beginPath();g.rect(x,y,w,h)}g.clip();fn();g.restore()};
+  /* draw an SVG path text being traced: c.trace('M..', 0..1, {stroke, lw}) */
+  c.trace=function(d,t,o){t=clamp(t,0,1);if(t<=0)return;var L=scPathLen(d);g.save();g.setLineDash([L*t+.01,L+1]);g.lineCap='round';scPaint(scP2D(d),Object.assign({stroke:'@ink',lw:2},o||{}));g.restore()};
+  c.pathLen=scPathLen;
+  /* a rectangle that shows another look: its background is painted inside, then fn(c) draws in the panel's own coordinates */
+  c.panel=function(x,y,w,h,lookName,fn){
+    var sv={W:c.W,H:c.H,cx:c.cx,cy:c.cy,u:c.u,vw:c.vw,look:c.look,pal:c.pal},lk=scGetLook(lookName);
+    g.save();g.translate(x,y);g.beginPath();g.rect(0,0,w,h);g.clip();
+    c.W=w;c.H=h;c.cx=w/2;c.cy=h/2;c.u=h/100;c.vw=w/100;c.look=lk;c.pal=lk.pal||{};
+    if(lk.bg)lk.bg(c);if(fn)fn(c);
+    c.W=sv.W;c.H=sv.H;c.cx=sv.cx;c.cy=sv.cy;c.u=sv.u;c.vw=sv.vw;c.look=sv.look;c.pal=sv.pal;g.restore();
   };
   c.asset=scAsset;
   c.image=function(src,x,y,w,h,o){var a=scAsset(src);if(a.ok!==1)return;o=o||{};var iw=a.im.naturalWidth||1,ih=a.im.naturalHeight||1;if(w==null){w=iw;h=ih}else if(h==null)h=w*ih/iw;var a0=g.globalAlpha;if(o.alpha!=null)g.globalAlpha=a0*o.alpha;g.drawImage(a.im,x-(o.center?w/2:0),y-(o.center?h/2:0),w,h);g.globalAlpha=a0};
@@ -195,9 +220,10 @@ function scDraw(name){
 }
 function scIsBright(sh){var P=sh[4]||{},d=null;try{d=scCompile(sh[3])}catch(e){}return scGetLook(P.look||(d&&d.look)).bright?1:0}
 /* project rigs/*.js and looks/*.js (embedded by the build) run once at start; returns the load errors */
-function scLoadUser(rigs,looks){
+function scLoadUser(rigs,looks,libs){
   var k={ease:SC_EASE,holes:SC_HOLES,noise:scNoise,tween:scTween},n,errs=[];
   for(n in rigs){try{new Function('rig','kit',rigs[n])(scRig,k)}catch(e){errs.push('rigs/'+n+'.js: '+(e&&e.message||e))}}
   for(n in looks){try{new Function('look','kit',looks[n])(scLook,k)}catch(e){errs.push('looks/'+n+'.js: '+(e&&e.message||e))}}
+  for(n in (libs||{})){try{new Function('lib','kit',libs[n])(scLibDef,k)}catch(e){errs.push('libs/'+n+'.js: '+(e&&e.message||e))}}
   return errs;
 }

@@ -12,6 +12,7 @@ const { STYLES, SCORES } = require('./registry');
 const { sampleParams } = require('./samples');
 const { buildTimeline } = require('./timeline');
 const { applyOps } = require('./edits');
+const ST = require('./scenetools'), SCN = require('./scenes');
 const ROOT = path.join(__dirname, '..');
 const CLI = path.join(ROOT, 'bin', 'filmstudio.js');
 const MAX_BODY = 5 * 1024 * 1024;
@@ -31,7 +32,7 @@ function makeProject(dir) {
   /* live change events (SSE): fs.watch on the folder plus a 2 s poll (fs.watch is unreliable on some filesystems and misses subfolders) */
   const subs = new Set(); let timer = null, watcher = null, sig = null, debounce = null, ticks = 0;
   const mt = p => { try { return fs.statSync(f(p)).mtimeMs; } catch (e) { return 0; } };
-  const signature = () => ({ spec: rev(), build: mt('build/film.html'), voice: mt('voice/durations.json'), feedback: mt('feedback.json') });
+  const signature = () => ({ spec: rev(), build: mt('build/film.html'), voice: mt('voice/durations.json'), feedback: mt('feedback.json'), scenes: ST.scenesStamp(dir) });
   const emit = ev => { const d = 'data: ' + JSON.stringify(ev) + '\n\n'; for (const r of subs) r.write(d); };
   function check() { const n = signature(); if (sig) for (const k of Object.keys(n)) if (n[k] !== sig[k]) emit({ type: k, rev: n.spec }); sig = n; }
   function subscribe(res) {
@@ -123,6 +124,14 @@ function createStudio(opts) {
         const { dir, f, readJson, writeJson, project, safeJoin, startJob, jobs, rev, backupOnce, subscribe } = proj;
         const stale = () => send(409, { error: 'spec.json changed on disk since this page loaded it (an agent or another editor saved it)', rev: rev(), spec: readJson(f('spec.json'), null) });
         if (p === '/api/project' && req.method === 'GET') return send(200, project());
+        if (p === '/api/scenes' && req.method === 'GET') return send(200, ST.scenesInfo(dir));
+        const sc = /^\/api\/scene\/([\w-]+)\/(preview\.html|source)$/.exec(p);
+        if (sc && req.method === 'GET') {
+          if (!SCN.NAME.test(sc[1]) || !fs.existsSync(f('scenes/' + sc[1] + '.js'))) return send(404, { error: 'no such scene' });
+          if (sc[2] === 'source') return send(200, fs.readFileSync(f('scenes/' + sc[1] + '.js')), 'text/plain; charset=utf-8');
+          const beats = Number(url.searchParams.get('beats')), look = url.searchParams.get('look');
+          return send(200, ST.previewHtml(dir, sc[1], { beats: beats > 0 && beats <= 64 ? beats : 8, look: look && /^[\w-]{1,40}$/.test(look) ? look : null }), MIME['.html']);
+        }
         if (p === '/api/events' && req.method === 'GET') { res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' }); res.write('retry: 2000\n\ndata: ' + JSON.stringify({ type: 'hello', rev: rev() }) + '\n\n'); return subscribe(res); }
         if (p === '/api/timeline' && req.method === 'GET') {
           const spec = readJson(f('spec.json'), null);

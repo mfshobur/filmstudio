@@ -34,7 +34,7 @@ const HELP = `filmstudio <command> [project-dir] [options]   (all output is JSON
   scene new <name> [--look wayang]       write a scene: code you draw for one beat of the script (guide: scenes); then preview and check it
   scene preview <name> [--beats 8] [--frames 0,2,4] [--size 960x540] [--look ink]   render frames and a strip you can look at
   scene check <name>                     lint + render tests: errors, blank or frozen scenes, same-frame determinism, draw speed
-  scene list | rig new <name> | look list | look show <name> | look new <name>   scenes, puppet rigs and looks (style guides)
+  scene list | rig new <name> | lib new <name> | look list | look show <name> | look new <name>   scenes, puppet rigs, shared helper code and looks (style guides)
   library list|save <kind> <name>|use <kind> <name>   keep scenes, rigs and looks you want to reuse across films (~/.filmstudio/library)
   length <seconds> [--preset calm-46]    suggest bars and bpm for a target length
   list [--root dir]                      list the projects in the workspace (default ~/filmstudio-projects or FILMSTUDIO_ROOT)
@@ -106,7 +106,7 @@ const HELP = `filmstudio <command> [project-dir] [options]   (all output is JSON
       }
       return out({ ok: true, created: target, applied, next: flags.example ? 'cd there, then `filmstudio validate`, `filmstudio build`.' : 'A valid starter spec.json (shots only, no narration) is in place. Edit the shots, meta text and add narration, then `validate`. See `filmstudio guide quick-start`.' });
     }
-    if (cmd === 'scene' || cmd === 'rig' || cmd === 'look' || cmd === 'library') {
+    if (cmd === 'scene' || cmd === 'rig' || cmd === 'look' || cmd === 'lib' || cmd === 'library') {
       const T = require('../src/scenetools'), sub = pos[1], nm = pos[2], pd = path.resolve(flags.dir ? String(flags.dir) : '.');
       const parseSize = () => { const z = flags.size ? String(flags.size).split('x').map(Number) : []; return z.length === 2 && z[0] > 0 ? { width: z[0], height: z[1] } : {}; };
       const optsFrom = () => Object.assign(parseSize(), { beats: flags.beats ? Number(flags.beats) : undefined, frames: flags.frames ? String(flags.frames).split(',').map(Number) : undefined, params: flags.params ? JSON.parse(String(flags.params)) : (flags.look ? { look: String(flags.look) } : undefined) });
@@ -124,6 +124,7 @@ const HELP = `filmstudio <command> [project-dir] [options]   (all output is JSON
         if (sub === 'show') { const l = T.resolveLook(cat, nm); if (!l) fail('no look "' + nm + '"', { looks: Object.keys(cat) }); return out(Object.assign({ ok: true }, l)); }
         fail('usage: filmstudio look <list|show <name>|new <name>>');
       }
+      if (cmd === 'lib') { if (sub === 'new') { if (!nm) fail('usage: filmstudio lib new <name>'); return out({ ok: true, created: T.scaffold(pd, 'lib', nm), next: 'Use it in a scene: c.lib(\'' + nm + '\').box(c, x, y, w, h).' }); } if (sub === 'list' || !sub) return out({ ok: true, libs: require('../src/scenes').listDir(pd, 'libs') }); fail('usage: filmstudio lib <list|new <name>>'); }
       if (cmd === 'rig') { if (sub === 'new') { if (!nm) fail('usage: filmstudio rig new <name>'); return out({ ok: true, created: T.scaffold(pd, 'rig', nm), next: 'Draw the parts, then c.rig(\'' + nm + '\').pose({...}).draw(x, y, scale) in a scene.' }); } if (sub === 'list' || !sub) return out({ ok: true, rigs: require('../src/scenes').listDir(pd, 'rigs') }); fail('usage: filmstudio rig <list|new <name>>'); }
       // scene
       if (sub === 'new') { if (!nm) fail('usage: filmstudio scene new <name> [--look wayang]'); return out({ ok: true, created: T.scaffold(pd, 'scene', nm, { look: flags.look ? String(flags.look) : undefined }), next: 'Use it in spec.json: [startBar, endBar, "scene", "' + nm + '"]. Edit draw(c), then `filmstudio scene preview ' + nm + '`.' }); }
