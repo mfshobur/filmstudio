@@ -155,7 +155,7 @@ var TLCTX={api:function(m,u,b,h){return api(m,u,b,h)},rev:function(){return S.p.
   applied:function(sp,rev,val){S.p.spec=sp;S.p.rev=rev;S.p.validation=val;S.dirty=false;renderSide();setState('saved '+new Date().toLocaleTimeString())}};
 function mountTimeline(){var el=$('#tlmount');if(!el)return;var go=function(){window.FilmTimeline.mount(el,TLCTX)};
   if(window.FilmTimeline)return go();
-  var sc=document.createElement('script');sc.src=BASE+'studio/timeline.js';sc.onload=go;sc.onerror=function(){el.textContent='Could not load the timeline script.'};document.head.appendChild(sc)}
+  var sc=document.createElement('script');sc.src=BASE+'studio/timeline.js?v='+Date.now();sc.onload=go;sc.onerror=function(){el.textContent='Could not load the timeline script.'};document.head.appendChild(sc)}
 /* ---------- scenes: files an agent writes; the preview reloads when they change ---------- */
 var SCS={sel:null,look:'',beats:8,info:null,playing:true};
 function vScenes(){return '<section class="card"><h2>Scenes</h2><div id="scmount"><p class="dim">loading scenes...</p></div></section>'}

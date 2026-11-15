@@ -40,6 +40,10 @@
       '.tl-end{position:absolute;top:0;bottom:0;border-left:2px dashed var(--ember);pointer-events:none}',
       '.tl-blk{position:absolute;border-radius:4px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font:11px/1.3 var(--mono);color:#fff;padding:3px 6px;border:1px solid rgba(255,255,255,.28);user-select:none;touch-action:none}',
       '.tl-blk.sel{outline:2px solid var(--ice);z-index:3}',
+      '.tl-transport{display:flex;align-items:center;gap:8px}',
+      '.tl-tb{min-width:42px;padding:6px 12px;font-size:15px}',
+      '.tl-big{min-width:64px;font-size:20px;background:var(--ember);color:#111}',
+      '.tl-time{font:13px var(--mono);margin-left:10px;opacity:.85}',
       '.tl-viewer{display:flex;flex-direction:column;align-items:center;gap:4px;margin:2px 0 12px}',
       '.tl-vcv{display:block;height:40vh;min-height:190px;max-height:520px;width:auto;max-width:100%;aspect-ratio:16/9;background:#000;border-radius:8px;border:1px solid rgba(255,255,255,.18)}',
       '.tl-shot{cursor:pointer;background-size:cover;background-position:center;text-shadow:0 1px 3px #000,0 0 2px #000}',
@@ -73,12 +77,14 @@
     var sh = d.tracks.shots.filter(function (s) { return T.ph >= s.start && T.ph < s.end; })[0];
     return 'bar ' + (Math.round(T.ph * 100) / 100) + ' · ' + r1((T.ph - 1) * d.secPerBar) + ' s of ' + d.seconds + ' s' + (sh ? ' · shot #' + (sh.i + 1) + ' ' + sh.style + '/' + sh.variant : '');
   }
+  function clock() { var d = T.data, t = Math.max(0, (T.ph - 1) * d.secPerBar), m = Math.floor(t / 60); return m + ':' + ('0' + Math.floor(t % 60)).slice(-2) + '.' + Math.floor((t % 1) * 10) + '  /  ' + Math.floor(d.seconds / 60) + ':' + ('0' + Math.round(d.seconds % 60)).slice(-2); }
   function movePH(bar, free) {
     var d = T.data; T.ph = clamp(free ? bar : snap(bar, 0.25), 1, d.bars + 1);
-    if (!free && playTimer) { clearInterval(playTimer); playTimer = null; var pb = CUR && CUR.el.querySelector('.tl-play'); if (pb) pb.textContent = 'Play'; }
+    if (!free && playTimer) { clearInterval(playTimer); playTimer = null; if (CUR) CUR.el.querySelectorAll('.tl-play').forEach(function (b) { b.textContent = '\u25B6'; b.title = 'Play (Space)'; }); }
     if (!CUR) return;
     var ph = CUR.el.querySelector('.tl-ph'); if (ph) ph.style.left = (LABW + (T.ph - 1) * T.zoom) + 'px';
     var rd = CUR.el.querySelector('.tl-read'); if (rd) rd.textContent = readout();
+    var tm = CUR.el.querySelector('.tl-time'); if (tm) tm.textContent = clock();
     updateViewer();
   }
 
@@ -167,16 +173,26 @@
     fr.src = 'film.html' + (location.search || '');  /* relative: the studio may be mounted at /p/<project>/ */
     document.body.appendChild(fr); return FILM.p;
   }
-  /* run jobs one after another (they share one canvas); a job gets { w, cv } and returns when its frame is drawn */
-  function onFilm(job) {
-    var run = FILM.q.then(function () { return filmFrame(); }).then(job);
-    FILM.q = run.catch(function () {}); return run;
-  }
-  function seekDraw(f, beat, out, ow, oh) {
-    f.w.__film.seek(beat);
-    return new Promise(function (r) { f.w.requestAnimationFrame(function () { f.w.requestAnimationFrame(function () { setTimeout(r, 40); }); }); }).then(function () {
-      out.width = ow; out.height = oh; out.getContext('2d').drawImage(f.cv, 0, 0, ow, oh);
+  /* one worker draws on the shared canvas. The viewer (high priority) always goes before thumbnails, and a newer viewer request replaces an older one. */
+  var Q = { hi: null, lo: [], busy: false };
+  function onFilm(job, high) {
+    return new Promise(function (res, rej) {
+      var it = { job: job, res: res, rej: rej };
+      if (high) { if (Q.hi) Q.hi.res(); Q.hi = it; } else Q.lo.push(it);
+      pump();
     });
+  }
+  function pump() {
+    if (Q.busy) return;
+    var it = Q.hi || Q.lo.shift(); if (!it) return;
+    if (it === Q.hi) Q.hi = null;
+    Q.busy = true;
+    filmFrame().then(it.job).then(it.res, it.rej).then(function () { Q.busy = false; pump(); }, function () { Q.busy = false; pump(); });
+  }
+  function seekDraw(f, beat, out, ow, oh, wait) {
+    var film = f.w.__film, direct = typeof film.drawAt === 'function';   /* drawAt draws one frame at once; older builds fall back to seek and a short wait */
+    var go = direct ? (film.drawAt(beat), Promise.resolve()) : (film.seek(beat), new Promise(function (r) { setTimeout(r, wait || 450); }));
+    return go.then(function () { out.width = ow; out.height = oh; out.getContext('2d').drawImage(f.cv, 0, 0, ow, oh); });
   }
   function shotMid(s) { return (s.start - 1) * 4 + (s.end - s.start) * 4 * 0.55; }
   function loadThumbs() {
@@ -197,12 +213,10 @@
   function barBeat() { return (T.ph - 1) * 4; }
   function updateViewer() {
     if (!VIEW.canvas || !T.data || !T.data.built) return;
-    var my = ++VIEW.tick;
     onFilm(function (f) {
-      if (my !== VIEW.tick) return;   /* a newer playhead position replaced this one */
       var w = Math.min(1280, Math.round((VIEW.canvas.parentNode ? VIEW.canvas.parentNode.clientWidth : 960) * 1.5)) || 960;
-      return seekDraw(f, barBeat(), VIEW.canvas, w, Math.round(w * f.cv.height / f.cv.width));
-    }).catch(function () {});
+      return seekDraw(f, barBeat(), VIEW.canvas, w, Math.round(w * f.cv.height / f.cv.width), 220);
+    }, true).catch(function () {});
   }
   var playTimer = null;
   function togglePlay() {
@@ -300,12 +314,20 @@
       h('span', { class: 'tl-live' + (CUR.ctx.live() ? ' on' : ''), title: 'live: the timeline follows changes an agent makes to spec.json' }), h('span', { class: 'dim', text: 'live' }),
       btn('−', function () { zoomTo(T.zoom / 1.3); }, 'Zoom out'), btn('+', function () { zoomTo(T.zoom * 1.3); }, 'Zoom in'),
       btn('Fit', function () { zoomTo((el.clientWidth - LABW - 24) / d.bars); }, 'Fit the whole film in view'),
-      (function () { var b = btn(playTimer ? 'Pause' : 'Play', togglePlay, 'Play the timeline silently (pictures only; the Preview tab plays with sound)'); b.classList.add('tl-play'); return b; })(), btn('Split (S)', splitAtPlayhead, 'Cut the shot under the playhead in two'), btn('Delete', deleteSelected, 'Delete the selected shot or prompt'), btn('Undo', undo, 'Undo the last timeline edit (Ctrl/Cmd+Z)'),
+      btn('Split (S)', splitAtPlayhead, 'Cut the shot under the playhead in two'), btn('Delete', deleteSelected, 'Delete the selected shot or prompt'), btn('Undo', undo, 'Undo the last timeline edit (Ctrl/Cmd+Z)'),
       h('span', { class: 'tl-read', text: readout() })
     ]);
     var scroll = h('div', { class: 'tl-scroll' }, [body]);
     if (!VIEW.canvas) { VIEW.canvas = document.createElement('canvas'); VIEW.canvas.className = 'tl-vcv'; VIEW.canvas.width = 960; VIEW.canvas.height = 540; VIEW.canvas.setAttribute('aria-label', 'The film at the playhead'); }
-    var viewer = h('div', { class: 'tl-viewer' }, [VIEW.canvas, h('div', { class: 'dim', text: d.built ? 'The frame at the playhead, from the last build. Click the ruler or press Play.' : 'No build yet: build the film (Preview tab) to see its pictures here.' })]);
+    var tb = function (t, f, title, cls) { return h('button', { class: 'btn tl-tb ' + (cls || ''), type: 'button', text: t, title: title, 'aria-label': title, onclick: f }); };
+    var transport = h('div', { class: 'tl-transport' }, [
+      tb('\u23EE', function () { movePH(1); }, 'Back to the start'),
+      tb('\u25C2', function () { movePH(T.ph - 1); }, 'Back one bar'),
+      tb(playTimer ? '\u23F8' : '\u25B6', togglePlay, playTimer ? 'Pause' : 'Play (Space)', 'tl-play tl-big'),
+      tb('\u25B8', function () { movePH(T.ph + 1); }, 'Forward one bar'),
+      tb('\u23ED', function () { movePH(d.bars + 1); }, 'Jump to the end'),
+      h('span', { class: 'tl-time', text: clock() })]);
+    var viewer = h('div', { class: 'tl-viewer' }, [VIEW.canvas, transport, h('div', { class: 'dim', text: d.built ? 'The frame at the playhead, from the last build. Click the ruler or press Play.' : 'No build yet: build the film (Preview tab) to see its pictures here.' })]);
     el.textContent = ''; el.appendChild(viewer); el.appendChild(tools); el.appendChild(scroll);
     updateViewer();
     el.appendChild(h('div', { class: 'tl-msg' + (T.bad ? ' bad' : ''), role: 'status', text: T.msg }));
@@ -320,6 +342,7 @@
     if (mod && (k === 'z' || k === 'Z')) { e.preventDefault(); undo(); }
     else if (!mod && (k === 'Delete' || k === 'Backspace')) { e.preventDefault(); deleteSelected(); }
     else if (!mod && (k === 's' || k === 'S')) { e.preventDefault(); splitAtPlayhead(); }
+    else if (!mod && k === ' ') { e.preventDefault(); togglePlay(); }
     else if (k === 'ArrowLeft' || k === 'ArrowRight') { e.preventDefault(); movePH(T.ph + (k === 'ArrowLeft' ? -1 : 1) * (e.shiftKey ? 1 : 0.25)); }
   }
 

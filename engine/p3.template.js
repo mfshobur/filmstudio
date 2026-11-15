@@ -91,7 +91,7 @@ A.setMusic=function(on){A.music=on;if(A.ok)A.musicOut.gain.setTargetAtTime(on?.4
 A.setVoice=function(on){A.voice=on;if(A.ok)A.vgain.gain.setTargetAtTime(on?1.25:0,A.ctx.currentTime,.1)};
 
 /* ================= CLOCK + FILM LOOP ================= */
-var EXPORTING=false,capShown=-2,playing=false,FORCE=null,rt0=0,lastShot=-1,shotStartBeat=0,promptIdx=0,capIdx=-1,capTimer=null,lastBar=0,idleT=performance.now()/1000;
+var ONCE=false,EXPORTING=false,capShown=-2,playing=false,FORCE=null,rt0=0,lastShot=-1,shotStartBeat=0,promptIdx=0,capIdx=-1,capTimer=null,lastBar=0,idleT=performance.now()/1000;
 function nowBeat(){
   if(FORCE!==null)return FORCE;
   if(!playing)return -1;
@@ -148,7 +148,7 @@ function frame(){
     if(bar!==lastBar){lastBar=bar;$('#tc').textContent=BPM+' BPM · BAR '+Math.min(bar,TOTAL_BARS)}
     if(beat>=bb({{END_BAR}})&&$('#end').classList.contains('gone'))$('#end').classList.remove('gone');
   }
-  requestAnimationFrame(frame);
+  if(!ONCE)requestAnimationFrame(frame);
 }
 
 /* ================= CONTROLS ================= */
@@ -168,7 +168,7 @@ var bM=$('#bMusic'),bV=$('#bVoice');
 bM.addEventListener('click',function(){var on=bM.getAttribute('aria-pressed')!=='true';bM.setAttribute('aria-pressed',on);A.setMusic(on)});
 bV.addEventListener('click',function(){var on=bV.getAttribute('aria-pressed')!=='true';bV.setAttribute('aria-pressed',on);A.setVoice(on)});
 document.addEventListener('visibilitychange',function(){if(!A.ctx)return;if(document.hidden)A.ctx.suspend();else A.ctx.resume()});
-window.__film={setBeat:function(b){EXPORTING=true;FORCE=b},spb:SPB,bars:TOTAL_BARS,errors:function(){return DRAW_ERRS},grab:function(){var x=GRABC.getContext('2d');x.drawImage(cv,0,0,48,27);var d=x.getImageData(0,0,48,27).data,o=[];for(var i=0;i<d.length;i+=4)o.push(d[i]+d[i+1]+d[i+2]);return o},seek:function(b){FORCE=b},free:function(){FORCE=null},vready:function(){return VOB.filter(Boolean).length},shots:SH.length,sceneMs:function(){return {n:SC_MS.n,avg:SC_MS.n?SC_MS.sum/SC_MS.n:0,max:SC_MS.max}},resetMs:function(){SC_MS.n=0;SC_MS.sum=0;SC_MS.max=0},grabN:function(w,h){var q=document.createElement('canvas');q.width=w;q.height=h;var x=q.getContext('2d');x.drawImage(cv,0,0,w,h);var d=x.getImageData(0,0,w,h).data,o=[];for(var i=0;i<d.length;i+=4)o.push(d[i],d[i+1],d[i+2]);return o}};
+window.__film={drawAt:function(b){FORCE=b;ONCE=true;try{frame()}finally{ONCE=false}},setBeat:function(b){EXPORTING=true;FORCE=b},spb:SPB,bars:TOTAL_BARS,errors:function(){return DRAW_ERRS},grab:function(){var x=GRABC.getContext('2d');x.drawImage(cv,0,0,48,27);var d=x.getImageData(0,0,48,27).data,o=[];for(var i=0;i<d.length;i+=4)o.push(d[i]+d[i+1]+d[i+2]);return o},seek:function(b){FORCE=b},free:function(){FORCE=null},vready:function(){return VOB.filter(Boolean).length},shots:SH.length,sceneMs:function(){return {n:SC_MS.n,avg:SC_MS.n?SC_MS.sum/SC_MS.n:0,max:SC_MS.max}},resetMs:function(){SC_MS.n=0;SC_MS.sum=0;SC_MS.max=0},grabN:function(w,h){var q=document.createElement('canvas');q.width=w;q.height=h;var x=q.getContext('2d');x.drawImage(cv,0,0,w,h);var d=x.getImageData(0,0,w,h).data,o=[];for(var i=0;i<d.length;i+=4)o.push(d[i],d[i+1],d[i+2]);return o}};
 try{if(document.fonts&&document.fonts.load){document.fonts.load('italic 90px "Instrument Serif"');document.fonts.load('800 20px "Hanken Grotesk"');document.fonts.load('20px "IBM Plex Mono"')}}catch(e){}
 requestAnimationFrame(frame);
 })();
