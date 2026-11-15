@@ -120,8 +120,8 @@ const HELP = `filmstudio <command> [project-dir] [options]   (all output is JSON
       if (cmd === 'look') {
         if (sub === 'new') { if (!nm) fail('usage: filmstudio look new <name>'); return out({ ok: true, created: T.scaffold(pd, 'look', nm), next: 'Edit it, then use it with scene({ look: \'' + nm + '\' }).' }); }
         const cat = T.lookCatalog(pd);
-        if (sub === 'list' || !sub) return out({ ok: true, looks: Object.values(cat).map(l => ({ name: l.name, desc: l.desc, bright: l.bright, source: l.source })), hint: 'Use one with scene({ look: "name" }). `filmstudio look show <name>` has its palette and guide; `filmstudio guide looks` explains them all.' });
-        if (sub === 'show') { if (!cat[nm]) fail('no look "' + nm + '"', { looks: Object.keys(cat) }); return out(Object.assign({ ok: true }, cat[nm])); }
+        if (sub === 'list' || !sub) return out({ ok: true, looks: Object.values(cat).map(l => ({ name: l.name, aliases: l.aliases && l.aliases.length ? l.aliases : undefined, follows: l.family || undefined, desc: l.desc, bright: l.bright, source: l.source })), hint: 'Use one with scene({ look: "name" }). `filmstudio look show <name>` has its palette and guide; `filmstudio guide looks` explains them all.' });
+        if (sub === 'show') { const l = T.resolveLook(cat, nm); if (!l) fail('no look "' + nm + '"', { looks: Object.keys(cat) }); return out(Object.assign({ ok: true }, l)); }
         fail('usage: filmstudio look <list|show <name>|new <name>>');
       }
       if (cmd === 'rig') { if (sub === 'new') { if (!nm) fail('usage: filmstudio rig new <name>'); return out({ ok: true, created: T.scaffold(pd, 'rig', nm), next: 'Draw the parts, then c.rig(\'' + nm + '\').pose({...}).draw(x, y, scale) in a scene.' }); } if (sub === 'list' || !sub) return out({ ok: true, rigs: require('../src/scenes').listDir(pd, 'rigs') }); fail('usage: filmstudio rig <list|new <name>>'); }

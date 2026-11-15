@@ -161,9 +161,17 @@ function scFx(lk,c,pre){
     if(k.n==='vignette'){gr=g.createRadialGradient(c.cx,c.cy,Math.min(c.W,c.H)*.35,c.cx,c.cy,Math.max(c.W,c.H)*.75);gr.addColorStop(0,'rgba(0,0,0,0)');gr.addColorStop(1,'rgba(0,0,0,'+(k.a!=null?k.a:.5)+')');g.fillStyle=gr;g.fillRect(0,0,c.W,c.H)}
     else if(k.n==='scan'){g.fillStyle='rgba(0,0,0,'+(k.a!=null?k.a:.12)+')';var st=k.step||3;for(var y=0;y<c.H;y+=st)g.fillRect(0,y,c.W,1)}
     else if(k.n==='flicker'){var fl=(scNoise(c.t*(k.rate||9),3,1)-.5)*(k.a!=null?k.a:.12);g.fillStyle=fl>0?'rgba(255,230,180,'+fl+')':'rgba(0,0,0,'+(-fl)+')';g.fillRect(0,0,c.W,c.H)}
+    else if(k.n==='paper'){var nt=scNoiseTile();g.save();g.globalCompositeOperation='multiply';g.globalAlpha=k.a!=null?k.a:.16;g.fillStyle=g.createPattern(nt,'repeat');g.fillRect(0,0,c.W,c.H);g.restore()}
+    else if(k.n==='chroma'){
+      var dx=(k.px||3)*(1+(k.pulse?c.pulse*2:0)),o=scOffscreen('ch0',cv.width,cv.height),og=o.getContext('2d');og.setTransform(1,0,0,1,0,0);og.globalCompositeOperation='copy';og.drawImage(cv,0,0);
+      var t2=scOffscreen('ch1',cv.width,cv.height),tg=t2.getContext('2d');tg.setTransform(1,0,0,1,0,0);
+      [['#ff0000',-dx],['#00ffff',dx]].forEach(function(q){tg.globalCompositeOperation='copy';tg.drawImage(o,0,0);tg.globalCompositeOperation='multiply';tg.fillStyle=q[0];tg.fillRect(0,0,t2.width,t2.height);g.save();g.setTransform(1,0,0,1,0,0);g.globalCompositeOperation='lighter';g.globalAlpha=k.a!=null?k.a:.45;g.drawImage(t2,q[1]*DPR,0);g.restore()});
+    }
     else if(k.n==='tint'){g.globalCompositeOperation=k.mode||'multiply';g.fillStyle=k.c;g.fillRect(0,0,c.W,c.H);g.globalCompositeOperation='source-over'}
   }
 }
+var SC_NOISE_TILE=null;
+function scNoiseTile(){if(!SC_NOISE_TILE){var q=document.createElement('canvas');q.width=q.height=96;var x=q.getContext('2d'),id=x.createImageData(96,96),i,v;for(i=0;i<id.data.length;i+=4){v=150+(scHash(i,7,3)-.5)*100;id.data[i]=id.data[i+1]=id.data[i+2]=v;id.data[i+3]=255}x.putImageData(id,0,0);SC_NOISE_TILE=q}return SC_NOISE_TILE}
 var SC_MS={n:0,sum:0,max:0};
 function scDraw(name){
   var scT0=performance.now(),P=F.params||{},def=scCompile(name),lk=scGetLook(P.look||def.look),c=SC_C,tb=F.p*F.dur,fps=lk.fps||P.fps||def.fps;
@@ -177,7 +185,10 @@ function scDraw(name){
   if(!def._ready){def._ready=1;if(def.setup)def.setup(c)}
   if(lk.bg&&def.bg!==false&&P.bg!==false)lk.bg(c);
   scFx(lk,c,true);
+  var boil=lk.boil||0;if(boil){var bt=Math.floor(c.t*(lk.fps||8));g.save();g.translate((scHash(bt,1,1)-.5)*boil,(scHash(bt,2,1)-.5)*boil);g.rotate((scHash(bt,3,1)-.5)*.004)}
   def.draw(c);
+  if(boil)g.restore();
+  if(pix&&lk.levels){var id=g.getImageData(0,0,off.width,off.height),dd=id.data,L=lk.levels-1,q;for(q=0;q<dd.length;q++){if((q&3)!==3)dd[q]=Math.round(dd[q]/255*L)*255/L}g.putImageData(id,0,0)}
   if(pix){g=saved;g.imageSmoothingEnabled=false;g.drawImage(off,0,0,W,H);g.imageSmoothingEnabled=true}
   reset();scFx(lk,c,false);
   var ms=performance.now()-scT0;SC_MS.n++;SC_MS.sum+=ms;if(ms>SC_MS.max)SC_MS.max=ms;

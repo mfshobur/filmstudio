@@ -133,10 +133,12 @@ async function check(dir, name, opts = {}) {
 
 /* ---------------- looks ---------------- */
 function parseLooks(src) {
-  const out = {}, stub = (n, o) => { out[n] = { name: n, desc: o.desc || '', bright: !!o.bright, pal: o.pal || {}, fx: (o.fx || []).map(x => typeof x === 'string' ? x : x.n), fps: o.fps || null, pixelate: o.pixelate || null, guide: o.guide || null, family: o.family || null }; return o; };
-  try { new Function('scLook', 'look', src)(stub, stub); } catch (e) { out.__error = e.message; }
+  const out = {}, stub = (n, o) => { out[n] = { name: n, desc: o.desc || '', bright: !!o.bright, pal: o.pal || {}, fx: (o.fx || []).map(x => typeof x === 'string' ? x : x.n), fps: o.fps || null, pixelate: o.pixelate || null, guide: o.guide || null, family: o.family || null, aliases: [] }; return o; };
+  try { new Function('scLook', 'look', 'SC_LOOKS', src)(stub, stub, out); } catch (e) { out.__error = e.message; }
+  for (const k of Object.keys(out)) { const v = out[k]; if (k !== '__error' && v && v.name && v.name !== k) { if (out[v.name]) out[v.name].aliases.push(k); delete out[k]; } } // `SC_LOOKS.shadow = SC_LOOKS.wayang` makes an alias
   return out;
 }
+const resolveLook = (cat, name) => cat[name] || Object.values(cat).find(l => (l.aliases || []).includes(name)) || null;
 function lookCatalog(dir) {
   const cat = parseLooks(read(path.join(ROOT, 'engine', 'plooks.js')) || ''); Object.values(cat).forEach(l => { if (l && typeof l === 'object') l.source = 'built-in'; });
   if (dir) listDir(dir, 'looks').forEach(n => { const l = parseLooks(read(path.join(dir, 'looks', n + '.js')) || ''); Object.values(l).forEach(x => { if (x && x.name) { x.source = 'project looks/' + n + '.js'; cat[x.name] = x; } }); });
@@ -171,4 +173,4 @@ function libUse(dir, kind, name, opts = {}) {
   return { wrote: f, assetsCopied: copied, assetsAlreadyThere: skipped };
 }
 
-module.exports = { scaffold, preview, check, lookCatalog, parseLooks, libList, libSave, libUse, libRoot, sampleBeats };
+module.exports = { scaffold, preview, check, lookCatalog, parseLooks, resolveLook, libList, libSave, libUse, libRoot, sampleBeats };
