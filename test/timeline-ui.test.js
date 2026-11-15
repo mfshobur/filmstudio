@@ -3,7 +3,8 @@
 // Real-browser test of the project picker and the timeline (drag, undo, live update, conflict banner).
 // Drives Chrome over the DevTools protocol with Node's built-in WebSocket (Node 22+): no playwright needed.
 // Skips (exit 0) when there is no Chrome/Chromium or no global WebSocket. Set FILMSTUDIO_CHROMIUM to pick a binary,
-// FILMSTUDIO_SHOTS=<dir> to save screenshots.
+// FILMSTUDIO_SHOTS=<dir> to save screenshots. FILMSTUDIO_CDP_WS=<ws://.../devtools/page/ID> attaches to a tab that is already open
+// in a running browser (e.g. Arc with remote debugging) instead of launching Chrome; the test closes nothing it did not open.
 const fs = require('fs'), os = require('os'), path = require('path'), assert = require('assert'), { spawn } = require('child_process');
 const { createStudio } = require('../src/studio');
 const ROOT = path.join(__dirname, '..');
@@ -14,7 +15,8 @@ function findChrome() {
   return c.filter(Boolean).find(p => { try { return fs.statSync(p).isFile(); } catch (e) { return false; } });
 }
 const chrome = findChrome();
-if (typeof WebSocket === 'undefined' || !chrome) { console.log('skipped: needs Node 22+ (global WebSocket) and Chrome or Chromium' + (chrome ? '' : ' (none found; set FILMSTUDIO_CHROMIUM)')); process.exit(0); }
+const attachWs = process.env.FILMSTUDIO_CDP_WS;
+if (typeof WebSocket === 'undefined' || (!chrome && !attachWs)) { console.log('skipped: needs Node 22+ (global WebSocket) and Chrome or Chromium' + (chrome ? '' : ' (none found; set FILMSTUDIO_CHROMIUM)')); process.exit(0); }
 
 const sleep = ms => new Promise(r => setTimeout(r, ms));
 let pass = 0, fail = 0; const t = async (n, f) => { try { await f(); pass++; console.log('ok   ' + n); } catch (e) { fail++; console.log('FAIL ' + n + '\n     ' + String(e && e.message).split('\n').slice(0, 4).join('\n     ')); } };
@@ -29,11 +31,14 @@ function connect(url) {
 }
 
 (async () => {
-  const prof = fs.mkdtempSync(path.join(os.tmpdir(), 'fs-chrome-'));
-  const proc = spawn(chrome, ['--headless=new', '--remote-debugging-port=0', '--user-data-dir=' + prof, '--no-first-run', '--no-default-browser-check', '--disable-gpu', '--mute-audio', 'about:blank'], { stdio: ['ignore', 'ignore', 'pipe'] });
-  const endpoint = await new Promise((res, rej) => { let buf = ''; proc.stderr.on('data', d => { buf += d; const m = /DevTools listening on ws:\/\/([\d.:]+)\//.exec(buf); if (m) res(m[1]); }); proc.on('exit', c => rej(new Error('chrome exited early: ' + c))); setTimeout(() => rej(new Error('chrome did not start')), 20000); });
-  const target = await (await fetch('http://' + endpoint + '/json/new?about:blank', { method: 'PUT' })).json();
-  const c = await connect(target.webSocketDebuggerUrl), errors = [];
+  let proc = null, wsUrl = attachWs;
+  if (!attachWs) {
+    const prof = fs.mkdtempSync(path.join(os.tmpdir(), 'fs-chrome-'));
+    proc = spawn(chrome, ['--headless=new', '--remote-debugging-port=0', '--user-data-dir=' + prof, '--no-first-run', '--no-default-browser-check', '--disable-gpu', '--mute-audio', 'about:blank'], { stdio: ['ignore', 'ignore', 'pipe'] });
+    const endpoint = await new Promise((res, rej) => { let buf = ''; proc.stderr.on('data', d => { buf += d; const m = /DevTools listening on ws:\/\/([\d.:]+)\//.exec(buf); if (m) res(m[1]); }); proc.on('exit', c => rej(new Error('chrome exited early: ' + c))); setTimeout(() => rej(new Error('chrome did not start')), 20000); });
+    wsUrl = (await (await fetch('http://' + endpoint + '/json/new?about:blank', { method: 'PUT' })).json()).webSocketDebuggerUrl;
+  }
+  const c = await connect(wsUrl), errors = [];
   c.on(m => { if (m.method === 'Runtime.exceptionThrown') errors.push(m.params.exceptionDetails.exception ? m.params.exceptionDetails.exception.description : m.params.exceptionDetails.text); if (m.method === 'Runtime.consoleAPICalled' && m.params.type === 'error') errors.push(m.params.args.map(a => a.value || a.description).join(' ')); });
   const netFails = [], reqUrl = new Map(); c.on(m => { if (m.method === 'Network.requestWillBeSent') reqUrl.set(m.params.requestId, m.params.request.method + ' ' + m.params.request.url.replace(/^http:\/\/[^/]+/, '')); if (m.method === 'Network.loadingFailed' && !/favicon/.test(reqUrl.get(m.params.requestId) || '')) netFails.push((reqUrl.get(m.params.requestId) || '?') + ' -> ' + m.params.errorText + (m.params.canceled ? ' (canceled)' : '')); });
   await c.send('Network.enable'); await c.send('Runtime.enable'); await c.send('Page.enable'); await c.send('Emulation.setDeviceMetricsOverride', { width: 1400, height: 900, deviceScaleFactor: 1, mobile: false });
@@ -119,6 +124,6 @@ function connect(url) {
     await ev('(function(){var f=document.querySelector("#newp");f.name.value="made-in-ui";f.length.value="45";f.requestSubmit()})()'); await waitFor('/^\\/p\\/made-in-ui\\/$/.test(location.pathname)&&document.querySelector("#tabs button")', 'new project page');
     const sp = JSON.parse(fs.readFileSync(path.join(wsroot, 'made-in-ui', 'spec.json'), 'utf8')); assert.ok(Math.abs(sp.bars * 240 / sp.bpm - 45) < 3); assert.deepStrictEqual(errors, []);
   });
-  await ws.close(); await st.close(); c.close(); proc.kill();
+  await ws.close(); await st.close(); c.close(); if (proc) proc.kill();
   console.log('\n' + pass + ' passed, ' + fail + ' failed'); process.exit(fail ? 1 : 0);
 })().catch(e => { console.error('FAIL', e.message); process.exit(1); });
