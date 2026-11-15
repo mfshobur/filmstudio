@@ -78,7 +78,7 @@ async function withPage(dir, name, opts, fn) {
     const p = await b.newPage({ viewport: { width: opts.width || 640, height: opts.height || 360 }, deviceScaleFactor: 1 });
     p.on('pageerror', e => errors.push(e.message)); p.on('console', m => { if (m.type() === 'error' && !/fonts|ERR_|Failed to load resource/.test(m.text())) errors.push(m.text()); });
     await p.goto('file://' + path.resolve(file), { waitUntil: 'load' }); await p.waitForTimeout(1200);
-    await p.addStyleTag({ content: '#intro{display:none!important}' });
+    await p.addStyleTag({ content: '#intro,#end,.hud,.bar,#cap,#prompt{display:none!important}' });
     return await fn(p, out, errors, beats);
   } finally { await b.close().catch(() => {}); }
 }

@@ -13,6 +13,9 @@ put('good', "scene({ look: 'plain', draw(c) { c.circle(c.cx + Math.sin(c.t * 2) 
 put('blank', "scene({ look: 'plain', draw(c) {} });");
 put('crash', "scene({ draw(c) { c.circle(c.cx, c.cy, 40, { fill: '#0f0' }); c.nothing.here(); } });");
 put('state', "let n = 0; scene({ draw(c) { n++; c.circle(c.cx + n * 3 % 200, c.cy, 40, { fill: '#0ff' }); } });");
+put('rawctx', "scene({ look: 'plain', draw(c) { c.g.fillStyle = '#f0a'; c.g.fillRect(c.cx - 30, c.cy - 30, 60 + Math.sin(c.t * 3) * 20, 60); c.g.font = '20px serif'; } });");
+put('tokens', "scene({ look: 'wayang', draw(c) { c.clear(c.radial(c.cx, c.cy, 0, c.W * .6, [[0, '@glow'], [1, '@bg2']])); c.glow(c.cx, c.cy, c.u * 20 + Math.sin(c.t * 3) * c.u * 3, '@gold', .9); c.rect(c.cx - 40, c.cy - 40, 80, 80, { fill: c.grad(0, 0, 80, 80, [[0, '@main'], [1, '@accent']]) }); c.text('x', c.cx, c.cy, 30, '@ink'); } });");
+put('badrole', "scene({ look: 'paper', draw(c) { c.circle(c.cx, c.cy, 40, { fill: '@nonexistent' }); } });");
 put('still', "scene({ draw(c) { c.circle(c.cx, c.cy, 60, { fill: c.pal.main }); } });");
 put('puppet', "scene({ look: 'wayang', draw(c) { c.rig('p').pose({ arm: Math.sin(c.t * 3) * 30 }).draw(c.cx, c.H * .9, c.H * .004); } });");
 fs.mkdirSync(path.join(dir, 'libs'));
@@ -24,6 +27,9 @@ fs.writeFileSync(path.join(dir, 'rigs', 'p.js'), "rig('p', { parts: [{ id: 'body
   await t('a blank scene is reported as blank', async () => { const r = await T.check(dir, 'blank'); assert.ok(!r.ok && r.errors.some(e => /blank or one flat colour/.test(e.message)), JSON.stringify(r)); });
   await t('a scene that throws reports the error', async () => { const r = await T.check(dir, 'crash'); assert.ok(!r.ok && r.errors.some(e => /nothing|undefined/.test(e.message)), JSON.stringify(r.errors)); });
   await t('hidden state (the same time drawn differently) is reported', async () => { const r = await T.check(dir, 'state'); assert.ok(!r.ok && r.errors.some(e => /draws differently twice/.test(e.message)), JSON.stringify(r.errors)); });
+  await t('c.g is the raw 2D context (documented, so it must exist)', async () => { const r = await T.check(dir, 'rawctx'); assert.ok(r.ok, JSON.stringify(r.errors)); });
+  await t('@role colours work in gradients and glow, not only in fills', async () => { const r = await T.check(dir, 'tokens'); assert.ok(r.ok, JSON.stringify(r.errors)); });
+  await t('an undefined @role is a named error, not a silent wrong colour', async () => { const r = await T.check(dir, 'badrole'); assert.ok(!r.ok && r.errors.some(e => /colour role '@nonexistent'.*'paper'.*it has:/.test(e.message)), JSON.stringify(r.errors)); });
   await t('a frozen scene gets a warning, not an error', async () => { const r = await T.check(dir, 'still'); assert.ok(r.ok && r.warnings.some(w => /does not move/.test(w.message)), JSON.stringify(r)); });
   await t('the kit features (libs, colour tokens, trace, clip, measure, look panels) draw and are deterministic', async () => { const r = await T.check(dir, 'kit'); assert.ok(r.ok, JSON.stringify(r)); assert.strictEqual(r.stats.determinismDiff, 0); assert.ok(r.stats.motion > 0.001, JSON.stringify(r.stats)); });
   await t('a puppet rig with perforations draws, moves and is deterministic', async () => { const r = await T.check(dir, 'puppet'); assert.ok(r.ok, JSON.stringify(r.errors)); assert.strictEqual(r.stats.determinismDiff, 0); assert.ok(r.stats.motion > 0.001); });

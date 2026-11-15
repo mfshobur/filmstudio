@@ -54,7 +54,7 @@ scLook('paper',{desc:'Layered paper cut-out: warm sky, a sun disc, hills stacked
   bg:function(c){c.clear(c.grad(0,0,0,c.H,[[0,'#f9dcb0'],[1,c.pal.bg2]]));scLkSun(c,c.W*.68,c.H*.34,c.u*13,'#fff6d8','#f9d27a');scLkHills(c,[{y:.62,amp:.05,freq:2,seed:1,col:'#f08a64',shadow:1},{y:.72,amp:.06,freq:2.6,seed:2,col:'#2a9d8f',shadow:1},{y:.85,amp:.05,freq:3.2,seed:3,col:'#264653',shadow:1}])}});
 
 scLook('synth',{desc:'Synthwave: purple-pink sky, striped sun, mountain silhouettes, a neon perspective grid scrolling toward you.',family:'synth',bright:0,
-  pal:{bg:'#1a0f2b',bg2:'#403363',ink:'#ffe9f5',main:'#d350ad',accent:'#6be3ff',hi:'#f0cea1',violet:'#732a91'},fx:[{n:'vignette',a:.45}],
+  pal:{bg:'#1a0f2b',bg2:'#403363',ink:'#ffe9f5',main:'#d350ad',accent:'#6be3ff',soft:'#8a6fb0',hi:'#f0cea1',violet:'#732a91'},fx:[{n:'vignette',a:.45}],
   guide:'Night gradient from violet to magenta, a big sun split by dark horizontal bars, black mountain triangles on the horizon, then a magenta grid floor with cyan highlights moving toward the camera. Neon outlines glow (draw each line twice, wide and faint, then thin and bright). Motion is steady forward travel at a constant speed.',
   bg:function(c){var hy=c.H*.58;c.clear(c.grad(0,0,0,hy,[[0,c.pal.bg],[.6,c.pal.violet],[1,c.pal.main]]));scLkSun(c,c.cx,hy-c.u*6,c.u*17,'#f0cea1','#d350ad');for(var i=0;i<6;i++)c.rect(c.cx-c.u*18,hy-c.u*14+i*c.u*3.4,c.u*36,c.u*(.5+i*.35),{fill:c.pal.bg});c.poly([[0,hy],[c.W*.18,hy-c.u*7],[c.W*.3,hy],[c.W*.7,hy],[c.W*.85,hy-c.u*9],[c.W,hy]],{fill:'#1a0f2b'});c.rect(0,hy,c.W,c.H-hy,{fill:'#1a0f2b'});scLkFloor(c,hy,c.pal.main,12,14,.5)}});
 
@@ -86,7 +86,7 @@ scLook('pixel',{desc:'Pixel art: chunky low-resolution pixels, a limited palette
   bg:function(c){c.clear(c.grad(0,0,0,c.H,[[0,'#26405f'],[1,c.pal.bg]]));c.rect(0,c.H*.82,c.W,c.H*.18,{fill:'#12a05a'});c.rect(0,c.H*.82,c.W,c.u*1.6,{fill:'#7ae582'})}});
 
 scLook('glitch',{desc:'Digital glitch: dark violet field, RGB channel splitting, scanlines, tearing and static on beats.',family:'glitch',bright:0,
-  pal:{bg:'#110b1a',bg2:'#251e3a',ink:'#f5efff',main:'#d9a065',accent:'#a1376a',violet:'#4a1b5d',cyan:'#4b697f'},fx:[{n:'chroma',px:3,pulse:1,a:.5},{n:'scan',a:.16,step:3},{n:'flicker',a:.05,rate:13}],
+  pal:{bg:'#110b1a',bg2:'#251e3a',ink:'#f5efff',main:'#d9a065',accent:'#a1376a',soft:'#6b5a8a',violet:'#4a1b5d',cyan:'#4b697f'},fx:[{n:'chroma',px:3,pulse:1,a:.5},{n:'scan',a:.16,step:3},{n:'flicker',a:.05,rate:13}],
   guide:'A clean image that keeps failing. Draw the subject normally, then break it on the beat: horizontal slices shifted sideways (use c.pulse to trigger), colour channels split (the chroma effect does this), scanlines, a block of static. Use short bursts, then go clean again; constant glitch is just noise. Text is mono, uppercase, with a stuttering cursor.',
   bg:function(c){c.clear(c.grad(0,0,0,c.H,[[0,c.pal.bg2],[1,c.pal.bg]]))}});
 
@@ -106,7 +106,7 @@ scLook('gen',{desc:'Generative abstract: dark field, flowing lines and soft blob
   bg:function(c){c.clear(c.grad(0,0,0,c.H,[[0,c.pal.bg2],[1,c.pal.bg]]))}});
 
 scLook('vapor',{desc:'Vaporwave: pink-to-blue gradient sky, a striped sun, a checkered floor, retro windows and palm silhouettes.',family:'vapor',bright:0,
-  pal:{bg:'#7b4a8f',bg2:'#558cdc',ink:'#ffffff',main:'#ff71ce',accent:'#01cdfe',mint:'#05ffa1',violet:'#b967ff',yellow:'#fffb96'},fx:[{n:'scan',a:.07,step:3}],
+  pal:{bg:'#7b4a8f',bg2:'#558cdc',ink:'#ffffff',main:'#ff71ce',accent:'#01cdfe',soft:'#e4beca',mint:'#05ffa1',violet:'#b967ff',yellow:'#fffb96'},fx:[{n:'scan',a:.07,step:3}],
   guide:'Pastel neon: hot pink, cyan, mint, violet. A pink-violet gradient sky, a pale yellow sun, a magenta-cyan checkered floor receding to the horizon. Retro desktop windows (grey bevelled title bars, tiny dialog text) float in the sky. Slow drifting motion; text in a wide spaced sans. Nostalgia, not irony.',
   bg:function(c){var hy=c.H*.6;c.clear(c.grad(0,0,0,hy,[[0,c.pal.violet],[1,c.pal.main]]));scLkSun(c,c.cx,hy-c.u*8,c.u*14,'#fffb96','#ff71ce');c.rect(0,hy,c.W,c.H-hy,{fill:'#2b1a5e'});for(var i=0;i<14;i++){var u=i/14,y=hy+(c.H-hy)*u*u;c.line(0,y,c.W,y,{stroke:'#01cdfe',lw:1+u*2,alpha:.7})}for(i=-12;i<=12;i++)c.line(c.cx+i*c.W*.02,hy,c.cx+i*c.W*.3,c.H,{stroke:'#ff71ce',lw:1.3,alpha:.8})}});
 

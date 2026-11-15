@@ -39,7 +39,12 @@ function scTween(t,keys,ease){
 function scP2D(d){return d instanceof Path2D?d:(SC_PATHS[d]||(SC_PATHS[d]=new Path2D(d)))}
 function scFont(f){return f==='serif'?SERIF:f==='sans'?SANS:f==='mono'||!f?MONO:f}
 /* paint the current path (or a Path2D) with an options object: {fill,stroke,lw,alpha,blend,dash,rule,shadow:[color,blur,dx,dy]} */
-function scCol(v){return(typeof v==='string'&&v.charAt(0)==='@')?((SC_C.pal&&SC_C.pal[v.slice(1)])||'#f0f'):v}
+function scCol(v){
+  if(typeof v!=='string'||v.charAt(0)!=='@')return v;
+  var r=v.slice(1),col=SC_C.pal&&SC_C.pal[r];
+  if(!col)throw new Error("colour role '@"+r+"' is not defined in the look '"+(SC_C.look&&SC_C.look.name)+"' (it has: "+Object.keys(SC_C.pal||{}).join(', ')+"). Use a role it has, or a plain colour.");
+  return col;
+}
 function scPaint(path,o){
   o=o||{};var a0=g.globalAlpha,c0=g.globalCompositeOperation;
   if(o.alpha!=null)g.globalAlpha=a0*o.alpha;if(o.blend)g.globalCompositeOperation=o.blend;
@@ -126,9 +131,9 @@ function scBuildCtx(){
   c.poly=function(pts,o,closed){g.beginPath();for(var i=0;i<pts.length;i++){if(i)g.lineTo(pts[i][0],pts[i][1]);else g.moveTo(pts[i][0],pts[i][1])}if(closed!==false)g.closePath();scPaint(null,o)};
   c.line=function(x1,y1,x2,y2,o){g.beginPath();g.moveTo(x1,y1);g.lineTo(x2,y2);scPaint(null,Object.assign({stroke:'#fff'},o||{}))};
   c.curve=function(pts,o){g.beginPath();g.moveTo(pts[0][0],pts[0][1]);for(var i=1;i<pts.length-1;i++){var mx=(pts[i][0]+pts[i+1][0])/2,my=(pts[i][1]+pts[i+1][1])/2;g.quadraticCurveTo(pts[i][0],pts[i][1],mx,my)}var l=pts[pts.length-1];g.lineTo(l[0],l[1]);scPaint(null,Object.assign({stroke:'#fff'},o||{}))};
-  c.grad=function(x1,y1,x2,y2,stops){var gr=g.createLinearGradient(x1,y1,x2,y2);stops.forEach(function(s){gr.addColorStop(s[0],s[1])});return gr};
-  c.radial=function(x,y,r0,r1,stops){var gr=g.createRadialGradient(x,y,r0,x,y,r1);stops.forEach(function(s){gr.addColorStop(s[0],s[1])});return gr};
-  c.glow=function(x,y,r,col,a){var gr=g.createRadialGradient(x,y,0,x,y,r);gr.addColorStop(0,col);gr.addColorStop(1,'rgba(0,0,0,0)');var a0=g.globalAlpha;g.globalAlpha=a0*(a==null?1:a);g.fillStyle=gr;g.globalCompositeOperation='lighter';g.fillRect(x-r,y-r,r*2,r*2);g.globalCompositeOperation='source-over';g.globalAlpha=a0};
+  c.grad=function(x1,y1,x2,y2,stops){var gr=g.createLinearGradient(x1,y1,x2,y2);stops.forEach(function(s){gr.addColorStop(s[0],scCol(s[1]))});return gr};
+  c.radial=function(x,y,r0,r1,stops){var gr=g.createRadialGradient(x,y,r0,x,y,r1);stops.forEach(function(s){gr.addColorStop(s[0],scCol(s[1]))});return gr};
+  c.glow=function(x,y,r,col,a){var gr=g.createRadialGradient(x,y,0,x,y,r);gr.addColorStop(0,scCol(col));gr.addColorStop(1,'rgba(0,0,0,0)');var a0=g.globalAlpha;g.globalAlpha=a0*(a==null?1:a);g.fillStyle=gr;g.globalCompositeOperation='lighter';g.fillRect(x-r,y-r,r*2,r*2);g.globalCompositeOperation='source-over';g.globalAlpha=a0};
   c.text=function(s,x,y,size,col,align,font,weight){txt(String(s),x,y,size,scCol(col||'@ink'),align||'center',scFont(font),weight)};
   c.type=function(s,t0,cps){s=String(s);return s.slice(0,Math.max(0,Math.min(s.length,Math.floor((c.t-(t0||0))*(cps||14)))))};
   c.at=scAt;
@@ -206,7 +211,7 @@ function scDraw(name){
   c.cam={x:0,y:0,z:1,r:0};
   var pix=lk.pixelate>1,saved=g,off=null;
   if(pix){var kx=lk.pixelate;off=scOffscreen('pix',Math.max(8,Math.round(W/kx)),Math.max(8,Math.round(H/kx)));g=off.getContext('2d');g.setTransform(off.width/W,0,0,off.height/H,0,0);g.imageSmoothingEnabled=false}
-  reset();
+  reset();c.g=g;
   if(!def._ready){def._ready=1;if(def.setup)def.setup(c)}
   if(lk.bg&&def.bg!==false&&P.bg!==false)lk.bg(c);
   scFx(lk,c,true);

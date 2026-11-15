@@ -47,7 +47,7 @@ The file runs as a function body with `scene`, `rig`, `look`, `kit` and `c` in s
 - `c.params` the shot's params; `c.look`, `c.pal` the look and its colours; `c.name` the scene name.
 
 ## The drawing kit (everything is on `c`)
-Colours anywhere a colour is expected: any CSS colour, a gradient, or `'@role'` for the look's palette (`'@main'`, `'@ink'`, `'@accent'`, `'@soft'`, `'@gold'`...; `filmstudio look show <name>` lists the roles), so a scene recolours itself when the look changes. Style options: `{ fill, stroke, lw, alpha, blend, dash, rule, shadow: [color, blur, dx, dy] }`.
+Colours anywhere a colour is expected: any CSS colour, a gradient, or `'@role'` for the look's palette (`'@main'`, `'@ink'`, `'@accent'`, `'@soft'`, `'@gold'`...; `filmstudio look show <name>` lists the roles), so a scene recolours itself when the look changes. Every look defines the core roles `bg`, `bg2`, `ink`, `main`, `accent`, `soft`: use those when the scene must work in any look. A role the look does not define (`'@red'` in a look without red) is a draw error that names it, not a silent wrong colour. Style options: `{ fill, stroke, lw, alpha, blend, dash, rule, shadow: [color, blur, dx, dy] }`.
 
 | need | call |
 |---|---|

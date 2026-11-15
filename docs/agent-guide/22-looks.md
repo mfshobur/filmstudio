@@ -97,7 +97,7 @@ Layered paper cut-out: warm sky, a sun disc, hills stacked like cut paper with s
 ## `synth`
 Synthwave: purple-pink sky, striped sun, mountain silhouettes, a neon perspective grid scrolling toward you.
 
-- Palette (`c.pal.<role>`): `bg` #1a0f2b, `bg2` #403363, `ink` #ffe9f5, `main` #d350ad, `accent` #6be3ff, `hi` #f0cea1, `violet` #732a91
+- Palette (`c.pal.<role>`): `bg` #1a0f2b, `bg2` #403363, `ink` #ffe9f5, `main` #d350ad, `accent` #6be3ff, `soft` #8a6fb0, `hi` #f0cea1, `violet` #732a91
 - Effects: `vignette`
 - How to draw in it: Night gradient from violet to magenta, a big sun split by dark horizontal bars, black mountain triangles on the horizon, then a magenta grid floor with cyan highlights moving toward the camera. Neon outlines glow (draw each line twice, wide and faint, then thin and bright). Motion is steady forward travel at a constant speed.
 
@@ -132,7 +132,7 @@ Pixel art: chunky low-resolution pixels, a limited palette, hard edges, 8-bit te
 ## `glitch`
 Digital glitch: dark violet field, RGB channel splitting, scanlines, tearing and static on beats.
 
-- Palette (`c.pal.<role>`): `bg` #110b1a, `bg2` #251e3a, `ink` #f5efff, `main` #d9a065, `accent` #a1376a, `violet` #4a1b5d, `cyan` #4b697f
+- Palette (`c.pal.<role>`): `bg` #110b1a, `bg2` #251e3a, `ink` #f5efff, `main` #d9a065, `accent` #a1376a, `soft` #6b5a8a, `violet` #4a1b5d, `cyan` #4b697f
 - Effects: `chroma`, `scan`, `flicker`
 - How to draw in it: A clean image that keeps failing. Draw the subject normally, then break it on the beat: horizontal slices shifted sideways (use c.pulse to trigger), colour channels split (the chroma effect does this), scanlines, a block of static. Use short bursts, then go clean again; constant glitch is just noise. Text is mono, uppercase, with a stuttering cursor.
 
@@ -160,7 +160,7 @@ Generative abstract: dark field, flowing lines and soft blobs in muted teal, ros
 ## `vapor`
 Vaporwave: pink-to-blue gradient sky, a striped sun, a checkered floor, retro windows and palm silhouettes.
 
-- Palette (`c.pal.<role>`): `bg` #7b4a8f, `bg2` #558cdc, `ink` #ffffff, `main` #ff71ce, `accent` #01cdfe, `mint` #05ffa1, `violet` #b967ff, `yellow` #fffb96
+- Palette (`c.pal.<role>`): `bg` #7b4a8f, `bg2` #558cdc, `ink` #ffffff, `main` #ff71ce, `accent` #01cdfe, `soft` #e4beca, `mint` #05ffa1, `violet` #b967ff, `yellow` #fffb96
 - Effects: `scan`
 - How to draw in it: Pastel neon: hot pink, cyan, mint, violet. A pink-violet gradient sky, a pale yellow sun, a magenta-cyan checkered floor receding to the horizon. Retro desktop windows (grey bevelled title bars, tiny dialog text) float in the sky. Slow drifting motion; text in a wide spaced sans. Nostalgia, not irony.
 
