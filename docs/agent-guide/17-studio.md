@@ -25,6 +25,7 @@ Tell the user the URL it prints. The server listens on localhost only. To reach 
 - **Preview**: build and play `film.html` in the page.
 - **Review**: the user writes notes (optionally tied to a shot). They land in `feedback.json`.
 - **Timeline**: a multi-track view (music, video shots, narration, prompts) with a playhead and zoom. Drag the handle between two shots to retime the cut, drag narration lines and prompts, `S` splits the shot under the playhead, `Delete` removes the selected shot or prompt, `Ctrl/Cmd+Z` undoes. It is live: when you change `spec.json` the page redraws within about 2 seconds. Narration lines can only move between their neighbours (voice clips are matched to lines by position). Dashed narration blocks have an estimated length until `voice` measures the clips.
+- **Scenes**: every scene in `scenes/` with its lint status, a live preview you can scrub, a look picker and the source. It refreshes by itself when an agent edits a scene, rig, lib or look file (about 2 seconds). Edit the files in your editor or ask the agent; the tab is for watching.
 - **Status**: audio check, per-shot review, MP4 export, with logs.
 
 ## What you do

@@ -7,7 +7,7 @@ You are an AI agent using `filmstudio` to make a short generated film (procedura
 2. **Create the project:** `filmstudio new my-film` gives a valid starter `spec.json` (shots, no narration) to edit; `--example the-only-limit` copies a finished film.
 3. **Write `brief.json`** from what the user said (title, idea, audience, length, tone, avoid, styles, voice).
 4. **Write `treatment.md`:** 5 to 10 lines: hook, build, turn, payoff, last image. Pick the message first.
-5. **Write the storyboard into `spec.json`** (see `guide storyboard`): shots, narration lines with start times, prompts. Use the style grammar to choose styles.
+5. **Write the script and storyboard into `spec.json`** (see `guide storyboard`): narration lines with start times, prompts, and one shot per beat of the script. **Draw each beat as a scene** (`guide scenes`): `filmstudio scene new <name> --look <look>`, write `draw(c)`, `filmstudio scene preview <name>` and LOOK at the strip, `filmstudio scene check <name>`. Pick looks (style guides) from the story (`guide looks`). Use a built-in style (`guide style-grammar`) only for an abstract moment where a ready-made picture is right.
 6. **Validate:** `filmstudio validate`. Fix every error; each has a `fix` hint. Warnings are advice.
 7. **Voice:** `filmstudio voice` (default provider kokoro), then `filmstudio voice-check` (fix any flagged clip), then `validate` again, because real clip lengths can overlap.
 8. **Build and review:** `filmstudio build`, then `filmstudio review` and LOOK at `build/review/sheet*.png` (see `guide review`). Fix what looks wrong and rebuild.

@@ -6,7 +6,7 @@ filmstudio is a command-line program with JSON output and a project folder, so a
 Run `node <clone>/bin/filmstudio.js <command>` (or `filmstudio <command>` if you linked it). Read `AGENTS.md`, then `filmstudio guide all`.
 
 ## Option B: MCP server
-`filmstudio mcp [--root <workspace>]` runs an MCP server on stdio. It offers 12 tools (`filmstudio_new`, `_list`, `_validate`, `_build`, `_voice`, `_voice_check`, `_review`, `_audio_check`, `_export`, `_styles`, `_guide`, `_doctor`) and the whole guide as resources (`filmstudio://guide/<topic>`). Project paths are confined to `--root` (default: the folder the server starts in); anything outside it is refused.
+`filmstudio mcp [--root <workspace>]` runs an MCP server on stdio. It offers 19 tools (`filmstudio_new`, `_list`, `_scene_new`, `_scene_list`, `_scene_preview` (returns the strip as an image), `_scene_check`, `_look_list`, `_look_show`, `_library`, `_validate`, `_build`, `_voice`, `_voice_check`, `_review`, `_audio_check`, `_export`, `_styles`, `_guide`, `_doctor`) and the whole guide as resources (`filmstudio://guide/<topic>`). Project paths are confined to `--root` (default: the folder the server starts in); anything outside it is refused.
 
 Verified: Claude Code (non-interactive run with `--mcp-config`) started the server, called `filmstudio_styles` and got the correct list. The other registrations below are from memory of those tools' formats; check their current docs, because the file formats change between versions.
 - **Claude Code:** `claude mcp add filmstudio -- node /path/to/filmstudio/bin/filmstudio.js mcp --root /path/to/workspace`

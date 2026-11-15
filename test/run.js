@@ -112,7 +112,7 @@ t('list: --root and FILMSTUDIO_ROOT pick the workspace; only folders with spec.j
 t('guide explain-a-codebase exists and every style/variant it names is real', () => {
   const g = fs.readFileSync(path.join(ROOT, 'docs', 'agent-guide', '19-explain-a-codebase.md'), 'utf8');
   assert.ok(cli('guide', 'explain-a-codebase').out.includes('Explain a project or codebase'));
-  const refs = [...g.matchAll(/`([a-z]+)\/([a-z0-9]+)`/g)]; assert.ok(refs.length > 10);
+  const refs = [...g.matchAll(/`([a-z]+)\/([a-z0-9]+)`/g)]; assert.ok(refs.length > 5);
   refs.forEach(([, s, v]) => { assert.ok(STYLES[s], 'unknown style ' + s); assert.ok(STYLES[s].variants.includes(v), 'unknown variant ' + s + '/' + v); });
 });
 console.log('\n' + pass + ' passed, ' + fail + ' failed'); process.exit(fail ? 1 : 0);

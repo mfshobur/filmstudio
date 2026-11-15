@@ -12,8 +12,10 @@ README, the entry point, the directory layout, and the one flow you are explaini
 ## 2. One message, 3 to 5 concepts
 Write the one sentence the viewer should leave with (this is `treatment.md`'s payoff). Then pick 3 to 5 concepts that build to it: the problem, the idea, the parts, how they connect, the result. About 2 to 4 bars per concept at 128 BPM.
 
-## 3. Map concepts to shots
-Change style when the idea changes (see `guide style-grammar`). What works for software:
+## 3. Draw a scene for each concept
+Each concept gets a scene you draw (`guide scenes`): a request travelling through boxes and arrows (`c.rrect`, `c.curve`, `c.trace`, dots along a path from `c.each`), a terminal typing a command (`c.type` in mono), a before/after, a counter. Pick one look for the film (`filmstudio look list`; `ink`, `board` or `math` suit explanations) so the scenes belong together, and draw the thing the narration names, not a stand-in. Put shared UI pieces (a window frame, a button, a code panel) in `libs/` and reuse them.
+
+For an abstract moment, a ready-made built-in style can stand in (`guide style-grammar`). What works for software:
 
 | You want to show | Use |
 |---|---|

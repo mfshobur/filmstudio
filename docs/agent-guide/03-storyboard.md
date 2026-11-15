@@ -46,6 +46,9 @@ Changing only `bpm` (with bars 46) still works too; the table below uses that.
 - `prompts[]`: `bar` plus `beat` (beats after the bar starts) set when the typed text appears. `big:true` centres it large; `hide:true` removes the current one. Optional.
 - `endCardBar`: bar at which the "Watch again" end card fades in; use `bars - 1.4` (44.6).
 
+### Scenes: a shot you draw yourself
+`[startBar, endBar, "scene", "<name>", { "look": "ink" }]` runs `scenes/<name>.js` (`filmstudio guide scenes`). Use one scene per beat of the narration, so the picture shows what the words say. The params object is optional and is passed to the scene as `c.params`; `look` overrides the scene's own look for that shot. The pacing rules below apply to scenes too, and the same scene may appear several times (for example in different looks). `validate` checks the file exists, lints it, and checks the assets it names; `filmstudio scene check` renders it.
+
 ### meta fields (all text shown on the intro and end screens)
 | field | shown where |
 |---|---|

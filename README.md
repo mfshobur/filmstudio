@@ -1,6 +1,6 @@
 # filmstudio
 
-You describe a short film to an AI coding agent. The agent uses filmstudio to make it: it writes a storyboard, records the narration, builds the film, takes screenshots of every shot to check them, and measures the audio.
+You describe a short film to an AI coding agent. The agent uses filmstudio to make it: it writes the script, **draws a scene for every beat of it** in the visual style you want (wayang shadow puppets, ink wash, paper cut-out, clay, pixel art...), records the narration, builds the film, looks at screenshots of every shot to check them, and measures the audio.
 
 The result is one HTML file. Open it in a browser and it plays: animated scenes cut to a score that is generated live in the page, with a voice reading the narration. If you need a video file, `export` renders an MP4 (slow on small machines, but it resumes if it is interrupted).
 
@@ -8,9 +8,21 @@ I started this to make one film, "The Only Limit" (it's in `examples/`), and the
 
 ## What it can and can't do
 
-It draws everything itself with canvas graphics. That means flat or glowing 2D scenes, simple 3D charts and shapes, paper-cut and isometric looks, a robot mascot. It cannot make photos, real people, or a specific product. If you need those, this is the wrong tool.
+It draws everything itself with canvas graphics: 2D scenes made of shapes, paths, gradients, light and text, puppets with jointed parts, simple 3D charts. It cannot make photos, real people, or a specific product. If you need those, this is the wrong tool.
 
-Right now there are thirty visual styles, with a few variants of each. A picture of every variant is in [docs/gallery](docs/gallery/README.md).
+### Scenes and looks: the agent draws; the styles are style guides
+The point of the tool is that an agent can **define a custom scene for each beat of a script**. If the narration is about a rabbit crossing a bridge, the agent writes `scenes/rabbit-bridge.js`: it draws the rabbit and the bridge, with a rig of jointed parts for the rabbit, in a *look* such as `wayang`.
+
+```
+filmstudio scene new rabbit-bridge --look wayang   # a working starter scene
+filmstudio scene preview rabbit-bridge             # frames and a strip the agent looks at
+filmstudio scene check rabbit-bridge               # errors, blank or frozen scenes, determinism, speed
+```
+
+A **look** is a style guide in code (palette, background, effects, motion feel) taken from the built-in styles: 29 of them, from `atom` and `ink` to `wayang`, `clay`, `pixel` and `vapor` (`filmstudio look list`, [the guide](docs/agent-guide/22-looks.md)). Scenes are code, so they are checked: drawing must depend only on time (preview, scrubbing and MP4 export give identical frames) and may not touch the network or the page. The studio's Scenes tab plays them live while the agent edits. Scenes, puppet rigs and looks can be saved to a shared library and reused across films. Start with `filmstudio guide scenes`.
+
+### Built-in styles
+There are also thirty ready-made styles with a few variants each. They are finished abstract pictures (a galaxy, a city of bars, a terminal): fine where an abstract visual is right for a beat, but they know nothing about your story. A picture of every variant is in [docs/gallery](docs/gallery/README.md).
 
 | style | what it looks like |
 |---|---|
@@ -147,6 +159,8 @@ All commands print JSON.
 | command | does |
 |---|---|
 | `new <dir> [--example name]` | create a project folder |
+| `scene new\|preview\|check\|list` | write, look at and test the scenes you draw for each beat (`rig new`, `lib new`, `look list\|show\|new` for puppets, shared code and style guides) |
+| `library list\|save\|use` | keep scenes, rigs, looks and libs for reuse across films (`~/.filmstudio/library`) |
 | `validate` | check `spec.json` |
 | `voice` | generate narration with Kokoro, or import your own audio (`--provider file`) |
 | `export` | render `build/film.mp4` (frames from the real engine, offline-mixed audio); `--fps`, `--size`, `--from-bar/--to-bar` |
@@ -156,7 +170,7 @@ All commands print JSON.
 | `audio-check` | render the score offline and report loudness, clipping, dynamics |
 | `list` | list the projects in your workspace folder (default `~/filmstudio-projects`) |
 | `serve` | open a local web page: a project picker for the workspace, and per project an editor for the storyboard, narration, preview and notes |
-| `mcp` | run an MCP server (12 tools, the guide as resources) for agent tools that prefer native tool calls |
+| `mcp` | run an MCP server (19 tools, the guide as resources) for agent tools that prefer native tool calls |
 | `length <seconds>` | suggest `bars` and `bpm` for a target film length |
 | `install-skill` | install the Claude Code skill; print MCP and `AGENTS.md` snippets for use from another repo |
 | `doctor` | check this machine |

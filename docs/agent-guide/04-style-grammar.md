@@ -1,4 +1,6 @@
-# 04 Style grammar: choose styles by story function
+# 04 Built-in styles: ready-made abstract pictures
+
+**These are finished pictures, not a menu for your story.** They know nothing about your script: `atom/spark` is a glowing atom whatever the narration says. For the beats of a script, **draw a scene** (`guide scenes`) in a look (`guide looks`); each look here is the style guide one of these styles was made from. Reach for a built-in style only when an abstract picture is right for the beat (a galaxy for "the universe", rising bars for "growth"), and never to fill a film with pictures that do not show what the narration says.
 
 Run `filmstudio styles` for the live list. Rule: **change style when the idea changes**; keep one style when elaborating.
 
