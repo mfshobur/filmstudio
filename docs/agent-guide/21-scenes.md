@@ -83,7 +83,7 @@ Colours anywhere a colour is expected: any CSS colour, a gradient, or `'@role'` 
 - **A film in several aspect ratios:** compute from `c.W`/`c.H`, or `c.fit` a fixed drawing.
 
 ## Keep the picture clean (the finish)
-A film made of scenes you draw gets a **clean finish** by default: crisp text, almost no grain (2%), no bloom or light streaks, a barely-there vignette (looks' vignettes scaled to 20%) and plain hard cuts. Films made of built-in styles keep the older **cinematic** finish (moving grain, strong glow, light streaks, a zoom punch, glitch slices and a white flash at every cut). Tune either in `spec.json`:
+A film made of scenes you draw gets a **clean finish** by default: crisp text, almost no grain (2%), no bloom or light streaks, no page-wide vignette and the looks' own vignettes scaled to 10% and plain hard cuts. Films made of built-in styles keep the older **cinematic** finish (moving grain, strong glow, light streaks, a zoom punch, glitch slices and a white flash at every cut). Tune either in `spec.json`:
 ```json
 "finish": { "preset": "clean", "grain": 1, "bloom": 1, "streak": 1, "vignette": 1, "cuts": 1 }
 ```

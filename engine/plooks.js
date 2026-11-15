@@ -5,6 +5,9 @@
    bg(c) is painted first, its fx run after. The looks follow the built-in styles (palettes measured from the gallery images) but
    they are guides, not subjects: nothing here draws a rabbit, a robot or a city; the scene does, in this look.
    Keys: desc, family (the built-in style it follows), bright (1 for light backgrounds), pal, fx, fps, boil, pixelate, levels, guide. */
+/* look backgrounds that darken toward the edges are a vignette: blend the edge colour toward the centre colour by the film's finish.vignette (1 = as designed, near 0 = flat) */
+function scMixHex(a,b,t){var ok=function(h){return/^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.test(String(h))},p=function(h){h=String(h).replace('#','');if(h.length===3)h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2];return[parseInt(h.slice(0,2),16),parseInt(h.slice(2,4),16),parseInt(h.slice(4,6),16)]};if(!ok(a)||!ok(b))return b;var x=p(a),y=p(b),m=function(i){return Math.round(x[i]+(y[i]-x[i])*t)};return'rgb('+m(0)+','+m(1)+','+m(2)+')'}
+function scBgR(c,cx,cy,r,a,b){var k=typeof FIN_VIG==='number'?Math.min(1,FIN_VIG):1;c.clear(c.radial(cx,cy,0,r,[[0,a],[1,scMixHex(a,b,k)]]))}
 function scLkStars(c,n,seed,col,size,tw){c.each(n,seed,function(i,r){var x=r()*c.W,y=r()*c.H*.85,t=.45+.55*Math.sin(c.t*(1+r()*3)+r()*6);c.circle(x,y,Math.max(.6,c.u*(size||.18)*(.5+r())),{fill:col,alpha:(tw===false?.8:t)*.85})})}
 function scLkGrid(c,step,col,lw){for(var x=0;x<=c.W;x+=step)c.line(x,0,x,c.H,{stroke:col,lw:lw||1});for(var y=0;y<=c.H;y+=step)c.line(0,y,c.W,y,{stroke:col,lw:lw||1})}
 function scLkHills(c,layers){layers.forEach(function(L,li){var pts=[[0,c.H]],x,y,n=Math.ceil(c.W/22);for(var i=0;i<=n;i++){x=i*22;y=c.H*L.y+(Math.sin(x*(L.freq||3)*.0035+(L.seed||0)*2.7+c.t*(L.sp||0))*.6+(c.noise(x*.003*(L.freq||3),L.seed||0,0)-.5)*.8)*c.H*(L.amp||.05);pts.push([x,y])}pts.push([c.W,c.H]);c.poly(pts,{fill:L.col,shadow:L.shadow?['rgba(0,0,0,.28)',c.u*1.6,0,-c.u*.5]:null})})}
@@ -21,7 +24,7 @@ scLook('plain',{desc:'A neutral dark stage. Use when the scene paints its own wh
 scLook('atom',{desc:'Dark space and science: glowing points and thin orbit lines on near-black, warm glow against cool light.',family:'atom',bright:0,
   pal:{bg:'#0b0c12',bg2:'#15151c',ink:'#e8e3d6',main:'#ffb25c',accent:'#8fd8ff',soft:'#6e635a',hi:'#fff3d0'},fx:[{n:'vignette',a:.5}],
   guide:'Near-black field, a handful of luminous things. Everything glows: use c.glow with the ember warm tone for the subject and ice-blue for the thin lines around it. Lines are 1-2 px, never filled. Motion is slow orbiting and breathing, nothing snaps. Leave most of the frame empty.',
-  bg:function(c){c.clear(c.radial(c.cx,c.cy,0,Math.max(c.W,c.H)*.7,[[0,c.pal.bg2],[1,c.pal.bg]]));scLkStars(c,60,3,'#d8d2c0',.14)}});
+  bg:function(c){scBgR(c,c.cx,c.cy,Math.max(c.W,c.H)*.7,c.pal.bg2,c.pal.bg);scLkStars(c,60,3,'#d8d2c0',.14)}});
 
 scLook('math',{desc:'Blueprint: deep blue graph paper with fine white-blue lines, one orange curve being drawn.',family:'math',bright:0,
   pal:{bg:'#101f38',bg2:'#152641',ink:'#cfe6ff',main:'#ffb25c',accent:'#6fd2ff',soft:'#4c6a96'},fx:[{n:'vignette',a:.4}],
@@ -41,7 +44,7 @@ scLook('chart',{desc:'Data in 3D: navy stage with a floor grid, cream and amber 
 scLook('explainer',{desc:'Technical explainer: dark panel, labelled nodes and cubes in violet and amber, soft glow, small callout labels.',family:'explainer',bright:0,
   pal:{bg:'#12192e',bg2:'#0c101d',ink:'#c6cac5',main:'#8f7bff',accent:'#ffb25c',soft:'#81837d',node:'#6fb1ff'},fx:[{n:'vignette',a:.45}],
   guide:'Dark slate with glowing spheres (violet, blue, amber) joined by hairlines. Callouts are small white pills with a short uppercase label and a leader line. Show structure first, then data flowing through it (small bright dots travelling along the lines). Calm, precise motion.',
-  bg:function(c){c.clear(c.radial(c.cx,c.cy,0,Math.max(c.W,c.H)*.75,[[0,c.pal.bg],[1,c.pal.bg2]]));scLkStars(c,40,9,'#7a86b8',.12,false)}});
+  bg:function(c){scBgR(c,c.cx,c.cy,Math.max(c.W,c.H)*.75,c.pal.bg,c.pal.bg2);scLkStars(c,40,9,'#7a86b8',.12,false)}});
 
 scLook('iso',{desc:'Isometric miniature: a diamond floor, small coloured blocks in teal, coral and sand, soft top light.',family:'iso',bright:0,
   pal:{bg:'#172641',bg2:'#0f1729',ink:'#e6eef2',main:'#e8825f',accent:'#3b8681',hi:'#8ecec8',soft:'#ffd9a8',sand:'#e9c78b'},fx:[{n:'vignette',a:.4}],
@@ -61,7 +64,7 @@ scLook('synth',{desc:'Synthwave: purple-pink sky, striped sun, mountain silhouet
 scLook('type',{desc:'Kinetic typography: dark slate, big serif italic words in bone with one ember accent, motion blur on arrival.',family:'type',bright:0,
   pal:{bg:'#282b38',bg2:'#1a1e28',ink:'#f3ead9',main:'#ffae5c',accent:'#86e6ff',soft:'#655f5d'},fx:[{n:'vignette',a:.5}],
   guide:'Words are the picture. Big italic serif, bone coloured, one word per beat in the accent ember. Each word arrives with ease.out from slightly below with a faint blur trail and settles; earlier words fade to 30%. Mono for small supporting labels. Lots of empty slate around the words.',
-  bg:function(c){c.clear(c.radial(c.cx,c.cy,0,Math.max(c.W,c.H)*.7,[[0,c.pal.bg],[1,c.pal.bg2]]))}});
+  bg:function(c){scBgR(c,c.cx,c.cy,Math.max(c.W,c.H)*.7,c.pal.bg,c.pal.bg2)}});
 
 scLook('board',{desc:'Whiteboard: off-white board, black marker handwriting, red and blue marker accents, things drawn stroke by stroke.',family:'board',bright:1,
   pal:{bg:'#ebeae0',bg2:'#d8d7cc',ink:'#1a1a1a',main:'#d1495b',accent:'#2e86ab',soft:'#a8a6a1'},fx:[{n:'paper',a:.08}],
@@ -128,7 +131,7 @@ scLook('ascii',{desc:'Terminal / ASCII: black screen, green phosphor monospace, 
 scLook('clay',{desc:'Claymation soft: pastel lavender, plump rounded shapes with soft shading and a gentle drop shadow, candy colours.',family:'clay',bright:1,
   pal:{bg:'#e6ddf0',bg2:'#cfbed0',ink:'#5b4b6b',main:'#ff8fb8',accent:'#7fd8ff',yellow:'#ffe08a',mint:'#9be8c4',soft:'#a7a1b0'},fx:[{n:'vignette',a:.18}],
   guide:'Everything looks like soft modelling clay: plump rounded shapes with a radial highlight (bright top-left, darker bottom-right), a soft contact shadow, no outlines. Candy pastels. Letters are fat rounded. Motion is squishy: ease.elastic on arrival, a slow wobble while idle.',
-  bg:function(c){c.clear(c.radial(c.cx,c.cy*.8,0,Math.max(c.W,c.H)*.8,[[0,'#f3ecf8'],[1,c.pal.bg2]]))}});
+  bg:function(c){scBgR(c,c.cx,c.cy*.8,Math.max(c.W,c.H)*.8,'#f3ecf8',c.pal.bg2)}});
 
 scLook('origami',{desc:'Origami: warm cream paper, crisp folded facets in blue, teal and coral with visible creases, quiet and precise.',family:'origami',bright:1,
   pal:{bg:'#e9ddc4',bg2:'#beb19c',ink:'#2b2b2b',main:'#e07a5f',accent:'#375769',light:'#69a2b3',teal:'#3d9a8b',soft:'#918677'},fx:[{n:'paper',a:.14}],
