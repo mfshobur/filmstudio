@@ -3,12 +3,17 @@
 `filmstudio export` renders `build/film.mp4` from the real engine: every frame is drawn at an exact beat (no real-time capture), captions, typed prompts and the end card included, then the score and narration are mixed offline (music dips under speech like in the player) and muxed with ffmpeg.
 
 ```
-filmstudio export                                   # whole film, 640x360, 12 fps
-filmstudio export --fps 24 --size 1280x720          # smoother and sharper (much slower)
+filmstudio export                                   # whole film, Full HD 1080p, 24 fps (the default)
+filmstudio export --quality hd                      # 1280x720, 24 fps
+filmstudio export --quality draft                   # 640 wide, 12 fps: a fast check, not a deliverable
+filmstudio export --quality 4k                      # 3840 wide, very slow
+filmstudio export --fps 30 --crf 16                 # override frame rate and compression (lower crf = bigger, cleaner file)
+filmstudio export --size 1080x1920                  # an explicit size overrides --quality
 filmstudio export --from-bar 13 --to-bar 21         # only bars 13 to 20 (good for a test or a teaser)
 filmstudio export --no-audio                        # silent video
 filmstudio export --no-bars                         # remove the cinematic letterbox bars
 ```
+Quality presets: `draft` 640 wide, 12 fps, crf 26; `hd` 1280, 24 fps, crf 20; `fhd` 1920, 24 fps, crf 18 (default); `4k` 3840, 24 fps, crf 18. "Wide" means the long edge, so a 9:16 film at `fhd` is 1080x1920. The studio's Status tab has the same settings (resolution, frame rate, file quality, audio, letterbox bars). On a phone or other small device use `--quality draft` (or `hd`); Full HD is the default because it is what people expect from a finished film. Always run a 2 bar test first (`--from-bar 1 --to-bar 3`): Full HD takes a while.
 ## How long it takes
 Measured on a 4 GB Android phone (proot, software rendering): a 5.6 s range at 360x640, 8 fps took 76 s including the audio mix, so budget roughly 12 to 15 times the film length at that setting. The whole 86 s example at 640x360 and 8 fps took 14 minutes in one run (8 MB, h264 + aac, duration matched to the frame). A laptop is much faster. Always test with `--from-bar 1 --to-bar 3` first.
 

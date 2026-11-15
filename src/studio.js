@@ -60,7 +60,7 @@ function makeProject(dir) {
   function safeJoin(base, rel) { const p = path.resolve(base, '.' + path.sep + decodeURIComponent(rel)); const r = path.relative(base, p); return r.startsWith('..') || path.isAbsolute(r) ? null : p; }
   function startJob(cmd, a) {
     if (running) return { error: 'another job is running (' + running.cmd + ')', code: 409 };
-    const allowed = { build: [], voice: ['provider', 'yes', 'force'], 'voice-check': [], review: ['size', 'motion'], 'audio-check': [], export: ['fps', 'size', 'from-bar', 'to-bar', 'no-audio', 'no-bars'] };
+    const allowed = { build: [], voice: ['provider', 'yes', 'force'], 'voice-check': [], review: ['size', 'motion'], 'audio-check': [], export: ['quality', 'fps', 'size', 'crf', 'from-bar', 'to-bar', 'no-audio', 'no-bars'] };
     if (!allowed[cmd]) return { error: 'command not allowed: ' + cmd, code: 400 };
     const args = [cmd, dir];
     for (const [k, v] of Object.entries(a || {})) {

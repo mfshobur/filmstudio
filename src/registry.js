@@ -34,6 +34,9 @@ const STYLES = {
 };
 const FORMATS = { '16:9': [16, 9], '9:16': [9, 16], '1:1': [1, 1], '4:5': [4, 5] };
 /* default pixel size for a format; `long` is the longer side */
+/* Export quality presets: long edge in pixels, frames per second, x264 crf (lower = bigger, cleaner file). fhd is the default. */
+const QUALITY = { draft: { long: 640, fps: 12, crf: 26, label: 'Draft (640 wide, 12 fps, fast)' }, hd: { long: 1280, fps: 24, crf: 20, label: 'HD 720p' }, fhd: { long: 1920, fps: 24, crf: 18, label: 'Full HD 1080p' }, '4k': { long: 3840, fps: 24, crf: 18, label: '4K 2160p (very slow)' } };
+const DEFAULT_QUALITY = 'fhd';
 function sizeFor(format, long) { const f = FORMATS[format] || FORMATS['16:9'], L = long || 640, k = L / Math.max(f[0], f[1]); return [Math.round(f[0] * k / 2) * 2, Math.round(f[1] * k / 2) * 2]; }
 /* film lengths the built-in scores support: 46 bars, or any even number from 24 to 78 (the montage stretches; below 40 a shorter arrangement) */
 const BARS_MIN = 24, BARS_MAX = 78;
@@ -61,4 +64,4 @@ const MOODS = {
 Object.keys(MOODS).forEach(k => { if (STYLES[k]) STYLES[k].moods = MOODS[k]; });
 const ICON_NAMES = ['bulb', 'heart', 'house', 'book', 'rocket', 'chart', 'person', 'tree', 'cloud', 'star', 'gear', 'check'];
 const PUPPET_KINDS = ['hero', 'demon', 'clown', 'gunungan', 'bird', 'tree', 'mountain', 'house', 'deer'];
-module.exports = { FORMATS, sizeFor, barsOk, planLength, BARS_MIN, BARS_MAX, STYLES, SCORES, ICON_NAMES, PUPPET_KINDS };
+module.exports = { QUALITY, DEFAULT_QUALITY, FORMATS, sizeFor, barsOk, planLength, BARS_MIN, BARS_MAX, STYLES, SCORES, ICON_NAMES, PUPPET_KINDS };

@@ -54,7 +54,7 @@ async function exportFilm(dir, spec, opts = {}) {
   let audio = null;
   if (!opts.noAudio) audio = await buildAudio(spec, dir, { fromBar, toBar, sr: opts.audioRate || 32000, workDir: work, log });
   const out = opts.out || path.join(dir, 'build', 'film.mp4');
-  const venc = hasEncoder('libx264') ? ['-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', '20', '-preset', 'veryfast'] : ['-c:v', 'mpeg4', '-q:v', '3', '-pix_fmt', 'yuv420p'];
+  const venc = hasEncoder('libx264') ? ['-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-crf', String(opts.crf || 20), '-preset', 'veryfast'] : ['-c:v', 'mpeg4', '-q:v', '3', '-pix_fmt', 'yuv420p'];
   const args = ['-y', '-loglevel', 'error', '-framerate', String(fps), '-i', path.join(framesDir, '%06d.jpg')].concat(audio ? ['-i', audio.wav] : [], venc, audio ? ['-c:a', 'aac', '-b:a', '160k', '-shortest'] : [], ['-movflags', '+faststart', out]);
   const r = spawnSync('ffmpeg', args, { encoding: 'utf8' });
   if (r.status !== 0) throw new Error('ffmpeg failed: ' + String(r.stderr).slice(0, 400));
