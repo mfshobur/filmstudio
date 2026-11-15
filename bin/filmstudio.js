@@ -59,6 +59,7 @@ const HELP = `filmstudio <command> [project-dir] [options]   (all output is JSON
       return console.log(want.map(f => fs.readFileSync(path.join(gdir, f), 'utf8')).join('\n\n---\n\n'));
     }
     if (cmd === 'mcp') { require('../src/mcp').serve(flags.root ? String(flags.root) : null); return; }
+    if (cmd === 'listen' && flags.setup) return out(require('../src/listen').setup(flags.model ? String(flags.model) : 'base.en', m => console.error(m)));  // an installer: no project needed
     if (cmd === 'length') { const sec = Number(pos[1]); if (!(sec > 0)) fail('usage: filmstudio length <seconds> [--bpm 128] [--preset anthem-46|calm-46]'); const r = require('../src/registry').planLength(sec, flags.preset ? String(flags.preset) : 'anthem-46', flags.bpm ? Number(flags.bpm) : null); return out(Object.assign(r, { set: 'In spec.json set "bars": ' + r.bars + ' and "bpm": ' + r.bpm + '. The length is exact and the tempo stays near ' + (flags.bpm || 'the preset tempo') + ': length and tempo are independent.', note: Math.abs(r.seconds - sec) > 0.5 ? 'Could not reach ' + sec + ' s within the tempo limits (40 to 240 bpm); closest is ' + r.seconds + ' s.' : undefined })); }
     if (cmd === 'list') {
       const W = require('../src/workspace'), root = W.resolveRoot(flags.root);
@@ -158,7 +159,6 @@ const HELP = `filmstudio <command> [project-dir] [options]   (all output is JSON
     }
     if (cmd === 'listen') {
       const LS = require('../src/listen');
-      if (flags.setup) return out(LS.setup(flags.model ? String(flags.model) : 'base.en', m => console.error(m)));
       const r = await LS.listen(dir, spec, { model: flags.model ? String(flags.model) : null, lines: flags.lines ? String(flags.lines).split(',').map(Number) : null, log: m => console.error(m) });
       out(r); return process.exit(r.ok ? 0 : 2);
     }

@@ -21,7 +21,13 @@ function spell(n) {
 function normalize(text) {
   return String(text || '').toLowerCase().replace(/&/g, ' and ').replace(/%/g, ' percent ').replace(/(\d),(?=\d{3}\b)/g, '$1')
     .replace(/\d+/g, m => ' ' + spell(parseInt(m, 10)) + ' ').replace(/[’]/g, "'").replace(/[-–—\/]/g, ' ')
-    .replace(/[^a-z' ]/g, ' ').replace(/(^|\s)'+|'+(?=\s|$)/g, ' ').split(/\s+/).filter(Boolean);
+    .replace(/[^a-z' ]/g, ' ').replace(/(^|\s)'+|'+(?=\s|$)/g, ' ').replace(/\ba (hundred|thousand|million)\b/g, 'one $1').split(/\s+/).filter(Boolean);
+}
+/* "filmstudio" and "film studio" sound the same: join neighbouring words when the join is a word on the other side */
+function joinCompounds(a, other) {
+  const set = new Set(other), out = [];
+  for (let i = 0; i < a.length; i++) { if (i + 1 < a.length && set.has(a[i] + a[i + 1])) { out.push(a[i] + a[i + 1]); i++; } else out.push(a[i]); }
+  return out;
 }
 /* word alignment by edit distance: ops are equal, sub, del (in the script, not heard) and ins (heard, not in the script) */
 function align(ref, hyp) {
@@ -38,7 +44,7 @@ function align(ref, hyp) {
 }
 /* compare what the script says with what was heard */
 function compare(script, heard) {
-  const ref = normalize(script), hyp = normalize(heard), ops = align(ref, hyp);
+  let ref = normalize(script), hyp = normalize(heard); const r0 = ref; ref = joinCompounds(ref, hyp); hyp = joinCompounds(hyp, r0); const ops = align(ref, hyp);
   const wrong = ops.filter(o => o.op !== 'equal').length, wer = ref.length ? wrong / ref.length : (hyp.length ? 1 : 0);
   const missing = ops.filter(o => o.op === 'del').map(o => o.ref), extra = ops.filter(o => o.op === 'ins').map(o => o.hyp), subs = ops.filter(o => o.op === 'sub').map(o => [o.ref, o.hyp]);
   const lastRef = ops.filter(o => o.ref !== undefined), tailMissing = []; for (let k = lastRef.length - 1; k >= 0 && lastRef[k].op === 'del'; k--) tailMissing.unshift(lastRef[k].ref);
@@ -50,14 +56,14 @@ function judge(script, tr, minProb) {
   if (!tr.text) flags.push('nothing was heard: the clip may be silent or not speech');
   else {
     if (c.wer >= 0.35) flags.push('does not match the script (' + Math.round(c.wer * 100) + '% of words differ)');
-    else if (c.wer >= 0.15) flags.push('some words differ from the script');
+    else if (c.substituted.length || c.missing.length || c.extra.length) flags.push('words differ from the script: ' + c.substituted.map(x => x[0] + ' heard as ' + x[1]).concat(c.missing.map(w => w + ' not heard'), c.extra.map(w => w + ' added')).join('; '));
     if (c.tailMissing.length) flags.push('the end may be cut off: "' + c.tailMissing.join(' ') + '" was not heard');
     if (c.headMissing.length) flags.push('the start may be clipped: "' + c.headMissing.join(' ') + '" was not heard');
     if (c.extra.length >= 3) flags.push('extra speech that is not in the script: "' + c.extra.join(' ') + '"');
   }
   const unclear = (tr.words || []).filter(w => w.p != null && w.p < (minProb == null ? 0.4 : minProb)).map(w => w.w.replace(/[^\w']/g, '')).filter(Boolean);
-  if (unclear.length && !flags.length) flags.push('unclear pronunciation (low recognition confidence): ' + unclear.join(', '));
-  return Object.assign({ script, heard: tr.text, unclearWords: unclear.length ? unclear : undefined, flags }, c);
+  const warnings = unclear.length ? ['the recogniser was unsure of: ' + unclear.join(', ') + ' (may be unclear or just an unusual word)'] : [];
+  return Object.assign({ script, heard: tr.text, unclearWords: unclear.length ? unclear : undefined, flags, warnings }, c);
 }
 
 const modelDir = model => process.env.FILMSTUDIO_LISTEN_MODEL || path.join(ENV.HOME, 'models', 'whisper', model || 'base.en');
@@ -93,7 +99,7 @@ async function listen(dir, spec, opts = {}) {
   }
   const results = clips.map(c => { const tr = (transcripts || []).find(t => t.index === c.index) || { text: '', words: [] }; return Object.assign({ index: c.index }, judge(c.text, tr, opts.minProb)); });
   const flagged = results.filter(r => r.flags.length), avg = results.reduce((s, r) => s + r.wer, 0) / results.length;
-  return { ok: flagged.length === 0, clips: results.length, flagged: flagged.length, meanWordErrorRate: Math.round(avg * 100) / 100, results, note: 'This reads the narration back with a speech recogniser and compares it with the script. It catches garbled, swallowed, cut-off or wrong words. It cannot judge tone, emotion, pacing or whether the voice sounds natural: ask a person to listen and report timecodes.' };
+  return { ok: flagged.length === 0, clips: results.length, flagged: flagged.length, withWarnings: results.filter(r => !r.flags.length && r.warnings.length).length, meanWordErrorRate: Math.round(avg * 100) / 100, results, note: 'This reads the narration back with a speech recogniser and compares it with the script. It catches garbled, swallowed, cut-off or wrong words. It cannot judge tone, emotion, pacing or whether the voice sounds natural: ask a person to listen and report timecodes.' };
 }
 
 function setup(model, log) {
