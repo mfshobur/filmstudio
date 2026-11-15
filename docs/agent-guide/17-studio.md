@@ -24,13 +24,15 @@ Tell the user the URL it prints. The server listens on localhost only. To reach 
 - **Voice**: generate narration, listen to every clip, run `voice-check`. ElevenLabs asks for confirmation with the character count before spending.
 - **Preview**: build and play `film.html` in the page.
 - **Review**: the user writes notes (optionally tied to a shot). They land in `feedback.json`.
+- **Timeline**: a multi-track view (music, video shots, narration, prompts) with a playhead and zoom. Drag the handle between two shots to retime the cut, drag narration lines and prompts, `S` splits the shot under the playhead, `Delete` removes the selected shot or prompt, `Ctrl/Cmd+Z` undoes. It is live: when you change `spec.json` the page redraws within about 2 seconds. Narration lines can only move between their neighbours (voice clips are matched to lines by position). Dashed narration blocks have an estimated length until `voice` measures the clips.
 - **Status**: audio check, per-shot review, MP4 export, with logs.
 
 ## What you do
 - Read `feedback.json` at the start of each turn. Each note has `id, text, shot (0-based index or null), status (open|done), created`. After you act on a note, set `status` to `done` and add a short `reply` string.
 - If the user edited `spec.json` in the page, re-run `validate` before building. The page keeps one backup of the spec as `spec.json.bak` the first time it saves.
 - Jobs started from the page (one at a time) write `studio-status.json`; read it to see what is running.
-- Don't edit `spec.json` while the user is mid-edit in the page without telling them; the page saves its whole copy when they type.
+- Editing `spec.json` while the page is open is safe now: the page follows your changes live, and its saves carry the version it loaded, so if you changed the file first the server refuses (409) and the page asks the user whether to load your version or overwrite it. If the user has an unsaved edit in the page when you save, they get that choice. Tell them anyway when you restructure the storyboard.
+- Over HTTP (for tools): `GET /api/project` returns `rev` (a hash of `spec.json`); `PUT /api/spec` with an `If-Match: <rev>` header is refused with 409 if the file changed; `PATCH /api/spec` with `{rev, ops}` applies timeline edits (`shot.boundary`, `shot.split`, `shot.delete`, `narration.move`, `prompt.move`, `prompt.delete`; see `src/edits.js`) and refuses any edit that would add a validation error; `GET /api/timeline` returns the tracks with bar and second positions; `GET /api/events` is a server-sent event stream (`spec`, `build`, `voice`, `feedback`).
 
 ## Limits
-Local and single user. No accounts, no live sync (reload the page after you change files). The page can't do what the machine can't: review and export need a headless browser and ffmpeg.
+Local and single user. No accounts. The page follows file changes live (about 2 seconds), but not mid-keystroke: if the user is typing in a field it shows a notice instead of reloading. The page can't do what the machine can't: review and export need a headless browser and ffmpeg.

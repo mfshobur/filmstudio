@@ -10,6 +10,8 @@ const { compile } = require('./build');
 const { validate } = require('./validate');
 const { STYLES, SCORES } = require('./registry');
 const { sampleParams } = require('./samples');
+const { buildTimeline } = require('./timeline');
+const { applyOps } = require('./edits');
 const ROOT = path.join(__dirname, '..');
 const CLI = path.join(ROOT, 'bin', 'filmstudio.js');
 const MAX_BODY = 5 * 1024 * 1024;
@@ -21,11 +23,32 @@ function makeProject(dir) {
   const readJson = (p, d) => { try { return JSON.parse(fs.readFileSync(p, 'utf8')); } catch (e) { return d; } };
   const writeJson = (p, o) => { fs.writeFileSync(p + '.tmp', JSON.stringify(o, null, 1)); fs.renameSync(p + '.tmp', p); };
   const jobs = new Map(); let running = null;
+  /* rev: a short hash of spec.json's bytes. A save that carries the rev it loaded is refused if the file changed since
+     (an agent edited it): all fs calls are synchronous, so the check and the write cannot be interleaved with another request. */
+  const rev = () => { try { return crypto.createHash('sha1').update(fs.readFileSync(f('spec.json'))).digest('hex').slice(0, 16); } catch (e) { return 'none'; } };
+  const backupOnce = () => { if (fs.existsSync(f('spec.json')) && !fs.existsSync(f('spec.json.bak'))) fs.copyFileSync(f('spec.json'), f('spec.json.bak')); };
+
+  /* live change events (SSE): fs.watch on the folder plus a 2 s poll (fs.watch is unreliable on some filesystems and misses subfolders) */
+  const subs = new Set(); let timer = null, watcher = null, sig = null, debounce = null, ticks = 0;
+  const mt = p => { try { return fs.statSync(f(p)).mtimeMs; } catch (e) { return 0; } };
+  const signature = () => ({ spec: rev(), build: mt('build/film.html'), voice: mt('voice/durations.json'), feedback: mt('feedback.json') });
+  const emit = ev => { const d = 'data: ' + JSON.stringify(ev) + '\n\n'; for (const r of subs) r.write(d); };
+  function check() { const n = signature(); if (sig) for (const k of Object.keys(n)) if (n[k] !== sig[k]) emit({ type: k, rev: n.spec }); sig = n; }
+  function subscribe(res) {
+    subs.add(res);
+    if (subs.size === 1) {
+      sig = signature();
+      try { watcher = fs.watch(dir, () => { clearTimeout(debounce); debounce = setTimeout(check, 100); }); watcher.on('error', () => {}); } catch (e) { /* the poll still works */ }
+      timer = setInterval(() => { check(); if (++ticks % 8 === 0) for (const r of subs) r.write(': ping\n\n'); }, 2000);
+    }
+    res.on('close', () => { subs.delete(res); if (!subs.size) { clearInterval(timer); clearTimeout(debounce); if (watcher) watcher.close(); watcher = null; } });
+  }
+  const closeEvents = () => { for (const r of [...subs]) r.end(); };
 
   function project() {
     const spec = readJson(f('spec.json'), null);
     return {
-      dir, spec, brief: readJson(f('brief.json'), {}), treatment: fs.existsSync(f('treatment.md')) ? fs.readFileSync(f('treatment.md'), 'utf8') : '',
+      dir, spec, rev: rev(), brief: readJson(f('brief.json'), {}), treatment: fs.existsSync(f('treatment.md')) ? fs.readFileSync(f('treatment.md'), 'utf8') : '',
       feedback: readJson(f('feedback.json'), []), validation: spec ? validate(spec, dir) : null,
       hasFilm: fs.existsSync(f('build/film.html')), hasMp4: fs.existsSync(f('build/film.mp4')),
       voiceFiles: fs.existsSync(f('voice')) ? fs.readdirSync(f('voice')).filter(x => /\.(mp3|wav|m4a|ogg)$/.test(x)).sort() : [],
@@ -51,7 +74,7 @@ function makeProject(dir) {
     p.on('error', e => { job.status = 'failed'; job.log += String(e); running = null; });
     return { job };
   }
-  return { dir, f, readJson, writeJson, project, safeJoin, startJob, jobs };
+  return { dir, f, readJson, writeJson, project, safeJoin, startJob, jobs, rev, backupOnce, subscribe, closeEvents };
 }
 
 /* opts.dir: serve that one project (routes at /). opts.root (no dir): serve a workspace of projects (routes at /p/<name>/, picker at /). */
@@ -97,9 +120,24 @@ function createStudio(opts) {
           } else if (req.method === 'GET' && (p === '/' || p === '/index.html')) return send(200, fs.readFileSync(path.join(ROOT, 'studio', 'index.html')), MIME['.html']);
           else return send(404, { error: 'not found' });
         } else if (p === '/api/projects' && req.method === 'GET') return send(200, { mode: 'project', projects: [] });
-        const { dir, f, readJson, writeJson, project, safeJoin, startJob, jobs } = proj;
+        const { dir, f, readJson, writeJson, project, safeJoin, startJob, jobs, rev, backupOnce, subscribe } = proj;
+        const stale = () => send(409, { error: 'spec.json changed on disk since this page loaded it (an agent or another editor saved it)', rev: rev(), spec: readJson(f('spec.json'), null) });
         if (p === '/api/project' && req.method === 'GET') return send(200, project());
-        if (p === '/api/spec' && req.method === 'PUT') { const s = await json(); if (!s || typeof s !== 'object' || Array.isArray(s)) return send(400, { error: 'spec must be a JSON object' }); if (fs.existsSync(f('spec.json')) && !fs.existsSync(f('spec.json.bak'))) fs.copyFileSync(f('spec.json'), f('spec.json.bak')); writeJson(f('spec.json'), s); return send(200, { saved: true, validation: validate(s, dir) }); }
+        if (p === '/api/events' && req.method === 'GET') { res.writeHead(200, { 'Content-Type': 'text/event-stream', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' }); res.write('retry: 2000\n\ndata: ' + JSON.stringify({ type: 'hello', rev: rev() }) + '\n\n'); return subscribe(res); }
+        if (p === '/api/timeline' && req.method === 'GET') {
+          const spec = readJson(f('spec.json'), null);
+          if (!spec || !(spec.bpm > 0) || !Number.isInteger(spec.bars) || !Array.isArray(spec.shots)) return send(422, { error: 'spec.json has no usable bpm, bars and shots yet' });
+          try { return send(200, Object.assign({ rev: rev() }, buildTimeline(spec, dir))); } catch (e) { return send(422, { error: 'cannot draw the timeline: ' + e.message }); }
+        }
+        if (p === '/api/spec' && req.method === 'PUT') { const s = await json(); if (!s || typeof s !== 'object' || Array.isArray(s)) return send(400, { error: 'spec must be a JSON object' }); const im = req.headers['if-match']; if (im && im !== rev()) return stale(); backupOnce(); writeJson(f('spec.json'), s); return send(200, { saved: true, rev: rev(), validation: validate(s, dir) }); }
+        /* PATCH: timeline edits as small operations (see src/edits.js). Re-reads the file, so it never writes from a stale copy; `rev` is required. */
+        if (p === '/api/spec' && req.method === 'PATCH') {
+          const b = await json(); if (!b || typeof b !== 'object' || typeof b.rev !== 'string') return send(400, { error: 'body must be {rev, ops}; get rev from GET /api/project' });
+          const cur = readJson(f('spec.json'), null); if (!cur) return send(400, { error: 'no spec.json' });
+          if (b.rev !== rev()) return stale();
+          const r = applyOps(cur, b.ops, dir); if (r.error) return send(422, { error: r.error, fix: r.fix });
+          backupOnce(); writeJson(f('spec.json'), r.spec); return send(200, { saved: true, rev: rev(), spec: r.spec, validation: validate(r.spec, dir) });
+        }
         if (p === '/api/validate' && req.method === 'POST') { const s = await json(); return send(200, validate(s, dir)); }
         if (p === '/api/brief' && req.method === 'PUT') { const b = await json(); if (!b || typeof b !== 'object') return send(400, { error: 'brief must be an object' }); writeJson(f('brief.json'), b); return send(200, { saved: true }); }
         if (p === '/api/treatment' && req.method === 'PUT') { const t = await body(); fs.writeFileSync(f('treatment.md'), t); return send(200, { saved: true }); }
@@ -124,6 +162,7 @@ function createStudio(opts) {
           else if (p.startsWith('/voice/')) file = safeJoin(f('voice'), p.slice(7));
           else if (p.startsWith('/assets/')) file = safeJoin(f('assets'), p.slice(8));
           else if (p.startsWith('/review/')) file = safeJoin(f('build/review'), p.slice(8));
+          else if (p.startsWith('/studio/') && p.endsWith('.js')) file = safeJoin(path.join(ROOT, 'studio'), p.slice(8));
           else if (p.startsWith('/gallery/')) file = safeJoin(path.join(ROOT, 'docs', 'gallery'), p.slice(9));
           if (file && fs.existsSync(file) && fs.statSync(file).isFile()) { const ext = path.extname(file).toLowerCase(); res.writeHead(200, { 'Content-Type': MIME[ext] || 'application/octet-stream', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'Content-Length': fs.statSync(file).size }); return req.method === 'HEAD' ? res.end() : fs.createReadStream(file).pipe(res); }
         }
@@ -132,6 +171,6 @@ function createStudio(opts) {
       handle().catch(e => send(e.code === 413 || e.code === 400 ? e.code : 500, { error: String(e.message) }));
     } catch (e) { send(500, { error: String(e.message) }); }
   });
-  return { server, dir: single ? single.dir : null, root: workspaceRoot, host, token, listen: (port) => new Promise((r, j) => { server.once('error', j); server.listen(port || 0, host, () => r(server.address().port)); }), close: () => new Promise(r => server.close(r)) };
+  return { server, dir: single ? single.dir : null, root: workspaceRoot, host, token, listen: (port) => new Promise((r, j) => { server.once('error', j); server.listen(port || 0, host, () => r(server.address().port)); }), close: () => new Promise(r => { (single ? [single] : [...cache.values()]).forEach(x => x.closeEvents()); server.close(r); if (server.closeAllConnections) server.closeAllConnections(); }) };
 }
 module.exports = { createStudio };

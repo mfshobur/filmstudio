@@ -55,6 +55,9 @@ iframe{width:100%;aspect-ratio:16/9;border:1px solid var(--line);border-radius:1
 pre{margin:0;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:10px;overflow:auto;max-height:240px;font:12px/1.5 var(--mono);color:var(--dim);white-space:pre-wrap}
 .note{display:grid;grid-template-columns:1fr auto;gap:8px;align-items:start;border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-bottom:8px;background:var(--panel2)}
 .note.done{opacity:.55}.note small{font:11px var(--mono);color:var(--dim);display:block}
+#banner{margin:10px max(16px,env(safe-area-inset-left)) 0;padding:10px 14px;border:1px solid var(--ember);border-radius:8px;background:var(--panel);font-size:14px}
+#banner .btn{margin-left:6px;padding:4px 10px;font-size:13px}
+.layout.wide{grid-template-columns:minmax(0,1fr);max-width:none}.layout.wide .side .card{position:static}
 .pgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:14px}
 .pcard{display:flex;flex-direction:column;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--panel2);color:inherit;text-decoration:none}
 .pcard:hover,.pcard:focus-visible{border-color:var(--ember)}
@@ -70,17 +73,24 @@ pre{margin:0;background:var(--panel2);border:1px solid var(--line);border-radius
   <div class="top"><h1>filmstudio</h1><span class="dir" id="dir"></span><span class="state" id="state">loading</span></div>
   <nav id="tabs" role="tablist" aria-label="Sections"></nav>
 </header>
+<div id="banner" role="alert" style="display:none"></div>
 <div class="layout"><main id="view" aria-live="polite"></main><aside class="side" id="side"></aside></div>
 <script>
 (function(){
 'use strict';
-var S={p:null,tab:'idea',saveT:null,job:null,jobPoll:null,vcheck:null,hl:-1,msg:''};
-var TABS=[['idea','Idea'],['story','Storyboard'],['voice','Voice'],['preview','Preview'],['review','Review'],['status','Status']];
+var S={p:null,tab:'idea',saveT:null,job:null,jobPoll:null,vcheck:null,hl:-1,msg:'',dirty:false,saving:null,again:false,inflight:0,pending:null,es:null,live:false};
+var TABS=[['idea','Idea'],['story','Storyboard'],['timeline','Timeline'],['voice','Voice'],['preview','Preview'],['review','Review'],['status','Status']];
 var $=function(s,r){return (r||document).querySelector(s)};
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
 /* In workspace mode a project lives under /p/<name>/; everything it fetches is relative to that base. */
 var BASE=(/^\/p\/[^/]+\//.exec(location.pathname)||['/'])[0];
-function api(method,url,body){return fetch(BASE+url.replace(/^\//,''),{method:method,headers:{'X-Filmstudio':'1','Content-Type':'application/json'},body:body===undefined?undefined:JSON.stringify(body)}).then(function(r){return r.json().catch(function(){return {}}).then(function(j){if(!r.ok){var e=new Error(j.error||('HTTP '+r.status));e.data=j;e.status=r.status;throw e}return j})})}
+/* While one of this page's own writes to spec.json is in flight, a change event may be that very write (it can beat the response): hold it, then re-check against the rev we ended up with. */
+function track(p,method,url){
+  if(method==='GET'||!/^\/?api\/spec$/.test(url))return p;
+  S.inflight++;
+  var settle=function(){S.inflight--;if(!S.inflight)setTimeout(function(){var ev=S.pending;S.pending=null;if(ev&&S.p&&ev.rev!==S.p.rev)onRemote(ev)},0)};
+  return p.then(function(r){settle();return r},function(e){settle();throw e})}
+function api(method,url,body,hdrs){var hd={'X-Filmstudio':'1','Content-Type':'application/json'};for(var k in hdrs||{})hd[k]=hdrs[k];var p=fetch(BASE+url.replace(/^\//,''),{method:method,headers:hd,body:body===undefined?undefined:JSON.stringify(body)}).then(function(r){return r.json().catch(function(){return {}}).then(function(j){if(!r.ok){var e=new Error(j.error||('HTTP '+r.status));e.data=j;e.status=r.status;throw e}return j})});return track(p,method,url)}
 function setState(t){$('#state').textContent=t}
 function getPath(o,p){return p.split('.').reduce(function(a,k){return a==null?undefined:a[k]},o)}
 function setPath(o,p,v){var ks=p.split('.');for(var i=0;i<ks.length-1;i++){if(typeof o[ks[i]]!=='object'||o[ks[i]]===null)o[ks[i]]={};o=o[ks[i]]}if(v===''||v===undefined)delete o[ks[ks.length-1]];else o[ks[ks.length-1]]=v}
@@ -105,9 +115,39 @@ function home(r){
   $('#newp').addEventListener('submit',function(ev){ev.preventDefault();var f=ev.target,b={name:f.name.value.trim()};if(f.length.value)b.length=+f.length.value;if(f.format.value)b.format=f.format.value;
     $('#newmsg').textContent='creating...';api('POST','/api/projects',b).then(function(){location.href='p/'+encodeURIComponent(b.name)+'/'}).catch(function(e){$('#newmsg').textContent=e.message})});
   setState('ready')}
-function load(){return api('GET','/api/project').then(function(p){S.p=p;$('#dir').textContent=p.dir;if(BASE!=='/')$('h1').innerHTML='<a href="/" title="All projects" style="color:inherit;text-decoration:none">filmstudio</a> <a href="/" class="dim">&larr; projects</a>';render();setState('ready')}).catch(function(e){setState('error: '+e.message)})}
-function scheduleSave(){setState('editing...');clearTimeout(S.saveT);S.saveT=setTimeout(saveSpec,600)}
-function saveSpec(){setState('saving...');return api('PUT','/api/spec',spec()).then(function(r){S.p.validation=r.validation;renderSide();markShots();setState('saved '+new Date().toLocaleTimeString())}).catch(function(e){setState('save failed: '+e.message)})}
+function load(){return api('GET','/api/project').then(function(p){S.p=p;clearTimeout(S.saveT);S.saveT=null;S.dirty=false;banner('');connectEvents();$('#dir').textContent=p.dir;if(BASE!=='/')$('h1').innerHTML='<a href="/" title="All projects" style="color:inherit;text-decoration:none">filmstudio</a> <a href="/" class="dim">&larr; projects</a>';render();setState('ready')}).catch(function(e){setState('error: '+e.message)})}
+function scheduleSave(){S.dirty=true;setState('editing...');clearTimeout(S.saveT);S.saveT=setTimeout(saveSpec,600)}
+/* Saves carry the rev this page loaded (If-Match): if an agent changed spec.json since, the server answers 409 and we ask instead of overwriting. */
+function saveSpec(){
+  if(S.saving){S.again=true;return S.saving}
+  clearTimeout(S.saveT);S.saveT=null;setState('saving...');
+  S.saving=api('PUT','/api/spec',spec(),{'If-Match':S.p.rev}).then(function(r){S.p.validation=r.validation;S.p.rev=r.rev;if(!S.saveT)S.dirty=false;renderSide();markShots();setState('saved '+new Date().toLocaleTimeString())}).catch(function(e){if(e.status===409){showConflict();setState('not saved: file changed on disk')}else setState('save failed: '+e.message)}).then(function(){S.saving=null;if(S.again){S.again=false;saveSpec()}});
+  return S.saving}
+/* flush a pending autosave so a timeline edit never races it */
+function flushSave(){return S.saveT?saveSpec():(S.saving||Promise.resolve())}
+function banner(html){var b=$('#banner');b.innerHTML=html;b.style.display=html?'block':'none'}
+function showConflict(){banner('<b>spec.json changed on disk</b> (an agent or another editor saved it). <button class="btn" data-act="reload">Load their version</button> <button class="btn" data-act="keep">Keep mine and overwrite</button>')}
+function liveDot(){document.querySelectorAll('.tl-live').forEach(function(e){e.classList.toggle('on',S.live)})}
+function onRemote(ev){
+  if(ev.type==='spec'&&ev.rev===S.p.rev)return;
+  if(ev.type==='spec'&&S.inflight){S.pending=ev;return}
+  if(ev.type!=='spec'&&S.jobPoll)return;
+  var tag=((document.activeElement||{}).tagName)||'';
+  if(S.dirty||S.saveT){if(ev.type==='spec')showConflict();return}
+  if(/^(INPUT|TEXTAREA|SELECT)$/.test(tag)){if(ev.type==='spec')banner('<b>spec.json changed on disk.</b> <button class="btn" data-act="reload">Load it</button>');return}
+  load()}
+function connectEvents(){
+  if(S.es||!window.EventSource)return;
+  var es=new EventSource(BASE+'api/events');S.es=es;
+  es.onopen=function(){S.live=true;liveDot()};es.onerror=function(){S.live=false;liveDot()};
+  es.onmessage=function(m){var ev;try{ev=JSON.parse(m.data)}catch(e){return}if(!S.p)return;if(ev.type==='hello'){if(ev.rev!==S.p.rev)onRemote({type:'spec',rev:ev.rev});return}onRemote(ev)}}
+/* what the timeline module needs from this page */
+var TLCTX={api:function(m,u,b,h){return api(m,u,b,h)},rev:function(){return S.p.rev},spec:function(){return S.p.spec},flush:flushSave,live:function(){return S.live},conflict:function(){showConflict()},
+  applied:function(sp,rev,val){S.p.spec=sp;S.p.rev=rev;S.p.validation=val;S.dirty=false;renderSide();setState('saved '+new Date().toLocaleTimeString())}};
+function mountTimeline(){var el=$('#tlmount');if(!el)return;var go=function(){window.FilmTimeline.mount(el,TLCTX)};
+  if(window.FilmTimeline)return go();
+  var sc=document.createElement('script');sc.src=BASE+'studio/timeline.js';sc.onload=go;sc.onerror=function(){el.textContent='Could not load the timeline script.'};document.head.appendChild(sc)}
+function vTimeline(){return '<section class="card"><h2>Timeline</h2><div id="tlmount"><p class="dim">loading timeline...</p></div></section>'}
 var brT=null;function saveBrief(){clearTimeout(brT);brT=setTimeout(function(){api('PUT','/api/brief',S.p.brief).then(function(){setState('brief saved')})},500)}
 
 /* ---------- tabs + side ---------- */
@@ -120,8 +160,8 @@ function renderSide(){var v=S.p.validation,s='<section class="card"><h2>Check</h
     v.warnings.forEach(function(e){s+='<div class="msg w" data-jump="'+esc(e.path)+'"><b>'+esc(e.path||'spec')+'</b>'+esc(e.message)+(e.fix?'<i>'+esc(e.fix)+'</i>':'')+'</div>'})}
   $('#side').innerHTML=s+'</section>'}
 function markShots(){var v=S.p.validation;var bad={};if(v)v.errors.concat(v.warnings).forEach(function(e){var m=/^shots\[(\d+)\]/.exec(e.path||'');if(m)bad[m[1]]=1});document.querySelectorAll('.shot').forEach(function(el){el.classList.toggle('err',!!bad[el.dataset.i])})}
-function render(){renderTabs();renderSide();var fn={idea:vIdea,story:vStory,voice:vVoice,preview:vPreview,review:vReview,status:vStatus}[S.tab];$('#view').innerHTML=fn();after()}
-function after(){if(S.tab==='story')markShots();if(S.hl>=0){var el=$('.shot[data-i="'+S.hl+'"]');if(el){el.scrollIntoView({block:'center'});el.classList.add('hl');setTimeout(function(){el.classList.remove('hl')},1600)}S.hl=-1}}
+function render(){document.querySelector('.layout').classList.toggle('wide',S.tab==='timeline');renderTabs();renderSide();var fn={idea:vIdea,story:vStory,timeline:vTimeline,voice:vVoice,preview:vPreview,review:vReview,status:vStatus}[S.tab];$('#view').innerHTML=fn();after()}
+function after(){if(S.tab==='story')markShots();if(S.tab==='timeline')mountTimeline();if(S.hl>=0){var el=$('.shot[data-i="'+S.hl+'"]');if(el){el.scrollIntoView({block:'center'});el.classList.add('hl');setTimeout(function(){el.classList.remove('hl')},1600)}S.hl=-1}}
 
 /* ---------- IDEA ---------- */
 function sec(bpm){var b=(spec()||{}).bars||46;return bpm?Math.round(b*240/bpm*10)/10:0}
@@ -233,6 +273,9 @@ document.addEventListener('input',function(ev){var t=ev.target;
   var pr=t.closest('.shot[data-p]');if(pr&&t.dataset.pf){var P=spec().prompts[+pr.dataset.p],k3=t.dataset.pf;if(k3==='text')P.text=t.value;else P[k3]=+t.value;scheduleSave();return}
 });
 document.addEventListener('change',function(ev){var t=ev.target;if(t.dataset.s==='score.preset'||t.dataset.s==='voice.provider'||t.dataset.s==='format'){var v=t.value;if(t.dataset.s==='format'&&v==='16:9')v='';setPath(spec(),t.dataset.s,v);if(t.dataset.s==='score.preset'){spec().bpm=S.p.scores[v].bpm;spec().score=spec().score||{};spec().score.preset=v}scheduleSave();render()}});
+$('#banner').addEventListener('click',function(ev){var a=ev.target.getAttribute&&ev.target.getAttribute('data-act');if(!a)return;
+  if(a==='reload'){load()}
+  else if(a==='keep'){api('GET','/api/project').then(function(p){S.p.rev=p.rev;banner('');return saveSpec()})}});
 if(BASE==='/')api('GET','/api/projects').then(function(r){if(r.mode==='workspace')home(r);else load()}).catch(load);else load();
 })();
 </script>
