@@ -17,8 +17,16 @@
       '.fp-b{background:none;border:0;color:var(--bone,#f3ead9);font-size:18px;line-height:1;cursor:pointer;padding:6px 8px;border-radius:8px;min-width:34px}',
       '.fp-b:hover,.fp-b:focus-visible{background:rgba(255,255,255,.1)}',
       '.fp-time{font:12px var(--mono,ui-monospace,monospace);white-space:nowrap;opacity:.85;min-width:92px}',
-      '.fp-seek{flex:1;min-width:60px;accent-color:var(--ember,#ffae5c);height:18px;cursor:pointer}',
-      '.fp-vol{width:70px;accent-color:var(--ember,#ffae5c);cursor:pointer}',
+      '.fp-seek,.fp-vol{-webkit-appearance:none;appearance:none;background:transparent;height:18px;cursor:pointer;margin:0}',
+      '.fp-seek{flex:1;min-width:60px}',
+      '.fp-vol{width:70px}',
+      '.fp-seek,.fp-vol{--p:0%}',
+      '.fp-seek::-webkit-slider-runnable-track,.fp-vol::-webkit-slider-runnable-track{height:5px;border-radius:3px;background:linear-gradient(to right,var(--ember,#ffae5c) var(--p),rgba(255,255,255,.25) var(--p))}',
+      '.fp-seek::-moz-range-track,.fp-vol::-moz-range-track{height:5px;border-radius:3px;background:rgba(255,255,255,.25)}',
+      '.fp-seek::-moz-range-progress,.fp-vol::-moz-range-progress{height:5px;border-radius:3px;background:var(--ember,#ffae5c)}',
+      '.fp-seek::-webkit-slider-thumb,.fp-vol::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;margin-top:-4px;border-radius:50%;background:var(--ember,#ffae5c);border:0;box-shadow:0 0 0 2px rgba(6,7,13,.6)}',
+      '.fp-seek::-moz-range-thumb,.fp-vol::-moz-range-thumb{width:13px;height:13px;border-radius:50%;background:var(--ember,#ffae5c);border:0}',
+      '.fp-seek:focus-visible,.fp-vol:focus-visible{outline:2px solid var(--ice,#86e6ff);outline-offset:3px;border-radius:4px}',
       '@media(max-width:560px){.fp-vol{display:none}}'
     ].join('\n');
     document.head.appendChild(st);
@@ -48,7 +56,8 @@
     el.textContent = ''; el.appendChild(wrap);
 
     var secs = function () { return total * spb; };
-    var label = function () { time.textContent = fmt(pos * spb) + ' / ' + fmt(secs()); seek.value = total ? Math.round(pos / total * 1000) : 0; };
+    var fill = function (inp) { inp.style.setProperty('--p', (inp.value / inp.max * 100) + '%'); };
+    var label = function () { time.textContent = fmt(pos * spb) + ' / ' + fmt(secs()); seek.value = total ? Math.round(pos / total * 1000) : 0; fill(seek); };
     var draw = function () { if (film) { try { film.drawAt(pos); } catch (e) { /* film not ready */ } } label(); };
     var ui = function () { wrap.classList.toggle('playing', playing); pb.textContent = playing ? '⏸' : (pos >= total - 0.01 && total ? '↻' : '▶'); pb.title = playing ? 'Pause (Space)' : 'Play (Space)'; big.textContent = pos >= total - 0.01 && total ? '↻' : '▶'; };
     var stopTimer = function () { if (timer) { clearInterval(timer); timer = null; } };
@@ -75,7 +84,8 @@
     seek.addEventListener('change', function () { scrubbing = false; if (resume) { resume = false; play(); } else ui(); });
     var applyVol = function () { if (film) { try { film.setVolume(muted ? 0 : vol); } catch (e) {} } mb.textContent = muted || vol === 0 ? '🔇' : '🔊'; };
     mb.addEventListener('click', function () { muted = !muted; applyVol(); });
-    vs.addEventListener('input', function () { vol = vs.value / 100; muted = false; applyVol(); });
+    vs.addEventListener('input', function () { vol = vs.value / 100; muted = false; applyVol(); fill(vs); });
+    fill(vs);
     var full = function () { try { if (document.fullscreenElement) document.exitFullscreen(); else stage.requestFullscreen(); } catch (e) {} };
     fb.addEventListener('click', full);
     stage.addEventListener('dblclick', full);
