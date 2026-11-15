@@ -36,6 +36,31 @@ let pass = 0, fail = 0; const t = async (n, f) => { try { await f(); pass++; con
   await t('guide lists topics and returns a topic', async () => { const a = await call('filmstudio_guide', {}); assert.ok(JSON.parse(a.result.content[0].text).topics.length >= 14); const b = await call('filmstudio_guide', { topic: 'quick-start' }); assert.ok(/Quick start/.test(b.result.content[0].text)); });
   await t('unknown tool is an error', async () => { const r = await call('filmstudio_nope', {}); assert.strictEqual(r.result.isError, true); });
   await t('resources list the guide and can be read', async () => { const l = await rpc('resources/list'); assert.ok(l.result.resources.some(x => x.uri === 'filmstudio://guide/01-quick-start')); const r = await rpc('resources/read', { uri: 'filmstudio://guide/01-quick-start' }); assert.ok(/Quick start/.test(r.result.contents[0].text)); const bad = await rpc('resources/read', { uri: 'filmstudio://guide/../../etc/passwd' }); assert.ok(bad.error, 'path traversal must fail'); });
+  await t('initialize carries the full brief as instructions and offers prompts', async () => { const r = await rpc('initialize', { protocolVersion: '2024-11-05', capabilities: {}, clientInfo: { name: 'test', version: '1' } }); const ins = r.result.instructions; assert.ok(ins.length > 2000 && /filmstudio_guide/.test(ins) && /DRAW|draw/.test(ins) && /cannot hear/.test(ins) && /filmstudio_job/.test(ins)); assert.ok(r.result.capabilities.prompts); });
+  await t('prompts/get make_film returns the brief with the idea', async () => { const l = await rpc('prompts/list'); assert.ok(l.result.prompts.some(x => x.name === 'make_film')); const g = await rpc('prompts/get', { name: 'make_film', arguments: { idea: 'a lighthouse', length: '40' } }); const txt = g.result.messages[0].content.text; assert.ok(/a lighthouse/.test(txt) && /40 seconds/.test(txt) && /filmstudio_scene_preview/.test(txt)); const bad = await rpc('prompts/get', { name: 'nope' }); assert.ok(bad.error); });
+  await t('file tools: write, read, edit and list a scene without any other file access', async () => {
+    const w = await call('filmstudio_write', { dir: 'fresh', path: 'scenes/hop.js', content: "scene({ look: 'plain', draw(c) { c.clear('#123'); } });" }); assert.ok(!w.result.isError, JSON.stringify(w.result));
+    assert.ok(/clear/.test((await call('filmstudio_read', { dir: 'fresh', path: 'scenes/hop.js' })).result.content[0].text));
+    const e = await call('filmstudio_edit', { dir: 'fresh', path: 'scenes/hop.js', old_text: '#123', new_text: '#456' }); assert.ok(!e.result.isError); assert.ok(/#456/.test(fs.readFileSync(path.join(work, 'fresh', 'scenes', 'hop.js'), 'utf8')));
+    assert.ok((await call('filmstudio_edit', { dir: 'fresh', path: 'scenes/hop.js', old_text: 'zzz', new_text: 'x' })).result.isError);
+    assert.ok(JSON.parse((await call('filmstudio_files', { dir: 'fresh' })).result.content[0].text).files.some(f => f.path === 'scenes/hop.js'));
+    assert.ok((await call('filmstudio_write', { dir: 'fresh', path: 'spec.json', content: '{ nope' })).result.isError, 'invalid spec.json must be refused');
+  });
+  await t('file tools refuse escapes, odd paths, other file types and symlinks', async () => {
+    for (const [dir, pth] of [['fresh', '../x.js'], ['fresh', '/etc/passwd'], ['fresh', 'scenes/../../x.js'], ['fresh', 'run.sh'], ['fresh', '.env'], ['..', 'spec.json'], ['fresh', 'scenes/a b.js']]) assert.ok((await call('filmstudio_write', { dir, path: pth, content: 'x' })).result.isError, 'should refuse ' + pth);
+    assert.ok((await call('filmstudio_read', { dir: 'fresh', path: '../../../etc/hosts' })).result.isError);
+    try { fs.symlinkSync(os.tmpdir(), path.join(work, 'fresh', 'scenes', 'lnk')); } catch (e) { return; }
+    assert.ok((await call('filmstudio_read', { dir: 'fresh', path: 'scenes/lnk/anything' })).result.isError);
+    assert.ok((await call('filmstudio_write', { dir: 'fresh', path: 'scenes/lnk/x.js', content: 'x' })).result.isError);
+  });
+  await t('slow tools run as background jobs that can be polled', async () => {
+    const r = await call('filmstudio_export', { dir: 'proj', quality: 'draft', from_bar: 1, to_bar: 2, no_audio: true, wait: 1 }); const txt = r.result.content[0].text;
+    if (/browser|playwright|ffmpeg/i.test(txt) && !/"status": "running"/.test(txt)) return;   // no browser here: skip
+    const m = /"job": "(j\d+)"/.exec(txt); assert.ok(m, 'expected a job id: ' + txt.slice(0, 200));
+    let done = null; for (let i = 0; i < 12 && !done; i++) { const j = await call('filmstudio_job', { id: m[1], wait: 20 }); if (!/"status": "running"/.test(j.result.content[0].text)) done = j.result.content[0].text; }
+    assert.ok(done, 'job should finish'); assert.ok((await call('filmstudio_job', {})).result.content[0].text.includes(m[1]));
+    assert.ok((await call('filmstudio_job', { id: 'j999' })).result.isError);
+  });
   await t('unknown method returns a JSON-RPC error', async () => { const r = await rpc('bogus/method'); assert.strictEqual(r.error.code, -32601); });
   p.stdin.end(); console.log('\n' + pass + ' passed, ' + fail + ' failed'); process.exit(fail ? 1 : 0);
 })();

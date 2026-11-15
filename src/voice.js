@@ -18,7 +18,7 @@ function toMp3(src, dst, trim) {
 }
 function runPython(args, onLine, python) {
   return new Promise(resolve => {
-    const py = python || process.env.FILMSTUDIO_PYTHON || 'python3';
+    const py = python || require('./env').pythonBin();
     const p = spawn(py, args, { stdio: ['ignore', 'pipe', 'pipe'] });
     p.stdout.on('data', d => String(d).split('\n').filter(Boolean).forEach(l => onLine && onLine(l)));
     p.stderr.on('data', () => {});
