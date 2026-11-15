@@ -7,6 +7,29 @@ const ACTIONS = ['idle', 'walk', 'wave', 'point', 'think', 'celebrate', 'talk'];
 const EMOTIONS = ['happy', 'sad', 'surprised', 'thinking', 'angry', 'neutral'];
 const TYPES = ['human', 'robot', 'blob', 'stick', 'animal'];
 const SKINS = ['outline', 'flat', 'paper', 'silhouette', 'glow', 'sketch'];
+const PART_STYLES = ['ambient', 'pulse', 'drive', 'anthem'];
+const CHORD = /^[A-G][#b]?(maj7|m7|dim|sus2|sus4|m|7)?$/;
+/* spec.score.parts: a different piece of music for each stretch of the film. Parts must tile bars 1..bars exactly. */
+function checkParts(parts, bars, err) {
+  if (!Array.isArray(parts) || !parts.length) return err('score.parts', 'score.parts must be a non-empty array of parts', 'Example: [{"name":"Setup","from":1,"to":10,"style":"ambient","chords":["Am","F"]}]. See `filmstudio guide score-parts`.');
+  let prev = 0;
+  parts.forEach((p, i) => {
+    const q = 'score.parts[' + i + ']';
+    if (!p || typeof p !== 'object' || Array.isArray(p)) return err(q, 'each part must be an object', 'Example: {"from":1,"to":10,"style":"ambient","chords":["Am","F"]}');
+    if (!PART_STYLES.includes(p.style)) err(q + '.style', 'unknown part style "' + p.style + '"', 'Styles: ' + PART_STYLES.join(', ') + '.');
+    if (!(Number.isInteger(p.from) && Number.isInteger(p.to) && p.from >= 1 && p.to >= p.from)) return err(q, 'from and to must be whole film bars with to >= from', 'Bars are 1-based and inclusive: {"from":1,"to":10}.');
+    if (p.from !== prev + 1) err(q + '.from', i ? 'part starts at bar ' + p.from + ' but the previous part ended at bar ' + prev : 'the first part must start at bar 1 (it starts at bar ' + p.from + ')', 'Parts follow each other with no gap and no overlap: set from to ' + (prev + 1) + '.');
+    prev = p.to;
+    if (p.chords != null && (!Array.isArray(p.chords) || !p.chords.length || p.chords.some(c => typeof c !== 'string' || !CHORD.test(c)))) err(q + '.chords', 'chords must be a list of chord names like "Am", "F", "C", "G7", "Dm7", "Bb", "F#m"', 'One chord per bar; the list repeats. Allowed endings: m, 7, m7, maj7, dim, sus2, sus4.');
+    if (p.energy != null && (!Array.isArray(p.energy) || p.energy.length < 1 || p.energy.length > 2 || p.energy.some(x => !(typeof x === 'number' && x >= 0 && x <= 1.5)))) err(q + '.energy', 'energy must be one or two numbers from 0 to 1.5 ([start, end] is a crescendo)', 'Example: [0.6, 1].');
+    if (p.vol != null && !(typeof p.vol === 'number' && p.vol >= 0 && p.vol <= 2)) err(q + '.vol', 'vol must be a number from 0 to 2', 'Use 1 for normal.');
+    if (p.into != null && !['riser', 'roll', 'none'].includes(p.into)) err(q + '.into', 'into must be riser, roll or none', 'It is the build into the next part.');
+    if (p.hit != null && !['none', 'crash', 'boom', 'both'].includes(p.hit)) err(q + '.hit', 'hit must be none, crash, boom or both', 'It is the impact on the first beat of the part.');
+    if (p.cuts != null && !(typeof p.cuts === 'number' && p.cuts >= 0 && p.cuts <= 2)) err(q + '.cuts', 'cuts must be a number from 0 to 2', 'It scales the whoosh played on each cut.');
+    if (p.flash != null && !(typeof p.flash === 'number' && p.flash >= 0 && p.flash <= 1)) err(q + '.flash', 'flash must be a number from 0 to 1', 'It scales the beat pulse in the picture.');
+  });
+  if (Number.isInteger(bars) && prev !== bars) err('score.parts', 'parts end at bar ' + prev + ' but the film has ' + bars + ' bars', 'The last part must end at bar ' + bars + '.');
+}
 function validate(spec, dir) {
   const errors = [], warnings = [];
   const err = (p, message, fix) => errors.push({ path: p, message, fix });
@@ -16,10 +39,12 @@ function validate(spec, dir) {
   const bpm = spec.bpm, bars = spec.bars;
   if (!(bpm >= 60 && bpm <= 200)) err('bpm', 'bpm must be between 60 and 200', 'Use 128 for the built-in score.');
   if (!(Number.isInteger(bars) && bars >= 8 && bars <= 200)) err('bars', 'bars must be an integer from 8 to 200', 'bars = film length in seconds * bpm / 240.');
+  const hasParts = !!(spec.score && spec.score.parts !== undefined);
   const preset = (spec.score && spec.score.preset) || 'anthem-46';
   if (!SCORES[preset]) err('score.preset', 'unknown score preset "' + preset + '"', 'Available: ' + Object.keys(SCORES).join(', '));
-  else if (bars !== SCORES[preset].bars && !require('./registry').barsOk(bars)) err('bars', 'the built-in scores support 46 bars or any even number from 24 to 78, spec has ' + bars, 'Pick bars from 24 to 78 (even) and a bpm to match: seconds = bars x 240 / bpm. `filmstudio length <seconds>` suggests both.');
+  else if (!hasParts && bars !== SCORES[preset].bars && !require('./registry').barsOk(bars)) err('bars', 'the built-in scores support 46 bars or any even number from 24 to 78, spec has ' + bars, 'Pick bars from 24 to 78 (even) and a bpm to match: seconds = bars x 240 / bpm. `filmstudio length <seconds>` suggests both.');
   if (spec.format != null && !require('./registry').FORMATS[spec.format]) err('format', 'unknown format "' + spec.format + '"', 'Use one of: ' + Object.keys(require('./registry').FORMATS).join(', ') + '. Leave it out for 16:9.');
+  if (hasParts) checkParts(spec.score.parts, bars, err);
   if (spec.score && spec.score.transpose != null && !(Number.isInteger(spec.score.transpose) && spec.score.transpose >= -6 && spec.score.transpose <= 6)) err('score.transpose', 'transpose must be a whole number of semitones from -6 to 6', 'Use 0 for the default A minor; +3 gives C minor.');
   if (!spec.meta || !spec.meta.title) err('meta.title', 'meta.title is required', 'Add a short title.');
   if (spec.meta && spec.meta.titleLines && !Array.isArray(spec.meta.titleLines)) err('meta.titleLines', 'must be an array of strings', 'e.g. ["The only limit","is the","human mind."]');
@@ -80,7 +105,7 @@ function validate(spec, dir) {
     real.forEach((s, i) => { const beats = (s[1] - s[0]) * 4; if (beats > 12 && i < real.length - 1 && !(s[2] === 'domino' && s[3] === 'title')) warn('shots[' + i + ']', 'shot lasts ' + beats + ' beats; long holds lose attention', 'Cut away at least every 8 to 12 beats (the final shot may be longer).'); });
     real.forEach((s, i) => { if (i && real[i - 1][2] === s[2] && real[i - 1][3] === s[3] && s[2] !== 'stage') warn('shots[' + i + ']', 'same style/variant "' + s[2] + '/' + s[3] + '" twice in a row', 'Alternate styles so each cut reads as a change.'); });
     const distinct = new Set(real.map(s => s[2])).size; if (distinct > 12) warn('shots', distinct + ' different styles in one film looks scattered', 'Keep it to about 12 or fewer, chosen to fit the story.');
-    if (preset === 'anthem-46' || preset === 'calm-46') { const m0 = bars < 40 ? 9 : 13, mb = bars < 40 ? bars - 22 : 8 + (bars - 46), mont = real.filter(s => s[0] >= m0 && s[0] < m0 + mb).length, need = Math.min(6, Math.ceil(mb * 0.75)); if (mb > 0 && mont < need) warn('shots', 'only ' + mont + ' shots in the montage (bars ' + m0 + ' to ' + (m0 + mb - 1) + '); the score builds to quick cuts there', 'Use ' + Math.ceil(mb * 1.5) + ' to ' + mb * 2 + ' shots of 0.25 to 0.5 bar in bars ' + m0 + '-' + (m0 + mb - 1) + '.'); }
+    if (!hasParts && (preset === 'anthem-46' || preset === 'calm-46')) { const m0 = bars < 40 ? 9 : 13, mb = bars < 40 ? bars - 22 : 8 + (bars - 46), mont = real.filter(s => s[0] >= m0 && s[0] < m0 + mb).length, need = Math.min(6, Math.ceil(mb * 0.75)); if (mb > 0 && mont < need) warn('shots', 'only ' + mont + ' shots in the montage (bars ' + m0 + ' to ' + (m0 + mb - 1) + '); the score builds to quick cuts there', 'Use ' + Math.ceil(mb * 1.5) + ' to ' + mb * 2 + ' shots of 0.25 to 0.5 bar in bars ' + m0 + '-' + (m0 + mb - 1) + '.'); }
   }
   // narration
   let durations = null;

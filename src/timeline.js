@@ -19,6 +19,11 @@ function musicSections(bars) {
   return out;
 }
 
+/* score parts (spec.score.parts) become the music track as they are; null when the film uses a built-in preset */
+function partsSections(parts) {
+  if (!Array.isArray(parts) || !parts.length) return null;
+  return parts.filter(p => p && Number.isInteger(p.from) && Number.isInteger(p.to) && p.to >= p.from).map(p => ({ name: p.name || p.style, startBar: p.from, endBar: p.to + 1, style: p.style }));
+}
 const pos = (bar, beat) => bar + (beat || 0) / 4; // decimal bar position of [bar, beat offset in beats]
 
 function buildTimeline(spec, dir) {
@@ -36,6 +41,6 @@ function buildTimeline(spec, dir) {
     return { i, text: n.text || '', startBar: start, endBar: start + sec_ / spBar, seconds: Math.round(sec_ * 100) / 100, durSource: measured ? 'measured' : given ? 'spec' : 'estimate', hasAudio: !!n.file };
   });
   const prompts = (spec.prompts || []).map((p, i) => ({ i, bar: pos(p.bar, p.beat), text: p.text || '', big: !!p.big, hide: !!p.hide }));
-  return { bpm, bars, secPerBar: spBar, seconds: Math.round(bars * spBar * 10) / 10, endCardBar: spec.endCardBar == null ? null : spec.endCardBar, tracks: { shots, narration, prompts, music: musicSections(bars) } };
+  return { bpm, bars, secPerBar: spBar, seconds: Math.round(bars * spBar * 10) / 10, endCardBar: spec.endCardBar == null ? null : spec.endCardBar, tracks: { shots, narration, prompts, music: partsSections(spec.score && spec.score.parts) || musicSections(bars) } };
 }
 module.exports = { buildTimeline, musicSections, pos };

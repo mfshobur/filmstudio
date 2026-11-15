@@ -16,9 +16,11 @@ function filmScoreSeq(L){
   for(i=21;i<=46;i++)seq.push(i);
   return seq;
 }
+/* with score parts the music follows the film's own bars one to one */
+function partsSeq(n){var q=[],i;for(i=1;i<=n;i++)q.push(i);return q}
 function createMusic(c, out, BPM, opts){
-  opts = opts || {}; var CALM = !!opts.calm, TR = opts.transpose | 0;
-  var spb=60/BPM, s16=spb/4, SEQ=filmScoreSeq(opts.bars||46),M={BPM:BPM,spb:spb,s16:s16,bars:SEQ.length,steps:SEQ.length*16};
+  opts = opts || {}; var CALM = !!opts.calm, TR = opts.transpose | 0, PARTS = (opts.parts && opts.parts.length) ? opts.parts : null;
+  var spb=60/BPM, s16=spb/4, SEQ=PARTS?partsSeq(opts.bars||46):filmScoreSeq(opts.bars||46),M={BPM:BPM,spb:spb,s16:s16,bars:SEQ.length,steps:SEQ.length*16};
   function mtof(m){return 440*Math.pow(2,(m+TR-69)/12)}
   /* buses */
   var master=c.createGain();master.gain.value=1;master.connect(out);
@@ -244,5 +246,104 @@ function createMusic(c, out, BPM, opts){
     /* risers */
     if(st===0&&(bar===3||bar===11||bar===19||bar===26))riser(t,bar===3?spb*8:bar===26?spb*10:barLen*(bar===19?2:1),bar===26?.45:.34);
   };
+  /* spec.score.parts: a different piece of music for each stretch of the film (see composeParts below) */
+  if(PARTS)composeParts(M,{kick:kick,clap:clap,snare:snare,hat:hat,tick:tick,crash:crash,boom:boom,riser:riser,bass:bass,pad:pad,glass:glass,cello:cello,cutFx:cutFx,ping:ping,pluck:pluck,lead:lead},PARTS,spb,s16);
   return M;
+}
+
+/* ================= score parts: one piece of music per stretch of the film =================
+   parts = [{name, from, to, style:'ambient'|'pulse'|'drive'|'anthem', chords:['Am','F',...] (one per bar, cycled),
+             energy:[start,end] (0..1.5, a crescendo across the part), vol, into:'riser'|'roll'|'none', hit:'none'|'crash'|'boom'|'both',
+             drop:true (the beat before this part is silent), cuts (gain of the per-cut whoosh), flash (visual beat pulse 0..1), lead:false}]
+   `from` and `to` are film bars (inclusive). Voices come from createMusic so every output path (player, check, export) sounds the same. */
+var PART_STYLE={
+  ambient:{into:'riser',hit:'none',flash:.5,cuts:0},
+  pulse:{into:'riser',hit:'none',flash:.8,cuts:.5},
+  drive:{into:'roll',hit:'crash',flash:1,cuts:.7},
+  anthem:{into:'none',hit:'boom',flash:.9,cuts:0}
+};
+function partFlash(parts,bar){
+  if(!parts)return null;
+  for(var i=0;i<parts.length;i++){var p=parts[i];if(bar>=p.from&&bar<=p.to)return p.flash!=null?p.flash:(PART_STYLE[p.style]||PART_STYLE.pulse).flash}
+  return .6;
+}
+function chordVoicing(name){
+  var m=/^([A-G])([#b]?)(maj7|m7|dim|sus2|sus4|m|7)?$/.exec(String(name));
+  if(!m)return null;
+  var pc=({C:0,D:2,E:4,F:5,G:7,A:9,B:11}[m[1]]+(m[2]==='#'?1:m[2]==='b'?-1:0)+12)%12;
+  var I={'':[0,4,7],m:[0,3,7],'7':[0,4,7,10],m7:[0,3,7,10],maj7:[0,4,7,11],dim:[0,3,6],sus2:[0,2,7],sus4:[0,5,7]}[m[3]||''];
+  var r=36+pc;if(r<40)r+=12;
+  return {root:r-12,pad:[r,r+I[2],r+12,r+12+I[1],r+12+(I[3]!=null?I[3]:I[2])]};
+}
+function composeParts(M,V,PARTS,spb,s16){
+  var barLen=spb*4,ARP=[0,1,2,3,4,3,2,1,0,1,2,3,4,3,2,1],ARP8=[0,2,4,2,1,3,4,3],LEAD=[[0,4,6],[6,3,2],[8,2,4],[12,3,4]];
+  var CP=PARTS.map(function(p){
+    var d=PART_STYLE[p.style]||PART_STYLE.pulse,ch=(p.chords&&p.chords.length?p.chords:['Am']).map(chordVoicing).filter(Boolean);
+    if(!ch.length)ch=[chordVoicing('Am')];
+    var en=p.energy&&p.energy.length?p.energy:[.8,1];
+    return {style:PART_STYLE[p.style]?p.style:'pulse',from:p.from,to:p.to,ch:ch,e0:en[0],e1:en.length>1?en[1]:en[0],vol:p.vol!=null?p.vol:1,
+      into:p.into||d.into,hit:p.hit||d.hit,drop:!!p.drop,cuts:p.cuts!=null?p.cuts:d.cuts,lead:p.lead!==false};
+  });
+  function partFor(bar){for(var i=0;i<CP.length;i++)if(bar>=CP[i].from&&bar<=CP[i].to)return CP[i];return null}
+  var S={
+    /* tense and quiet: a drone, a heartbeat, a ticking clock, bowed glass and a distant ping */
+    ambient:function(x){
+      var t=x.t,ch=x.ch,e=x.e;
+      if(x.dn){V.pad(t,x.k<2?ch.pad.slice(0,3):ch.pad,x.padDur,.18+.16*e,420+700*e);V.bass(t,ch.root,x.barLen-.1,.14+.06*e)}
+      if(x.sub===0&&x.k>=1)V.tick(t,.08+.04*e);
+      if(x.st===0&&x.k>=1)V.kick(t,.1+.42*e,true);
+      if(x.st===8&&x.k>=3)V.kick(t,.3*e,true);
+      if(x.dn&&x.k%2===0)V.glass(t,ch.pad[4]+(x.k%4===0?12:0),x.barLen*1.5,.1+.08*e);
+      if(x.st===12&&x.k%2===1)V.ping(t,ch.pad[2]+24,.05+.04*e);
+    },
+    /* bright and light: a soft backbeat, a bouncing bass, plucked eighths and bell notes */
+    pulse:function(x){
+      var t=x.t,ch=x.ch,e=x.e;
+      if(x.dn)V.pad(t,ch.pad.slice(0,4),x.padDur,.1+.3*e,2000+800*e);
+      if(x.st===0||x.st===6||x.st===10)V.bass(t,ch.root,spb*(x.st===0?1.4:.9),.1+.36*e);
+      if(x.st===0||x.st===8)V.kick(t,.2+.5*e,false);
+      if(x.st===4||x.st===12)V.clap(t,.1+.3*e);
+      if(x.sub===2)V.hat(t,.1+.06*e,false);
+      if((x.st&1)===0)V.pluck(t,ch.pad[ARP8[x.st>>1]%5]+12,.1+.08*e,2200+800*e);
+      if(x.st===0&&x.k%2===0)V.ping(t,ch.pad[4]+12,.08+.04*e);
+      if(x.st===10)V.ping(t,ch.pad[2]+24,.06+.03*e);
+    },
+    /* hard electronic drive: four on the floor, offbeat hats, rolling bass, sixteenth arps */
+    drive:function(x){
+      var t=x.t,ch=x.ch,e=x.e;
+      if(x.dn)V.pad(t,ch.pad.slice(0,4),x.padDur,.2+.4*e,2400+600*e);
+      if(x.sub===0)V.kick(t,.3+.65*e,false);
+      if(x.st===4||x.st===12)V.clap(t,.15+.47*e);
+      if(x.sub===2)V.hat(t,.08+.14*e,x.beat===3);else if(x.sub===1||x.sub===3)V.hat(t,.03+.06*e,false);
+      if((x.st&1)===0){var up=(x.st===6||x.st===14),acc=(x.st===0||x.st===8);
+        V.bass(t,ch.root,spb*.45,.14+.34*e);V.cello(t,ch.root+12+(up?12:0),spb*.42,(.1+.28*e)*(acc?1.15:1),1000+500*e)}
+      V.pluck(t,ch.pad[ARP[x.st]%5]+12,.07+.13*e,2400+800*e);
+    },
+    /* open and rising: huge chords, a half-time kick, a long bass, strings and a lead melody */
+    anthem:function(x){
+      var t=x.t,ch=x.ch,e=x.e;
+      if(x.dn){V.pad(t,ch.pad,x.padDur+(x.final?1.2:0),.3+.5*e,2600+800*e);V.bass(t,ch.root,x.barLen-.1,.2+.3*e);V.cello(t,ch.root+12,x.barLen*.98,.1+.2*e,900+300*e)}
+      if(x.st===0)V.kick(t,.1+.68*e,false);
+      if(x.st===8)V.kick(t,.5*e,false);
+      if(x.st===8)V.clap(t,.12+.36*e);
+      if(x.sub===2)V.hat(t,.07+.05*e,false);
+      if((x.st&1)===0&&x.k%2===1)V.pluck(t,ch.pad[ARP8[x.st>>1]%5]+12,.05+.05*e,2600);
+      if(x.lead)LEAD.forEach(function(n){if(n[0]===x.st)V.lead(t,ch.pad[n[1]]+12,n[2]*s16,.1+.08*e)});
+    }
+  };
+  M.step=function(step,t){
+    var bar=Math.floor(step/16)+1,st=step%16,p=partFor(bar);if(!p)return;
+    var n=p.to-p.from+1,k=bar-p.from,last=k===n-1,nxt=last?partFor(bar+1):null,x={t:t,st:st,beat:st>>2,sub:st&3,dn:st===0,k:k,
+      ch:p.ch[k%p.ch.length],e:(p.e0+(p.e1-p.e0)*(n>1?k/(n-1):1))*p.vol,barLen:barLen,final:last&&!nxt,lead:p.lead};
+    var breath=last&&nxt&&nxt.drop;
+    if(breath&&st>=12)return;
+    x.padDur=barLen-.05-(breath?spb*1.1:0);
+    S[p.style](x);
+    if(k===0&&x.dn&&p.hit!=='none'){if(p.hit==='crash'||p.hit==='both')V.crash(t,.4*Math.min(1.2,p.vol));if(p.hit==='boom'||p.hit==='both')V.boom(t,.6*Math.min(1.2,p.vol))}
+    if(last&&nxt){
+      if(p.into==='riser'&&st===0)V.riser(t,barLen-(breath?spb*1.1:0),.3);
+      else if(p.into==='roll')V.snare(t,.2+x.beat*.08+(x.sub&1?.04:0));
+    }
+    if(x.sub===0&&p.cuts>0&&M.cuts&&M.cuts[Math.floor(step/4)])V.cutFx(t,M.cuts[Math.floor(step/4)]*p.cuts);
+  };
 }
