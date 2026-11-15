@@ -2,6 +2,7 @@
 /* ================= TIMELINE (bars, 128 BPM) ================= */
 var BPM={{BPM}},SPB=60/BPM,TOTAL_BARS={{BARS}};
 var TITLE_LINES={{TITLE_LINES}},TITLE_ACCENT={{TITLE_ACCENT}},SCORE={{SCORE}};
+var PSEQ=SCORE.parts?[]:filmScoreSeq(TOTAL_BARS);
 function bb(bar){return (bar-1)*4}
 var SH={{SHOTS}};
 var SCENES={{SCENES}},SC_DATA={{SCDATA}},RIGS_SRC={{RIGS}},LOOKS_SRC={{LOOKS}},LIBS_SRC={{LIBS}};
@@ -131,7 +132,7 @@ function frame(){
   if(beat<0){idx=0;sh=SH[0];F.tb=3+((now-idleT)/SPB)%5;F.dur=8;F.p=.4;F.beat=0}
   else{idx=findShot(beat);sh=SH[idx];var b0=bb(sh[0]),dur=bb(sh[1])-b0,tb=beat-b0;F.dur=dur;F.p=clamp(tb/dur,0,1);F.tb=tb+(dur<=2?3:0);F.beat=beat}
   F.T=F.tb*SPB;F.params=sh[4]||null;
-  var bar=Math.floor(Math.max(0,beat)/4)+1,calm=SCORE.parts?partFlash(SCORE.parts,bar):((bar<5||(bar>=21&&bar<=28)||bar>=41)?.5:1),bf=((beat<0?F.tb:beat)%1+1)%1;
+  var bar=Math.floor(Math.max(0,beat)/4)+1,pbar=SCORE.parts?bar:(PSEQ[bar-1]||PSEQ[PSEQ.length-1]),calm=SCORE.parts?partFlash(SCORE.parts,bar):((pbar<5||(pbar>=21&&pbar<=28)||pbar>=41)?.5:1),bf=((beat<0?F.tb:beat)%1+1)%1;
   F.k=Math.exp(-bf*5)*calm;
   if(idx!==lastShot){lastShot=idx;shotStartBeat=beat<0?0:bb(sh[0]);bcv.style.opacity=String(isBright(sh)?.1:BRIGHT[sh[2]]!==undefined?.28:.6);scv.style.opacity=isBright(sh)?'.04':'.22'}
   var age=beat<0?9:beat-shotStartBeat,punch=1+.05*Math.max(0,1-age/.5);

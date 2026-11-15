@@ -2,16 +2,19 @@
 /* film bar -> score bar. The score is 46 bars; the montage (score bars 13-20, four 2-bar units) stretches or shrinks
    so a film can be 40 to 78 bars (even numbers); below 40 (24 to 38) a shorter arrangement drops the first build half, the break and the early climax. The last montage unit (19-20, riser + roll into the break) always plays. */
 function filmScoreSeq(L){
-  L=L||46;var seq=[],i,u;
-  if(L<40){ /* short cut: intro 1-4, last build bars 9-12, montage units, the roll and breath 27-28, then the drop and outro 35-46 */
-    u=Math.max(1,Math.round((L-22)/2));
+  /* Any length from 8 bars up. The built-in arrangement is intro, a looping montage, then break, drop and outro; the montage stretches (13-18 cycle two bars at a time), so a film can be any number of bars at any tempo. 46 bars plays the arrangement as written. */
+  L=Math.max(8,L||46);var seq=[],i,m;
+  function mid(n){for(var k=0;k<n;k++){var b0=13+(Math.floor(k/2)%3)*2;seq.push(b0+(k%2))}}
+  if(L<24){ /* very short: the intro, then the end of the outro */
+    for(i=1;i<=4;i++)seq.push(i);for(i=46-(L-4)+1;i<=46;i++)seq.push(i);return seq;
+  }
+  if(L<40){ /* short cut: intro 1-4, last build bars 9-12, montage, the roll and breath 27-28, then the drop and outro 35-46 */
     for(i=1;i<=4;i++)seq.push(i);for(i=9;i<=12;i++)seq.push(i);
-    for(i=0;i<u-1;i++){var b0=13+(i%3)*2;seq.push(b0,b0+1)}
+    mid(L-24);
     seq.push(19,20,27,28);for(i=35;i<=46;i++)seq.push(i);return seq;
   }
-  u=Math.max(1,Math.round((L-38)/2));
   for(i=1;i<=12;i++)seq.push(i);
-  for(i=0;i<u-1;i++){var base=13+(i%3)*2;seq.push(base,base+1)}
+  mid(L-40);
   seq.push(19,20);
   for(i=21;i<=46;i++)seq.push(i);
   return seq;

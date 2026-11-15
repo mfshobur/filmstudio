@@ -19,8 +19,8 @@ const beatsOf = at => (at[0] - 1) * 4 + at[1];
     const m = musicSections(46); assert.deepStrictEqual(m.map(x => x.name), ['intro', 'build', 'montage', 'break', 'climax', 'outro']);
     assert.strictEqual(m[0].startBar, 1); assert.strictEqual(m[m.length - 1].endBar, 47); m.forEach((x, i) => { assert.ok(x.endBar > x.startBar); if (i) assert.strictEqual(x.startBar, m[i - 1].endBar); });
   });
-  await t('music sections: every supported length (24..78, even) is contiguous and covers the whole film', () => {
-    for (let b = 24; b <= 78; b += 2) { const m = musicSections(b); assert.ok(m.length >= 3, 'bars ' + b); assert.strictEqual(m[0].startBar, 1, 'bars ' + b); assert.strictEqual(m[m.length - 1].endBar, b + 1, 'bars ' + b); m.forEach((x, i) => { if (i) assert.strictEqual(x.startBar, m[i - 1].endBar, 'gap at bars ' + b); }); }
+  await t('music sections: every length (8..400 bars) is contiguous and covers the whole film', () => {
+    for (const b of [8, 9, 12, 23, 24, 25, 31, 46, 47, 78, 79, 100, 160, 301, 400]) { const m = musicSections(b); assert.ok(m.length >= 2, 'bars ' + b); assert.strictEqual(m[0].startBar, 1, 'bars ' + b); assert.strictEqual(m[m.length - 1].endBar, b + 1, 'bars ' + b); m.forEach((x, i) => { if (i) assert.strictEqual(x.startBar, m[i - 1].endBar, 'gap at bars ' + b); }); }
   });
   await t('music sections: a length with no arrangement gives no sections instead of wrong ones', () => { assert.deepStrictEqual(musicSections(null), []); assert.deepStrictEqual(musicSections(46.5), []); });
   await t('buildTimeline: shots, narration, prompts and music for the example film (no durations yet, so lines are estimated)', () => {

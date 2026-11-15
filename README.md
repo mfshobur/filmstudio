@@ -59,7 +59,7 @@ There are also thirty ready-made styles with a few variants each. They are finis
 
 Characters are optional. If your story needs one, you describe it in the project (body type, colors, hair, face, accessories) and pick how it's drawn: cartoon outline, flat, paper cut-out, shadow-puppet silhouette, neon glow or hand-drawn. `examples/character-demo` shows six. A film that doesn't use characters never has one.
 
-There are two music scores, both 46 bars in A minor with no piano: `anthem-46` (energetic) and `calm-46` (no hard drums). The score is 46 bars by default; set `bars` to any even number from 24 to 78. Longer films stretch the drum-driven middle section; below 40 bars a shorter arrangement drops the first half of the build, the break and the early climax. Film length is bars x 240 / bpm (`filmstudio length 60` suggests the numbers). The shortest film at a natural tempo is 24 bars, about 45 s; 30 s means 192 bpm. You can transpose the key. For a film with parts that need different moods (a tense setup, a bright turn, a hard montage, a big finish), `spec.score.parts` gives each stretch its own music: four styles (`ambient`, `pulse`, `drive`, `anthem`), your own chord progressions and an energy curve per part (`filmstudio guide score-parts`). More styles, characters and scores are the next things to build. See the roadmap below.
+There are two music scores, both 46 bars in A minor with no piano: `anthem-46` (energetic) and `calm-46` (no hard drums). The score is 46 bars by default, but **film length is free**: set `bars` to any whole number from 8 to 2000 and `bpm` (40 to 240) to whatever tempo you like. The drum-driven middle section stretches to fit; below 40 bars a shorter arrangement drops the first half of the build, the break and the early climax. Length in seconds is bars x 240 / bpm, and `filmstudio length 300 --bpm 128` works out the numbers (160 bars, exactly 300 s at 128 bpm), so a 5 minute film does not need a slow tempo. You can transpose the key. For a film with parts that need different moods (a tense setup, a bright turn, a hard montage, a big finish), `spec.score.parts` gives each stretch its own music: four styles (`ambient`, `pulse`, `drive`, `anthem`), your own chord progressions and an energy curve per part (`filmstudio guide score-parts`). More styles, characters and scores are the next things to build. See the roadmap below.
 
 ## Install
 
@@ -171,7 +171,7 @@ All commands print JSON.
 | `list` | list the projects in your workspace folder (default `~/filmstudio-projects`) |
 | `serve` | open a local web page: a project picker for the workspace, and per project an editor for the storyboard, narration, preview and notes |
 | `mcp` | run an MCP server (24 tools, the guide as resources, a `make_film` prompt, built-in instructions) so any agent can make a film through MCP alone |
-| `length <seconds>` | suggest `bars` and `bpm` for a target film length |
+| `length <seconds> [--bpm 128]` | the `bars` and `bpm` for an exact film length at about that tempo |
 | `install-skill` | install the Claude Code skill; print MCP and `AGENTS.md` snippets for use from another repo |
 | `doctor` | check this machine |
 | `styles` | list the styles and variants |

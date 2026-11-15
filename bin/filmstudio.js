@@ -20,7 +20,7 @@ const out = o => console.log(JSON.stringify(o, null, 2));
 const fail = (msg, extra) => { out(Object.assign({ ok: false, error: msg }, extra || {})); process.exit(1); };
 const readSpec = dir => { const f = path.join(dir, 'spec.json'); if (!fs.existsSync(f)) fail('spec.json not found in ' + path.resolve(dir), { fix: 'Run `filmstudio new <dir>` first, or cd into a project folder.' }); try { return JSON.parse(fs.readFileSync(f, 'utf8')); } catch (e) { fail('spec.json is not valid JSON: ' + e.message); } };
 const HELP = `filmstudio <command> [project-dir] [options]   (all output is JSON)
-  new <dir> [--example name] [--length 60] [--preset calm-46] [--format 9:16]   create a project (length in seconds sets bars and bpm)
+  new <dir> [--example name] [--length 60 [--bpm 128]] [--preset calm-46] [--format 9:16]   create a project (length in seconds sets bars; tempo is independent)
   validate [dir]                         check spec.json, with fix hints
   voice [dir] [--provider kokoro|elevenlabs|file] [--force] [--yes]   generate or import narration (elevenlabs is paid: needs --yes)
   export [dir] [--quality fhd|hd|4k|draft] [--fps 24] [--size 1920x1080] [--crf 18] [--from-bar 1 --to-bar 47] [--no-audio] [--no-bars]   render build/film.mp4 (default Full HD 1080p, 24 fps; slow, resumable)
@@ -36,7 +36,7 @@ const HELP = `filmstudio <command> [project-dir] [options]   (all output is JSON
   scene check <name>                     lint + render tests: errors, blank or frozen scenes, same-frame determinism, draw speed
   scene list | rig new <name> | lib new <name> | look list | look show <name> | look new <name>   scenes, puppet rigs, shared helper code and looks (style guides)
   library list|save <kind> <name>|use <kind> <name>   keep scenes, rigs and looks you want to reuse across films (~/.filmstudio/library)
-  length <seconds> [--preset calm-46]    suggest bars and bpm for a target length
+  length <seconds> [--bpm 128] [--preset calm-46]    bars and bpm for an exact length at about that tempo (length and tempo are independent)
   list [--root dir]                      list the projects in the workspace (default ~/filmstudio-projects or FILMSTUDIO_ROOT)
   serve [dir|--root dir] [--port 4173] [--host 127.0.0.1] [--token t] [--allow-host name.ngrok.app]   local web page: one project if dir has spec.json, else a project picker over the workspace (token required off localhost)
   styles [--mood calm]                   list shot styles and variants (filter by mood)
@@ -58,7 +58,7 @@ const HELP = `filmstudio <command> [project-dir] [options]   (all output is JSON
       return console.log(want.map(f => fs.readFileSync(path.join(gdir, f), 'utf8')).join('\n\n---\n\n'));
     }
     if (cmd === 'mcp') { require('../src/mcp').serve(flags.root ? String(flags.root) : null); return; }
-    if (cmd === 'length') { const sec = Number(pos[1]); if (!(sec > 0)) fail('usage: filmstudio length <seconds> [--preset anthem-46|calm-46]'); const r = require('../src/registry').planLength(sec, flags.preset ? String(flags.preset) : 'anthem-46'); return out(Object.assign(r, { set: 'In spec.json set "bars": ' + r.bars + ' and "bpm": ' + r.bpm + '.', note: Math.abs(r.seconds - sec) > 2 ? 'Closest this score can get to ' + sec + ' s without a very fast or slow tempo.' : undefined })); }
+    if (cmd === 'length') { const sec = Number(pos[1]); if (!(sec > 0)) fail('usage: filmstudio length <seconds> [--bpm 128] [--preset anthem-46|calm-46]'); const r = require('../src/registry').planLength(sec, flags.preset ? String(flags.preset) : 'anthem-46', flags.bpm ? Number(flags.bpm) : null); return out(Object.assign(r, { set: 'In spec.json set "bars": ' + r.bars + ' and "bpm": ' + r.bpm + '. The length is exact and the tempo stays near ' + (flags.bpm || 'the preset tempo') + ': length and tempo are independent.', note: Math.abs(r.seconds - sec) > 0.5 ? 'Could not reach ' + sec + ' s within the tempo limits (40 to 240 bpm); closest is ' + r.seconds + ' s.' : undefined })); }
     if (cmd === 'list') {
       const W = require('../src/workspace'), root = W.resolveRoot(flags.root);
       return out({ ok: true, root, exists: fs.existsSync(root), projects: W.listProjects(root), note: 'A project is a subfolder of the workspace that has spec.json. Set the workspace with --root or FILMSTUDIO_ROOT (default ~/filmstudio-projects).' });
@@ -101,7 +101,7 @@ const HELP = `filmstudio <command> [project-dir] [options]   (all output is JSON
         const R = require('../src/registry'), sp = path.join(target, 'spec.json'), spc = JSON.parse(fs.readFileSync(sp, 'utf8'));
         if (flags.preset) { if (!R.SCORES[String(flags.preset)]) fail('unknown preset', { presets: Object.keys(R.SCORES) }); spc.score = Object.assign({}, spc.score, { preset: String(flags.preset) }); spc.bpm = R.SCORES[String(flags.preset)].bpm; }
         if (flags.format) { if (!R.FORMATS[String(flags.format)]) fail('unknown format', { formats: Object.keys(R.FORMATS) }); if (flags.format !== '16:9') spc.format = String(flags.format); }
-        if (flags.length) { const p = R.planLength(Number(flags.length), (spc.score || {}).preset); const k = p.bars / spc.bars; let prev = 1; const ns = [];
+        if (flags.length) { const p = R.planLength(Number(flags.length), (spc.score || {}).preset, flags.bpm ? Number(flags.bpm) : null); const k = p.bars / spc.bars; let prev = 1; const ns = [];
           spc.shots.forEach((s, i) => { let e = i === spc.shots.length - 1 ? p.bars + 1 : Math.round((1 + (s[1] - 1) * k) * 4) / 4; if (e > prev) { ns.push([prev].concat([e], s.slice(2))); prev = e; } });
           if (ns.length) ns[ns.length - 1][1] = p.bars + 1; spc.shots = ns; spc.bars = p.bars; spc.bpm = p.bpm; spc.endCardBar = Math.round((p.bars - 1.4) * 100) / 100; }
         fs.writeFileSync(sp, JSON.stringify(spc, null, 1)); applied = { bars: spc.bars, bpm: spc.bpm, format: spc.format || '16:9', preset: (spc.score || {}).preset, shots: spc.shots.length, note: flags.length ? 'Starter shots were squeezed to fit; they are placeholders, replace them.' : undefined };

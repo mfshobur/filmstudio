@@ -38,14 +38,14 @@ const FORMATS = { '16:9': [16, 9], '9:16': [9, 16], '1:1': [1, 1], '4:5': [4, 5]
 const QUALITY = { draft: { long: 640, fps: 12, crf: 26, label: 'Draft (640 wide, 12 fps, fast)' }, hd: { long: 1280, fps: 24, crf: 20, label: 'HD 720p' }, fhd: { long: 1920, fps: 24, crf: 18, label: 'Full HD 1080p' }, '4k': { long: 3840, fps: 24, crf: 18, label: '4K 2160p (very slow)' } };
 const DEFAULT_QUALITY = 'fhd';
 function sizeFor(format, long) { const f = FORMATS[format] || FORMATS['16:9'], L = long || 640, k = L / Math.max(f[0], f[1]); return [Math.round(f[0] * k / 2) * 2, Math.round(f[1] * k / 2) * 2]; }
-/* film lengths the built-in scores support: 46 bars, or any even number from 24 to 78 (the montage stretches; below 40 a shorter arrangement) */
-const BARS_MIN = 24, BARS_MAX = 78;
-function barsOk(b) { return Number.isInteger(b) && b % 2 === 0 && b >= BARS_MIN && b <= BARS_MAX; }
-/* choose bars and bpm for a target length, staying near the preset's natural tempo */
-function planLength(seconds, preset) {
-  const sc = SCORES[preset || 'anthem-46'] || SCORES['anthem-46'];
-  let bars = Math.round(seconds * sc.bpm / 240 / 2) * 2; bars = Math.max(BARS_MIN, Math.min(BARS_MAX, bars));
-  const bpm = Math.max(60, Math.min(200, Math.round(bars * 240 / seconds)));
+/* Film length is free: any number of bars from 8, at any tempo from 40 to 240 bpm. The built-in scores stretch their montage to fit. */
+const BARS_MIN = 8, BARS_MAX = 2000, BPM_MIN = 40, BPM_MAX = 240;
+function barsOk(b) { return Number.isInteger(b) && b >= BARS_MIN && b <= BARS_MAX; }
+/* Choose bars and bpm for an exact length at (about) the wanted tempo: bars = length x tempo / 240, then the tempo is nudged by a fraction of a beat so that bars x 240 / bpm is exactly the length. */
+function planLength(seconds, preset, bpmWanted) {
+  const sc = SCORES[preset || 'anthem-46'] || SCORES['anthem-46'], want = bpmWanted > 0 ? bpmWanted : sc.bpm;
+  const bars = Math.max(BARS_MIN, Math.min(BARS_MAX, Math.round(seconds * want / 240)));
+  const bpm = Math.max(BPM_MIN, Math.min(BPM_MAX, Math.round(bars * 240 / seconds * 100) / 100));
   return { bars, bpm, seconds: Math.round(bars * 240 / bpm * 10) / 10 };
 }
 const SCORES = {
@@ -64,4 +64,4 @@ const MOODS = {
 Object.keys(MOODS).forEach(k => { if (STYLES[k]) STYLES[k].moods = MOODS[k]; });
 const ICON_NAMES = ['bulb', 'heart', 'house', 'book', 'rocket', 'chart', 'person', 'tree', 'cloud', 'star', 'gear', 'check'];
 const PUPPET_KINDS = ['hero', 'demon', 'clown', 'gunungan', 'bird', 'tree', 'mountain', 'house', 'deer'];
-module.exports = { QUALITY, DEFAULT_QUALITY, FORMATS, sizeFor, barsOk, planLength, BARS_MIN, BARS_MAX, STYLES, SCORES, ICON_NAMES, PUPPET_KINDS };
+module.exports = { QUALITY, DEFAULT_QUALITY, FORMATS, sizeFor, barsOk, planLength, BARS_MIN, BARS_MAX, BPM_MIN, BPM_MAX, STYLES, SCORES, ICON_NAMES, PUPPET_KINDS };

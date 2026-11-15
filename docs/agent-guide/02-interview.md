@@ -10,7 +10,7 @@ Goal: get enough to make a good film in **at most 3 questions**. Everything else
 ## Defaults when not stated
 | Field | Default |
 |---|---|
-| length | about 86 s at the default bpm 128. Run `filmstudio length <seconds>` for the `bars` and `bpm` to use (30 s = 24 bars at 192 bpm; 45 s = 24 bars at 128; 60 s = 32 bars at 128; 120 s calm = 50 bars at 100) |
+| length | about 86 s at the default bpm 128. Run `filmstudio length <seconds> [--bpm 128]` for the `bars` and `bpm` to use; any length works at any tempo (30 s = 16 bars at 128 bpm; 60 s = 32 bars; 300 s = 160 bars; 120 s calm = 50 bars at 100) |
 | tone | calm, curious, a little suspense |
 | styles | let the style grammar choose (see `guide style-grammar`) |
 | music | `anthem-46` (energetic) at 128 BPM; use `calm-46` at about 100 BPM when the tone is gentle, reflective or sleepy |

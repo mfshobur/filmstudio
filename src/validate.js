@@ -37,8 +37,8 @@ function validate(spec, dir) {
   if (!spec || typeof spec !== 'object') { err('', 'spec.json is missing or not an object', 'Run `filmstudio new` or create spec.json (see `filmstudio guide spec`).'); return { ok: false, errors, warnings }; }
   if (spec.version !== 1) err('version', 'version must be 1', 'Set "version": 1.');
   const bpm = spec.bpm, bars = spec.bars;
-  if (!(bpm >= 60 && bpm <= 200)) err('bpm', 'bpm must be between 60 and 200', 'Use 128 for the built-in score.');
-  if (!(Number.isInteger(bars) && bars >= 8 && bars <= 200)) err('bars', 'bars must be an integer from 8 to 200', 'bars = film length in seconds * bpm / 240.');
+  if (!(bpm >= 40 && bpm <= 240)) err('bpm', 'bpm must be between 40 and 240', 'Use 128 for the built-in score. The length does not depend on it: change bars (or run `filmstudio length <seconds> --bpm <tempo>`).');
+  if (!(Number.isInteger(bars) && bars >= 8 && bars <= 2000)) err('bars', 'bars must be a whole number from 8 to 2000', 'bars = film length in seconds * bpm / 240. `filmstudio length <seconds> [--bpm 128]` works it out.');
   if (spec.finish !== undefined) {
     if (!spec.finish || typeof spec.finish !== 'object' || Array.isArray(spec.finish)) err('finish', 'finish must be an object', 'Example: "finish": { "grain": 0.3 }. Keys: grain, bloom, streak (0 to 2, 1 = default).');
     else Object.keys(spec.finish).forEach(k => { const v = spec.finish[k]; if (!['grain', 'bloom', 'streak'].includes(k)) err('finish.' + k, 'unknown finish key "' + k + '"', 'Keys: grain, bloom, streak.'); else if (typeof v !== 'number' || !(v >= 0 && v <= 2)) err('finish.' + k, k + ' must be a number from 0 to 2', '0 turns it off, 1 is the default look.'); });
@@ -46,7 +46,6 @@ function validate(spec, dir) {
   const hasParts = !!(spec.score && spec.score.parts !== undefined);
   const preset = (spec.score && spec.score.preset) || 'anthem-46';
   if (!SCORES[preset]) err('score.preset', 'unknown score preset "' + preset + '"', 'Available: ' + Object.keys(SCORES).join(', '));
-  else if (!hasParts && bars !== SCORES[preset].bars && !require('./registry').barsOk(bars)) err('bars', 'the built-in scores support 46 bars or any even number from 24 to 78, spec has ' + bars, 'Pick bars from 24 to 78 (even) and a bpm to match: seconds = bars x 240 / bpm. `filmstudio length <seconds>` suggests both.');
   if (spec.format != null && !require('./registry').FORMATS[spec.format]) err('format', 'unknown format "' + spec.format + '"', 'Use one of: ' + Object.keys(require('./registry').FORMATS).join(', ') + '. Leave it out for 16:9.');
   if (hasParts) checkParts(spec.score.parts, bars, err);
   if (spec.score && spec.score.transpose != null && !(Number.isInteger(spec.score.transpose) && spec.score.transpose >= -6 && spec.score.transpose <= 6)) err('score.transpose', 'transpose must be a whole number of semitones from -6 to 6', 'Use 0 for the default A minor; +3 gives C minor.');

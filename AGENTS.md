@@ -30,7 +30,7 @@ filmstudio export                      # optional: render build/film.mp4 (slow o
 The user may keep the studio open (`filmstudio`, or `filmstudio serve --root <workspace>` for another folder): its Scenes tab previews your scenes live as you edit them. Reuse what you make: `filmstudio library save scene|rig|look|lib <name>`.
 
 ## Length and music (decide this early)
-Length: **seconds = bars x 240 / bpm**. Run `filmstudio length <seconds> [--preset calm-46]` and put the `bars` and `bpm` it suggests into spec.json. Music: the two built-in presets, or **a different piece of music for each part of the film** with `score.parts` (`filmstudio guide score-parts`). Details: `filmstudio guide storyboard`.
+Length is free and independent of tempo: any film length at any tempo (seconds = bars x 240 / bpm, and the tool does the sum). Run `filmstudio length <seconds> [--bpm 128] [--preset calm-46]` and put the `bars` and `bpm` it gives into spec.json; a 5 minute film at 128 bpm is 160 bars. Music: the two built-in presets, or **a different piece of music for each part of the film** with `score.parts` (`filmstudio guide score-parts`). Details: `filmstudio guide storyboard`.
 
 ## Rules
 - You cannot hear audio or judge taste: say so, use measurements, ask the user to listen and report timecodes. You can look at images (`scene preview`, `review`): do, and fix what you see.

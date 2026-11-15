@@ -13,7 +13,7 @@ The built-in presets (`anthem-46`, `calm-46`) are one continuous piece. When a f
 
 ## Rules (`validate` checks all of them)
 - Parts must **tile the film**: the first starts at bar 1, each starts the bar after the previous one ends, the last ends at `bars`. `from` and `to` are film bars, both inclusive.
-- With parts, `bars` can be any whole number from 8 to 200 (the built-in 46-bar lengths do not apply). Seconds = bars x 240 / bpm, as always. One tempo for the whole film.
+- Film length is free with or without parts: `bars` can be any whole number from 8 to 2000. Seconds = bars x 240 / bpm, and `filmstudio length <seconds> --bpm <tempo>` gives both. One tempo for the whole film. For films longer than about 2 minutes, parts are the better way to score: the built-in presets loop their montage.
 - `chords`: one chord per bar, the list repeats. Names: a letter A-G, optional `#` or `b`, optional `m`, `7`, `m7`, `maj7`, `dim`, `sus2`, `sus4` (`Am`, `F#m`, `Bb`, `G7`, `Dm7`). `score.transpose` still shifts everything.
 
 ## The four styles
