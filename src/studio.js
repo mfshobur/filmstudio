@@ -136,7 +136,7 @@ function createStudio(opts) {
         if (p === '/api/timeline' && req.method === 'GET') {
           const spec = readJson(f('spec.json'), null);
           if (!spec || !(spec.bpm > 0) || !Number.isInteger(spec.bars) || !Array.isArray(spec.shots)) return send(422, { error: 'spec.json has no usable bpm, bars and shots yet' });
-          try { return send(200, Object.assign({ rev: rev() }, buildTimeline(spec, dir))); } catch (e) { return send(422, { error: 'cannot draw the timeline: ' + e.message }); }
+          try { return send(200, Object.assign({ rev: rev(), built: (() => { try { return fs.statSync(f('build/film.html')).mtimeMs; } catch (e) { return 0; } })() }, buildTimeline(spec, dir))); } catch (e) { return send(422, { error: 'cannot draw the timeline: ' + e.message }); }
         }
         if (p === '/api/spec' && req.method === 'PUT') { const s = await json(); if (!s || typeof s !== 'object' || Array.isArray(s)) return send(400, { error: 'spec must be a JSON object' }); const im = req.headers['if-match']; if (im && im !== rev()) return stale(); backupOnce(); writeJson(f('spec.json'), s); return send(200, { saved: true, rev: rev(), validation: validate(s, dir) }); }
         /* PATCH: timeline edits as small operations (see src/edits.js). Re-reads the file, so it never writes from a stale copy; `rev` is required. */

@@ -40,7 +40,7 @@
       '.tl-end{position:absolute;top:0;bottom:0;border-left:2px dashed var(--ember);pointer-events:none}',
       '.tl-blk{position:absolute;border-radius:4px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font:11px/1.3 var(--mono);color:#fff;padding:3px 6px;border:1px solid rgba(255,255,255,.28);user-select:none;touch-action:none}',
       '.tl-blk.sel{outline:2px solid var(--ice);z-index:3}',
-      '.tl-shot{cursor:pointer}',
+      '.tl-shot{cursor:pointer;background-size:cover;background-position:center;text-shadow:0 1px 3px #000,0 0 2px #000}',
       '.tl-h{position:absolute;top:0;bottom:0;width:12px;margin-left:-6px;cursor:col-resize;z-index:4;touch-action:none}',
       '.tl-h::after{content:"";position:absolute;left:5px;top:22%;bottom:22%;width:2px;background:rgba(255,255,255,.8);border-radius:1px}',
       '.tl-nar{cursor:grab;background:#2a4a6e}.tl-nar.est{border-style:dashed}.tl-nar.noaudio{opacity:.65}',
@@ -87,7 +87,7 @@
   function refresh() {
     if (!CUR) return Promise.resolve();
     return fetchTimeline(CUR.ctx)
-      .then(function (d) { T.data = d; if (document.body.contains(CUR.el)) render(); })
+      .then(function (d) { T.data = d; if (document.body.contains(CUR.el)) { render(); loadThumbs(); } })
       .catch(function (e) { CUR.el.textContent = 'Timeline unavailable: ' + e.message; });
   }
   function failed(e) {
@@ -141,6 +141,43 @@
     CUR.el.querySelectorAll('.tl-blk[data-k]').forEach(function (e) { e.classList.toggle('sel', e.dataset.k === k && +e.dataset.i === i); });
   }
 
+  /* ---------- thumbnails: a hidden copy of the built film is seeked to the middle of each shot and its canvas copied ---------- */
+  var THUMBS = {}, TH = { built: null, busy: false, again: false };
+  function thumbKey(s) { return (T.data && T.data.built) + '|' + s.start + '-' + s.end + '|' + s.style + '/' + s.variant; }
+  function loadThumbs() {
+    var d = T.data; if (!d || !d.built) return;
+    if (TH.busy) { TH.again = true; return; }
+    var todo = d.tracks.shots.filter(function (s) { return !THUMBS[thumbKey(s)]; }); if (!todo.length) return;
+    TH.busy = true;
+    var fr = document.createElement('iframe');
+    fr.setAttribute('aria-hidden', 'true'); fr.tabIndex = -1;
+    fr.style.cssText = 'position:fixed;left:-2000px;top:0;width:640px;height:360px;border:0;opacity:0;pointer-events:none';
+    var done = function () { try { fr.remove(); } catch (e) {} TH.busy = false; if (TH.again) { TH.again = false; loadThumbs(); } };
+    var wait = function (ms) { return new Promise(function (r) { setTimeout(r, ms); }); };
+    fr.onload = function () {
+      var w = fr.contentWindow, tries = 0;
+      (function ready() {
+        if (!w.__film && tries++ < 50) return setTimeout(ready, 100);
+        if (!w.__film) return done();
+        try { var st = w.document.createElement('style'); st.textContent = '#intro{display:none!important}'; w.document.head.appendChild(st); } catch (e) {}
+        var cv = w.document.getElementById('c'), q = w.document.createElement('canvas'); q.width = 192; q.height = 108;
+        var i = 0;
+        (function next() {
+          if (i >= todo.length || !document.body.contains(CUR.el)) return done();
+          var s = todo[i++], beat = (s.start - 1) * 4 + (s.end - s.start) * 4 * 0.55;
+          w.__film.seek(beat);
+          wait(450).then(function () {
+            try { q.getContext('2d').drawImage(cv, 0, 0, 192, 108); THUMBS[thumbKey(s)] = q.toDataURL('image/jpeg', 0.7);
+              var el = CUR.el.querySelector('.tl-shot[data-i="' + s.i + '"]'); if (el) el.style.backgroundImage = 'url(' + THUMBS[thumbKey(s)] + ')'; } catch (e) {}
+            next();
+          });
+        })();
+      })();
+    };
+    fr.src = 'film.html' + (location.search || '');  /* relative: the studio may be mounted at /p/<project>/ */
+    document.body.appendChild(fr);
+  }
+
   /* ---------- drawing ---------- */
   function render() {
     var d = T.data, Z = T.zoom, tr = d.tracks, W = Math.round(d.bars * Z), el = CUR.el;
@@ -165,10 +202,11 @@
     tr.music.forEach(function (m) { mus.appendChild(h('div', { class: 'tl-blk tl-mus', style: 'top:3px;bottom:3px;left:' + x(m.startBar) + 'px;width:' + ((m.endBar - m.startBar) * Z - 1) + 'px', text: m.name, title: m.name + ' · bars ' + m.startBar + ' to ' + (m.endBar - 1) + ' (follows the score; not editable)' })); });
 
     /* shots */
-    var sl_ = lane('video', 38), shotEls = [], handleEls = [];
+    var sl_ = lane('video', 66), shotEls = [], handleEls = [];
     tr.shots.forEach(function (s, i) {
       var el_ = h('div', { class: 'tl-blk tl-shot' + (T.sel && T.sel.k === 'shot' && T.sel.i === i ? ' sel' : ''), 'data-k': 'shot', 'data-i': i, style: 'top:3px;bottom:3px;left:' + x(s.start) + 'px;width:' + ((s.end - s.start) * Z - 1) + 'px;background:hsl(' + hue(s.style) + ',42%,30%)', text: s.style + '/' + s.variant, title: '#' + (i + 1) + ' ' + s.style + '/' + s.variant + ' · bars ' + s.start + ' to ' + s.end + ' · ' + s.beats + ' beats. Click to select, press S to split at the playhead.' });
       el_.addEventListener('pointerdown', function (e) { var r = sl_.getBoundingClientRect(); select('shot', i); movePH(1 + (e.clientX - r.left) / Z); });
+      var th = THUMBS[thumbKey(s)]; if (th) { el_.style.backgroundImage = 'url(' + th + ')'; el_.style.backgroundBlendMode = 'normal'; }
       sl_.appendChild(el_); shotEls.push(el_);
     });
     tr.shots.forEach(function (s, i) {
@@ -248,7 +286,7 @@
     return fetchTimeline(ctx).then(function (d) {
       T.data = d; T.ph = clamp(T.ph, 1, d.bars + 1);
       if (!T.zoom) T.zoom = clamp((el.clientWidth - LABW - 24) / d.bars, ZMIN, ZMAX) || 18;
-      render();
+      render(); loadThumbs();
     }).catch(function (e) { el.textContent = ''; el.appendChild(h('p', { class: 'dim', text: 'No timeline yet: ' + e.message + (e.data && e.data.error ? '' : '') + ' Fix it in the Storyboard tab (the Check panel says what is wrong).' })); });
   }
   window.FilmTimeline = { mount: mount };
