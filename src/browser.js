@@ -13,7 +13,9 @@ function loadPlaywright() {
 }
 async function launch() {
   const pw = loadPlaywright();
-  const opts = { args: ['--no-sandbox', '--use-gl=swiftshader', '--enable-unsafe-swiftshader', '--disable-dev-shm-usage', '--mute-audio', '--autoplay-policy=no-user-gesture-required'] };
+  /* The real graphics chip is used on macOS and Windows (several times less CPU, much faster); software GL stays the default on Linux, phones and servers, which may have no GPU. FILMSTUDIO_GPU=1 or 0 overrides. */
+  const gpu = process.env.FILMSTUDIO_GPU ? process.env.FILMSTUDIO_GPU === '1' : (process.platform === 'darwin' || process.platform === 'win32');
+  const opts = { args: ['--no-sandbox'].concat(gpu ? [] : ['--use-gl=swiftshader', '--enable-unsafe-swiftshader'], ['--disable-dev-shm-usage', '--mute-audio', '--autoplay-policy=no-user-gesture-required']) };
   const chrome = ENV.chromiumPath(); if (chrome) opts.executablePath = chrome;
   if (!process.env.PLAYWRIGHT_HOST_PLATFORM_OVERRIDE && process.platform === 'linux' && fs.existsSync('/root/.cache/ms-playwright')) process.env.PLAYWRIGHT_HOST_PLATFORM_OVERRIDE = 'ubuntu24.04-arm64';
   return pw.chromium.launch(opts);

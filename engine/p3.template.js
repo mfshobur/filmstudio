@@ -113,7 +113,10 @@ function caption(text){
   capTimer=setTimeout(function(){el.innerHTML='';if(!text)return;String(text).split(' ').forEach(function(w,k){var s=document.createElement('span');s.textContent=w+' ';s.style.transitionDelay=(k*70)+'ms';el.appendChild(s)});requestAnimationFrame(function(){requestAnimationFrame(function(){el.classList.add('in')})})},text?60:0);
 }
 /* export mode: overlays (typed prompt, caption, end card) are computed purely from the beat so frames are reproducible */
+var GRAIN_STEPS=[[0,0],[-18,12],[14,-22],[-26,-8],[20,18],[0,0]];
 function syncOverlays(beat){
+  /* export: the CSS grain animation is switched off, so move the grain by hand, the same six positions every .7 s, as a pure function of the beat */
+  var gi=Math.floor(Math.max(0,beat)*SPB/.7*6)%6,ge=document.getElementById('grain');if(ge)ge.style.transform='translate('+GRAIN_STEPS[gi][0]+'px,'+GRAIN_STEPS[gi][1]+'px)';
   var pi=-1,i,pe=$('#prompt');for(i=0;i<PROMPTS.length;i++)if(beat>=PROMPTS[i][0])pi=i;
   if(pi<0||PROMPTS[pi][1]===null){pe.classList.add('off');pe.textContent=''}
   else{var Pp=PROMPTS[pi],per=(Pp[2]?85:48)/1000,typed=Math.floor((beat-Pp[0])*SPB/per);pe.classList.remove('off');pe.classList.toggle('big',!!Pp[2]);pe.textContent=Pp[1].slice(0,Math.max(0,Math.min(Pp[1].length,typed)))}

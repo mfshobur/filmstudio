@@ -23,7 +23,7 @@ const HELP = `filmstudio <command> [project-dir] [options]   (all output is JSON
   new <dir> [--example name] [--length 60 [--bpm 128]] [--preset calm-46] [--format 9:16]   create a project (length in seconds sets bars; tempo is independent)
   validate [dir]                         check spec.json, with fix hints
   voice [dir] [--provider kokoro|elevenlabs|file] [--force] [--yes]   generate or import narration (elevenlabs is paid: needs --yes)
-  export [dir] [--quality fhd|hd|4k|draft] [--fps 24] [--size 1920x1080] [--crf 18] [--from-bar 1 --to-bar 47] [--no-audio] [--no-bars]   render build/film.mp4 (default Full HD 1080p, 24 fps; slow, resumable)
+  export [dir] [--quality fhd|hd|4k|draft] [--fps 24] [--size 1920x1080] [--crf 18] [--workers 6] [--from-bar 1 --to-bar 47] [--no-audio] [--no-bars]   render build/film.mp4 (default Full HD 1080p, 24 fps; slow, resumable)
   listen [dir] [--lines 0,3] [--setup]   read the narration back with speech recognition and compare it with the script (--setup installs it once, about 150 MB)
   voice-check [dir]                      measure narration clips: clipping, glitches, silence, pace, flat delivery
   build [dir]                            write build/film.html
@@ -154,7 +154,7 @@ const HELP = `filmstudio <command> [project-dir] [options]   (all output is JSON
       if (!Q) fail('unknown quality "' + qn + '"', { fix: 'Use one of: ' + Object.keys(REG.QUALITY).join(', ') });
       const sz = flags.size ? String(flags.size).split('x').map(Number) : REG.sizeFor(spec.format || '16:9', Q.long);
       if (flags.size && !(sz.length === 2 && sz.every(n => n >= 64))) fail('bad --size "' + flags.size + '"', { fix: 'Use WIDTHxHEIGHT, for example 1920x1080.' });
-      const r = await require('../src/exporter').exportFilm(dir, spec, { fps: flags.fps ? +flags.fps : Q.fps, crf: flags.crf ? +flags.crf : Q.crf, size: sz, fromBar: flags['from-bar'] ? +flags['from-bar'] : null, toBar: flags['to-bar'] ? +flags['to-bar'] : null, noAudio: !!flags['no-audio'], noBars: !!flags['no-bars'], audioRate: flags['audio-rate'] ? +flags['audio-rate'] : null, log: m => console.error(m) });
+      const r = await require('../src/exporter').exportFilm(dir, spec, { workers: flags.workers ? +flags.workers : null, fps: flags.fps ? +flags.fps : Q.fps, crf: flags.crf ? +flags.crf : Q.crf, size: sz, fromBar: flags['from-bar'] ? +flags['from-bar'] : null, toBar: flags['to-bar'] ? +flags['to-bar'] : null, noAudio: !!flags['no-audio'], noBars: !!flags['no-bars'], audioRate: flags['audio-rate'] ? +flags['audio-rate'] : null, log: m => console.error(m) });
       return out(Object.assign({ ok: true }, r));
     }
     if (cmd === 'listen') {
