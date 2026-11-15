@@ -61,6 +61,23 @@ node bin/filmstudio.js doctor
 
 `doctor` tells you what's missing and how to install it. You can build a film with only Node; the rest is for narration and checking.
 
+### Setting up review, MP4 export and narration (optional)
+Each needs one install, and filmstudio finds it through an environment variable, so the pieces can live anywhere. This layout keeps everything under `~/.filmstudio`, outside the repo:
+
+```
+# a browser, for `review`, `audio-check` and `export`
+npm install --prefix ~/.filmstudio playwright-core
+export FILMSTUDIO_PW=$HOME/.filmstudio/node_modules
+export FILMSTUDIO_CHROMIUM="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"   # path to your own Chrome or Chromium
+
+# free local narration (kokoro) for `voice`
+python3 -m venv ~/.filmstudio/venv && ~/.filmstudio/venv/bin/pip install kokoro-onnx soundfile
+export FILMSTUDIO_PYTHON=$HOME/.filmstudio/venv/bin/python
+mkdir -p ~/.filmstudio/models      # then download the two model files below into it
+```
+
+The kokoro model files are `kokoro-v1.0.onnx` (about 326 MB) and `voices-v1.0.bin` (about 28 MB), from the `model-files-v1.0` release at https://github.com/thewh1teagle/kokoro-onnx/releases. Set `FILMSTUDIO_KOKORO_MODEL` and `FILMSTUDIO_KOKORO_VOICES` if you keep them elsewhere. Without `FILMSTUDIO_CHROMIUM`, run `npx playwright-core install chromium` to download a browser instead. The `export` lines are not saved: put them in your shell profile, or `review`, `export` and `voice` will report the tools as missing in a new shell. Run `filmstudio doctor` to confirm.
+
 ### Use it from another project
 To let an agent in any repo make a film (for example a video that explains that repo):
 
@@ -146,7 +163,7 @@ All commands print JSON.
 | `styles` | list the styles and variants |
 | `guide [topic]` | print the agent guide |
 
-Developing: `npm test` runs the fast checks (no browser). `npm run test:browser` tests export and the studio page. `npm run qa` draws every style and variant in a headless browser and reports errors and static shots.
+Developing: `npm test` runs the fast checks (no browser). `npm run test:browser` tests export, the studio page, and the project picker and timeline (drag, undo, live updates, conflict notice). The last one, `test/timeline-ui.test.js`, drives Chrome over the DevTools protocol (Node 22 or newer) and skips itself if there is no browser. To run it in a browser that is already open with remote debugging (for example Arc on port 9223), open a tab and pass its DevTools address: `FILMSTUDIO_CDP_WS=ws://localhost:9223/devtools/page/<id> node test/timeline-ui.test.js`. Known flake: in headless Chrome about 3 runs in 40 fail because the browser cancels a request before it reaches the server (a bare page doing only fetches shows the same; the cause is not found). It did not happen in 11 runs in Arc. `npm run qa` draws every style and variant in a headless browser and reports errors and static shots.
 
 ## Voices
 
