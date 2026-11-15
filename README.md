@@ -170,7 +170,8 @@ All commands print JSON.
 | `audio-check` | render the score offline and report loudness, clipping, dynamics |
 | `list` | list the projects in your workspace folder (default `~/filmstudio-projects`) |
 | `serve` | open a local web page: a project picker for the workspace, and per project an editor for the storyboard, narration, preview and notes |
-| `mcp` | run an MCP server (24 tools, the guide as resources, a `make_film` prompt, built-in instructions) so any agent can make a film through MCP alone |
+| `mcp` | run an MCP server (25 tools, the guide as resources, a `make_film` prompt, built-in instructions) so any agent can make a film through MCP alone |
+| `listen [dir] [--setup]` | read the narration back with local speech recognition and compare it with the script (catches garbled, swallowed or wrong words); `--setup` installs it once, about 150 MB |
 | `length <seconds> [--bpm 128]` | the `bars` and `bpm` for an exact film length at about that tempo |
 | `install-skill` | install the Claude Code skill; print MCP and `AGENTS.md` snippets for use from another repo |
 | `doctor` | check this machine |

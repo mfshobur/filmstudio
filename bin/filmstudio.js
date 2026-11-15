@@ -24,6 +24,7 @@ const HELP = `filmstudio <command> [project-dir] [options]   (all output is JSON
   validate [dir]                         check spec.json, with fix hints
   voice [dir] [--provider kokoro|elevenlabs|file] [--force] [--yes]   generate or import narration (elevenlabs is paid: needs --yes)
   export [dir] [--quality fhd|hd|4k|draft] [--fps 24] [--size 1920x1080] [--crf 18] [--from-bar 1 --to-bar 47] [--no-audio] [--no-bars]   render build/film.mp4 (default Full HD 1080p, 24 fps; slow, resumable)
+  listen [dir] [--lines 0,3] [--setup]   read the narration back with speech recognition and compare it with the script (--setup installs it once, about 150 MB)
   voice-check [dir]                      measure narration clips: clipping, glitches, silence, pace, flat delivery
   build [dir]                            write build/film.html
   review [dir] [--beats 10,20] [--size 400x800] [--motion]   screenshot every style variant + contact sheets
@@ -154,6 +155,12 @@ const HELP = `filmstudio <command> [project-dir] [options]   (all output is JSON
       if (flags.size && !(sz.length === 2 && sz.every(n => n >= 64))) fail('bad --size "' + flags.size + '"', { fix: 'Use WIDTHxHEIGHT, for example 1920x1080.' });
       const r = await require('../src/exporter').exportFilm(dir, spec, { fps: flags.fps ? +flags.fps : Q.fps, crf: flags.crf ? +flags.crf : Q.crf, size: sz, fromBar: flags['from-bar'] ? +flags['from-bar'] : null, toBar: flags['to-bar'] ? +flags['to-bar'] : null, noAudio: !!flags['no-audio'], noBars: !!flags['no-bars'], audioRate: flags['audio-rate'] ? +flags['audio-rate'] : null, log: m => console.error(m) });
       return out(Object.assign({ ok: true }, r));
+    }
+    if (cmd === 'listen') {
+      const LS = require('../src/listen');
+      if (flags.setup) return out(LS.setup(flags.model ? String(flags.model) : 'base.en', m => console.error(m)));
+      const r = await LS.listen(dir, spec, { model: flags.model ? String(flags.model) : null, lines: flags.lines ? String(flags.lines).split(',').map(Number) : null, log: m => console.error(m) });
+      out(r); return process.exit(r.ok ? 0 : 2);
     }
     if (cmd === 'voice-check') { const r = require('../src/voicecheck').voiceCheck(dir, spec); out(r); return process.exit(r.ok ? 0 : 2); }
     if (cmd === 'review') {

@@ -22,10 +22,11 @@ async function doctor(opts = {}) {
   const nHome = path.join(os.homedir(), '.filmstudio'), nPy = process.env.FILMSTUDIO_NEUTTS_PYTHON || path.join(nHome, 'venv-neutts', 'bin', 'python');
   const nFiles = [process.env.FILMSTUDIO_NEUTTS_MODEL || path.join(nHome, 'models', 'neutts', 'neutts-2e-Q8_0.gguf'), process.env.FILMSTUDIO_NEUTTS_CODEC || path.join(nHome, 'models', 'neutts', 'neucodec-onnx-decoder-int8', 'model.onnx')];
   add('neutts (emotional voice)', fs.existsSync(nPy) && nFiles.every(f => fs.existsSync(f)), fs.existsSync(nPy) && nFiles.every(f => fs.existsSync(f)) ? 'ready (speakers emily, sophie, paul, steven)' : 'not installed', 'Optional. NeuTTS-2E gives emotional English narration; see `filmstudio guide voice`.', true);
+  const lw = require('./listen').available(); add('listen (speech recognition)', lw.python && lw.model, lw.python && lw.model ? 'ready (faster-whisper base.en)' : 'not installed', 'Optional. `filmstudio listen --setup` installs it (about 150 MB): it lets an agent check the narration words against the script.', true);
   add('ELEVENLABS_API_KEY', !!process.env.ELEVENLABS_API_KEY, process.env.ELEVENLABS_API_KEY ? 'set (value hidden)' : 'not set', 'Optional. export ELEVENLABS_API_KEY=... to use the paid elevenlabs provider (phase 3).', true);
   add('memory', os.totalmem() > 3.5e9, (os.totalmem() / 1e9).toFixed(1) + ' GB RAM', 'Under 4 GB: run jobs in chunks, expect slow Kokoro (about 40 s per short clip) and slow MP4 export.', true);
   const ok = n => (checks.find(c => c.name === n) || {}).ok;
   const required = checks.filter(c => !c.optional);
-  return { ready: required.every(c => c.ok), can: { build: required.every(c => c.ok), review: !!ok('playwright-core') && !!ok('ffmpeg'), export: !!ok('playwright-core') && !!ok('ffmpeg'), neuttsVoice: !!(checks.find(c => c.name === 'neutts (emotional voice)') || {}).ok, kokoroVoice: !!ok('ffmpeg') && !!ok('kokoro python packages') && !!ok('kokoro model files'), ownAudioVoice: !!ok('ffmpeg') }, checks };
+  return { ready: required.every(c => c.ok), can: { build: required.every(c => c.ok), review: !!ok('playwright-core') && !!ok('ffmpeg'), export: !!ok('playwright-core') && !!ok('ffmpeg'), listen: !!(checks.find(c => c.name === 'listen (speech recognition)') || {}).ok, neuttsVoice: !!(checks.find(c => c.name === 'neutts (emotional voice)') || {}).ok, kokoroVoice: !!ok('ffmpeg') && !!ok('kokoro python packages') && !!ok('kokoro model files'), ownAudioVoice: !!ok('ffmpeg') }, checks };
 }
 module.exports = { doctor };

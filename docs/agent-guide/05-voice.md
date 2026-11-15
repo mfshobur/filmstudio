@@ -25,7 +25,10 @@ Audio language models are poor judges. Use `filmstudio voice-check` plus the use
 
 It cannot judge taste, accent or emotion. After it passes, ask the user to play the film with headphones and name the line and the symptom (crackle, cut-out, robotic, too quiet). Re-run `voice --force` for a flagged clip, or change that line's `speed`/text.
 - clip lengths are in `voice/durations.json`; `validate` catches clips that overlap the next line.
-- Not built yet: word-error-rate and predicted-naturalness scores (they need large models).
+- **Reading the words back:** `filmstudio listen` transcribes every narration clip with a small local speech recogniser (faster-whisper, `base.en`, on the CPU) and compares it with the script. It catches words that are garbled, swallowed or wrong (a mispronounced product name shows up as a substituted word), an ending or start that is cut off, speech that is not in the script, and words the recogniser was unsure of. Numbers are compared as spoken ("29" equals "twenty-nine"). Run it after `voice` and `voice-check`; `--lines 3,5` checks only those lines. Fix a flagged line by re-voicing it (`voice --force`, a different `seed` or `speaker` for neutts, a respelled word), then listen again.
+- It needs a one-off install of about 150 MB (the package plus the model, from Hugging Face): `filmstudio listen --setup`. That is a model download, so ask the user first; the MCP tool `filmstudio_listen` never downloads, it only says it is not installed.
+- It cannot judge tone, emotion, pacing or whether the voice sounds natural. Those still need a person.
+- Not built yet: predicted-naturalness scores (they need large models).
 
 ## Safety and licensing
 Voice cloning and celebrity voices need the speaker's consent. Mention AI-generated narration to viewers when publishing. Kokoro is Apache-2.0.
