@@ -117,7 +117,7 @@ Then open `build/film.html` in a browser and press Begin. Use headphones.
 Keep all your films in one workspace folder (default `~/filmstudio-projects`; set another with `--root` or `FILMSTUDIO_ROOT`) and serve it:
 
 ```
-filmstudio serve --root ~/filmstudio-projects      # leave it running; Ctrl+C stops it
+filmstudio                                       # opens the studio on ~/filmstudio-projects; Ctrl+C stops it
 ```
 
 Then open **http://127.0.0.1:4173/**. It only listens on your own machine.

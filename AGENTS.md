@@ -27,7 +27,7 @@ filmstudio review                      # look at build/review/sheet*.png: does e
 filmstudio audio-check                 # loudness, clipping, dynamics
 filmstudio export                      # optional: render build/film.mp4 (slow on small devices, resumable; test with --from-bar 1 --to-bar 3 first)
 ```
-The user may keep the studio open (`filmstudio serve --root <workspace>`): its Scenes tab previews your scenes live as you edit them. Reuse what you make: `filmstudio library save scene|rig|look|lib <name>`.
+The user may keep the studio open (`filmstudio`, or `filmstudio serve --root <workspace>` for another folder): its Scenes tab previews your scenes live as you edit them. Reuse what you make: `filmstudio library save scene|rig|look|lib <name>`.
 
 ## Length and music (decide this early)
 Length: **seconds = bars x 240 / bpm**. Run `filmstudio length <seconds> [--preset calm-46]` and put the `bars` and `bpm` it suggests into spec.json. Music: the two built-in presets, or **a different piece of music for each part of the film** with `score.parts` (`filmstudio guide score-parts`). Details: `filmstudio guide storyboard`.

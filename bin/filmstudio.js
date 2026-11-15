@@ -44,7 +44,9 @@ const HELP = `filmstudio <command> [project-dir] [options]   (all output is JSON
 
 (async () => {
   const { pos, flags } = parse(process.argv.slice(2));
-  const cmd = pos[0], dir = pos[1] || '.';
+  let cmd = pos[0]; const dir = pos[1] || '.';
+  // bare `filmstudio` in a terminal opens the studio on the default workspace; `filmstudio help` prints the command list
+  if (!cmd && !flags.help && process.stdout.isTTY) cmd = 'serve';
   try {
     if (!cmd || cmd === 'help' || flags.help) return console.log(HELP);
     if (cmd === 'styles') return out(Object.fromEntries(Object.entries(STYLES).filter(([k, v]) => !flags.mood || (v.moods || []).includes(String(flags.mood))).map(([k, v]) => [k, { variants: v.variants, moods: v.moods, use: v.use }])));
