@@ -188,7 +188,7 @@ function scFx(lk,c,pre){
   for(i=0;i<fx.length;i++){
     k=fx[i];if(typeof k==='string')k={n:k};
     if(!!k.pre!==!!pre)continue;
-    if(k.n==='vignette'){gr=g.createRadialGradient(c.cx,c.cy,Math.min(c.W,c.H)*.35,c.cx,c.cy,Math.max(c.W,c.H)*.75);gr.addColorStop(0,'rgba(0,0,0,0)');gr.addColorStop(1,'rgba(0,0,0,'+(k.a!=null?k.a:.5)+')');g.fillStyle=gr;g.fillRect(0,0,c.W,c.H)}
+    if(k.n==='vignette'){gr=g.createRadialGradient(c.cx,c.cy,Math.min(c.W,c.H)*.35,c.cx,c.cy,Math.max(c.W,c.H)*.75);gr.addColorStop(0,'rgba(0,0,0,0)');gr.addColorStop(1,'rgba(0,0,0,'+((k.a!=null?k.a:.5)*(typeof FIN_VIG==='number'?FIN_VIG:1))+')');g.fillStyle=gr;g.fillRect(0,0,c.W,c.H)}
     else if(k.n==='scan'){g.fillStyle='rgba(0,0,0,'+(k.a!=null?k.a:.12)+')';var st=k.step||3;for(var y=0;y<c.H;y+=st)g.fillRect(0,y,c.W,1)}
     else if(k.n==='flicker'){var fl=(scNoise(c.t*(k.rate||9),3,1)-.5)*(k.a!=null?k.a:.12);g.fillStyle=fl>0?'rgba(255,230,180,'+fl+')':'rgba(0,0,0,'+(-fl)+')';g.fillRect(0,0,c.W,c.H)}
     else if(k.n==='paper'){var nt=scNoiseTile();g.save();g.globalCompositeOperation='multiply';g.globalAlpha=k.a!=null?k.a:.16;g.fillStyle=g.createPattern(nt,'repeat');g.fillRect(0,0,c.W,c.H);g.restore()}

@@ -41,7 +41,7 @@ function validate(spec, dir) {
   if (!(Number.isInteger(bars) && bars >= 8 && bars <= 2000)) err('bars', 'bars must be a whole number from 8 to 2000', 'bars = film length in seconds * bpm / 240. `filmstudio length <seconds> [--bpm 128]` works it out.');
   if (spec.finish !== undefined) {
     if (!spec.finish || typeof spec.finish !== 'object' || Array.isArray(spec.finish)) err('finish', 'finish must be an object', 'Example: "finish": { "grain": 0.3 }. Keys: grain, bloom, streak (0 to 2, 1 = default).');
-    else Object.keys(spec.finish).forEach(k => { const v = spec.finish[k]; if (!['grain', 'bloom', 'streak'].includes(k)) err('finish.' + k, 'unknown finish key "' + k + '"', 'Keys: grain, bloom, streak.'); else if (typeof v !== 'number' || !(v >= 0 && v <= 2)) err('finish.' + k, k + ' must be a number from 0 to 2', '0 turns it off, 1 is the default look.'); });
+    else Object.keys(spec.finish).forEach(k => { const v = spec.finish[k]; if (k === 'preset') { if (!['clean', 'cinematic'].includes(v)) err('finish.preset', 'preset must be "clean" or "cinematic"', 'clean: crisp, almost no grain; cinematic: grain, strong glow, light streaks.'); } else if (!['grain', 'bloom', 'streak', 'vignette', 'cuts'].includes(k)) err('finish.' + k, 'unknown finish key "' + k + '"', 'Keys: preset, grain, bloom, streak, vignette, cuts.'); else if (typeof v !== 'number' || !(v >= 0 && v <= 2)) err('finish.' + k, k + ' must be a number from 0 to 2', '0 turns it off, 1 is the default look.'); });
   }
   const hasParts = !!(spec.score && spec.score.parts !== undefined);
   const preset = (spec.score && spec.score.preset) || 'anthem-46';

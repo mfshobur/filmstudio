@@ -1,6 +1,6 @@
 
 /* ================= TIMELINE (bars, 128 BPM) ================= */
-var BPM={{BPM}},SPB=60/BPM,TOTAL_BARS={{BARS}};
+var BPM={{BPM}},SPB=60/BPM,TOTAL_BARS={{BARS}},FIN_VIG={{VIGNETTE}},FIN_CUT={{CUTS}},FIN_BLOOM={{BLOOMK}},FIN_STREAK={{STREAKK}};
 var TITLE_LINES={{TITLE_LINES}},TITLE_ACCENT={{TITLE_ACCENT}},SCORE={{SCORE}};
 var PSEQ=SCORE.parts?[]:filmScoreSeq(TOTAL_BARS);
 function bb(bar){return (bar-1)*4}
@@ -137,13 +137,13 @@ function frame(){
   F.T=F.tb*SPB;F.params=sh[4]||null;
   var bar=Math.floor(Math.max(0,beat)/4)+1,pbar=SCORE.parts?bar:(PSEQ[bar-1]||PSEQ[PSEQ.length-1]),calm=SCORE.parts?partFlash(SCORE.parts,bar):((pbar<5||(pbar>=21&&pbar<=28)||pbar>=41)?.5:1),bf=((beat<0?F.tb:beat)%1+1)%1;
   F.k=Math.exp(-bf*5)*calm;
-  if(idx!==lastShot){lastShot=idx;shotStartBeat=beat<0?0:bb(sh[0]);bcv.style.opacity=String(isBright(sh)?.1:BRIGHT[sh[2]]!==undefined?.28:.6);scv.style.opacity=isBright(sh)?'.04':'.22'}
-  var age=beat<0?9:beat-shotStartBeat,punch=1+.05*Math.max(0,1-age/.5);
+  if(idx!==lastShot){lastShot=idx;shotStartBeat=beat<0?0:bb(sh[0]);bcv.style.opacity=String((isBright(sh)?.1:BRIGHT[sh[2]]!==undefined?.28:.6)*FIN_BLOOM);scv.style.opacity=String((isBright(sh)?.04:.22)*FIN_STREAK)}
+  var age=beat<0?9:beat-shotStartBeat,punch=1+.05*FIN_CUT*Math.max(0,1-age/.5);
   reset();g.save();g.translate(CX,CY);g.scale(punch,punch);g.translate(-CX,-CY);
   try{DRAW[sh[2]](sh[3])}catch(e){if(DRAW_ERRS.length<40)DRAW_ERRS.push({style:sh[2],variant:sh[3],message:String(e&&e.message||e)})}
   g.restore();reset();
-  if(age<.14&&beat>=0){var rn=R(idx*7+3);for(var q=0;q<3;q++){var ys=rn()*H*.8,hs=H*(.04+rn()*.08),off=(rn()-.5)*U*.5;g.drawImage(cv,0,ys*DPR,cv.width,hs*DPR,off,ys,W,hs)}}
-  if(age<.3&&beat>=0){g.globalAlpha=(1-age/.3)*(sh[1]-sh[0]>=1?.55:.3);g.fillStyle=PAL.bone;g.fillRect(0,0,W,H);g.globalAlpha=1}
+  if(FIN_CUT>0&&age<.14&&beat>=0){var rn=R(idx*7+3);for(var q=0;q<3;q++){var ys=rn()*H*.8,hs=H*(.04+rn()*.08),off=(rn()-.5)*U*.5;g.drawImage(cv,0,ys*DPR,cv.width,hs*DPR,off,ys,W,hs)}}
+  if(FIN_CUT>0&&age<.3&&beat>=0){g.globalAlpha=Math.min(1,FIN_CUT)*(1-age/.3)*(sh[1]-sh[0]>=1?.55:.3);g.fillStyle=PAL.bone;g.fillRect(0,0,W,H);g.globalAlpha=1}
   if(EXPORTING)syncOverlays(beat);
   if(QUAL<2){bg.globalCompositeOperation='copy';bg.drawImage(cv,0,0,bcv.width,bcv.height);sg.globalCompositeOperation='copy';sg.drawImage(cv,0,0,scv.width,scv.height)}
   if(playing&&FORCE===null){

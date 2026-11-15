@@ -44,10 +44,15 @@ function compile(spec, projectDir) {
     PROMPTS: JSON.stringify(prompts),
     VO: hasVoice ? JSON.stringify(vo.map(v => v || '')) : 'null',
   };
-  /* spec.finish: 0..1 multipliers for the film-wide finish layers (1 = the default look): grain (moving film grain), bloom (glow), streak (horizontal light streaks) */
-  const fin = spec.finish || {}, fx = (k, base) => +(base * Math.max(0, Math.min(2, typeof fin[k] === 'number' ? fin[k] : 1))).toFixed(3);
+  /* spec.finish: the film-wide finish layers. Films that draw their own scenes default to a CLEAN finish (crisp text, almost no grain, a faint glow, light vignette); films made of built-in styles keep the CINEMATIC finish they were designed with (moving grain, strong bloom and light streaks).
+     "finish": { "preset": "clean" | "cinematic", "grain": 0..2, "bloom": 0..2, "streak": 0..2, "vignette": 0..2, "cuts": 0..2 }  (the numbers multiply the preset; 0 turns a layer off; cuts = the zoom punch, glitch slices and white flash at every shot start: off in clean, plain hard cuts) */
+  const fin = spec.finish || {}, hasScene = (spec.shots || []).some(sh => sh[2] === 'scene');
+  const FIN_BASE = { clean: { grain: 0.02, bloom: 0, streak: 0, vignette: 0.2, cuts: 0 }, cinematic: { grain: 0.07, bloom: 0.6, streak: 0.22, vignette: 1, cuts: 1 } };
+  const finBase = FIN_BASE[fin.preset] || FIN_BASE[hasScene ? 'clean' : 'cinematic'];
+  const fx = k => +(finBase[k] * Math.max(0, Math.min(2, typeof fin[k] === 'number' ? fin[k] : 1))).toFixed(3);
+  vals.VIGNETTE = fx('vignette'); vals.CUTS = fx('cuts'); vals.BLOOMK = +(fx('bloom') / 0.6).toFixed(4); vals.STREAKK = +(fx('streak') / 0.22).toFixed(4);   /* the engine sets the bloom and streak opacity from JS at every shot start; these scale its values */
   const htmlVals = {
-    GRAIN: fx('grain', 0.07), BLOOM: fx('bloom', 0.6), STREAK: fx('streak', 0.22),
+    GRAIN: fx('grain'), BLOOM: fx('bloom'), STREAK: fx('streak'),
     TITLE: esc(meta.title || 'Untitled film'),
     EYEBROW: esc(meta.eyebrow || 'A short film'),
     LEDE: esc(meta.lede || ''),

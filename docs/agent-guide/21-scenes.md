@@ -82,6 +82,13 @@ Colours anywhere a colour is expected: any CSS colour, a gradient, or `'@role'` 
 - **A different look inside a scene:** `c.panel`. **The same scene in another look:** change `look` in the shot params and use `'@role'` colours.
 - **A film in several aspect ratios:** compute from `c.W`/`c.H`, or `c.fit` a fixed drawing.
 
+## Keep the picture clean (the finish)
+A film made of scenes you draw gets a **clean finish** by default: crisp text, almost no grain (2%), no bloom or light streaks, a barely-there vignette (looks' vignettes scaled to 20%) and plain hard cuts. Films made of built-in styles keep the older **cinematic** finish (moving grain, strong glow, light streaks, a zoom punch, glitch slices and a white flash at every cut). Tune either in `spec.json`:
+```json
+"finish": { "preset": "clean", "grain": 1, "bloom": 1, "streak": 1, "vignette": 1, "cuts": 1 }
+```
+`preset` is `"clean"` or `"cinematic"`; the numbers (0 to 2) multiply the preset and 0 turns a layer off (`"vignette": 0` removes it, `"cuts": 1` brings the cut effects back). **Do not stack your own vignette, grain, blur or glow on top**: a scene that draws a vignette, a heavy text shadow or a glowing halo around every label makes the film murky. Keep small text sharp (shadow blur of a pixel or two at most), keep the important content bright against its background, and check `review`: if you see haze, dark corners or soft text, fix it before exporting.
+
 ## Looking at your work
 `filmstudio scene preview <name> [--beats 8] [--frames 0.5,2,4,7] [--size 960x540] [--look ink]` writes frames and `build/scenes/<name>/strip.png`. **Open the strip and look.** Through MCP, `filmstudio_scene_preview` returns the image. Then `filmstudio scene check <name>`. In a full film, `filmstudio review` shows every shot, and the studio's Scenes tab plays a scene live.
 
