@@ -10,8 +10,10 @@ function probe(file) {
   const r = spawnSync('ffprobe', ['-v', 'error', '-show_entries', 'format=duration', '-of', 'csv=p=0', file], { encoding: 'utf8' });
   return r.status === 0 ? parseFloat(r.stdout) : null;
 }
-function toMp3(src, dst) {
-  const r = spawnSync('ffmpeg', ['-loglevel', 'error', '-y', '-i', src, '-af', MASTER, '-ac', '1', '-ar', '24000', '-c:a', 'libmp3lame', '-b:a', '64k', dst]);
+/* NeuTTS clips start with 0.5-1 s of silence: cut it, keep a short breath of 80 ms */
+const TRIM = 'silenceremove=start_periods=1:start_threshold=-42dB:start_silence=0.02,adelay=80:all=1,';
+function toMp3(src, dst, trim) {
+  const r = spawnSync('ffmpeg', ['-loglevel', 'error', '-y', '-i', src, '-af', (trim ? TRIM : '') + MASTER, '-ac', '1', '-ar', '24000', '-c:a', 'libmp3lame', '-b:a', '64k', dst]);
   return r.status === 0;
 }
 function runPython(args, onLine, python) {
@@ -81,7 +83,7 @@ async function voice(dir, spec, opts = {}) {
       await runPython([path.join(__dirname, '..', 'providers', 'neutts_gen.py'), gguf, onnx, jf], l => log(l), py);
       for (const i of pending) {
         const w = path.join(vdir, num(i) + '.wav'), m = path.join(vdir, num(i) + '.mp3');
-        if (fs.existsSync(w) && fs.statSync(w).size > 1000 && toMp3(w, m)) fs.rmSync(w, { force: true });
+        if (fs.existsSync(w) && fs.statSync(w).size > 1000 && toMp3(w, m, true)) fs.rmSync(w, { force: true });
       }
       fs.rmSync(jf, { force: true });
     }
