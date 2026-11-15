@@ -195,8 +195,14 @@ function renderSide(){var v=S.p.validation,s='<section class="card"><h2>Check</h
     v.warnings.forEach(function(e){s+='<div class="msg w" data-jump="'+esc(e.path)+'"><b>'+esc(e.path||'spec')+'</b>'+esc(e.message)+(e.fix?'<i>'+esc(e.fix)+'</i>':'')+'</div>'})}
   $('#side').innerHTML=s+'</section>'}
 function markShots(){var v=S.p.validation;var bad={};if(v)v.errors.concat(v.warnings).forEach(function(e){var m=/^shots\[(\d+)\]/.exec(e.path||'');if(m)bad[m[1]]=1});document.querySelectorAll('.shot').forEach(function(el){el.classList.toggle('err',!!bad[el.dataset.i])})}
-function render(){document.querySelector('.layout').classList.toggle('wide',S.tab==='timeline'||S.tab==='scenes');renderTabs();renderSide();var fn={idea:vIdea,story:vStory,timeline:vTimeline,scenes:vScenes,voice:vVoice,preview:vPreview,review:vReview,status:vStatus}[S.tab];$('#view').innerHTML=fn();after()}
-function after(){if(S.tab==='story')markShots();if(S.tab==='timeline')mountTimeline();if(S.tab==='scenes')mountScenes();if(S.hl>=0){var el=$('.shot[data-i="'+S.hl+'"]');if(el){el.scrollIntoView({block:'center'});el.classList.add('hl');setTimeout(function(){el.classList.remove('hl')},1600)}S.hl=-1}}
+(function(){var h=location.hash.slice(1);if(TABS.some(function(t){return t[0]===h}))S.tab=h})();
+window.addEventListener('hashchange',function(){var h=location.hash.slice(1);if(S.p&&h!==S.tab&&TABS.some(function(t){return t[0]===h})){S.tab=h;render()}});
+function render(){document.querySelector('.layout').classList.toggle('wide',S.tab==='timeline'||S.tab==='scenes');renderTabs();renderSide();if(location.hash!=='#'+S.tab){try{history.pushState(null,'','#'+S.tab)}catch(e){}}var fn={idea:vIdea,story:vStory,timeline:vTimeline,scenes:vScenes,voice:vVoice,preview:vPreview,review:vReview,status:vStatus}[S.tab];$('#view').innerHTML=fn();after()}
+function mountPreview(){var el=$('#pvmount');if(!el)return;var fmt=String(((spec()||{}).format||'16:9')).split(':'),ratio=(+fmt[0]/+fmt[1])||16/9;
+  var go=function(){window.FilmPlayer.mount(el,{src:BASE+'film.html?t='+Date.now(),ratio:ratio})};
+  if(window.FilmPlayer)return go();
+  var sc=document.createElement('script');sc.src=BASE+'studio/player.js?v='+Date.now();sc.onload=go;sc.onerror=function(){el.textContent='Could not load the player script.'};document.head.appendChild(sc)}
+function after(){if(S.tab==='preview')mountPreview();if(S.tab==='story')markShots();if(S.tab==='timeline')mountTimeline();if(S.tab==='scenes')mountScenes();if(S.hl>=0){var el=$('.shot[data-i="'+S.hl+'"]');if(el){el.scrollIntoView({block:'center'});el.classList.add('hl');setTimeout(function(){el.classList.remove('hl')},1600)}S.hl=-1}}
 
 /* ---------- IDEA ---------- */
 function sec(bpm){var b=(spec()||{}).bars||46;return bpm?Math.round(b*240/bpm*10)/10:0}
@@ -239,7 +245,7 @@ function vVoice(){var sp=spec()||{narration:[]},files=S.p.voiceFiles||[],n=sp.na
    +'<p class="dim">Kokoro is free but slow on weak machines. ElevenLabs is paid: the studio asks before sending anything. After you change a line, use Regenerate all. The checks measure clipping, glitches, pace and flat delivery; they cannot judge taste, so listen.</p>'+jobBox()+'</section><section class="card"><h2>Lines</h2>'+(rows||'<p class="dim">No narration lines yet. Add them in the Storyboard tab.</p>')+'</section>'}
 
 /* ---------- PREVIEW ---------- */
-function vPreview(){return '<section class="card"><h2>Preview</h2><p><button class="btn small solid" id="rebuild">Build and reload</button> <a class="btn small" style="text-decoration:none;display:inline-flex;align-items:center" href="'+BASE+'film.html" target="_blank" rel="noopener">Open full page</a> '+(S.p.hasMp4?'<a class="btn small" style="text-decoration:none;display:inline-flex;align-items:center" href="'+BASE+'download/film.mp4">Download MP4</a>':'')+'</p><p class="dim" id="buildmsg">'+esc(S.msg||(S.p.hasFilm?'A built film exists. Press Build to refresh it after edits.':'Not built yet.'))+'</p>'+(S.p.hasFilm?'<iframe id="film" style="aspect-ratio:'+String(((spec()||{}).format||'16:9')).replace(':','/')+';max-height:78vh;margin:0 auto;display:block" src="'+BASE+'film.html?t='+Date.now()+'" allow="autoplay" title="Film preview"></iframe>':'')+'</section>'}
+function vPreview(){return '<section class="card"><h2>Preview</h2><p><button class="btn small solid" id="rebuild">Build and reload</button> <a class="btn small" style="text-decoration:none;display:inline-flex;align-items:center" href="'+BASE+'film.html?studio=1">Open full page</a> '+(S.p.hasMp4?'<a class="btn small" style="text-decoration:none;display:inline-flex;align-items:center" href="'+BASE+'download/film.mp4" download="film.mp4">Download MP4</a>':'')+'</p><p class="dim" id="buildmsg">'+esc(S.msg||(S.p.hasFilm?'A built film exists. Press Build to refresh it after edits.':'Not built yet.'))+'</p>'+(S.p.hasFilm?'<div id="pvmount"></div>':'')+'</section>'}
 
 /* ---------- REVIEW ---------- */
 function vReview(){var sp=spec()||{shots:[]},fb=S.p.feedback||[];

@@ -44,7 +44,10 @@ function compile(spec, projectDir) {
     PROMPTS: JSON.stringify(prompts),
     VO: hasVoice ? JSON.stringify(vo.map(v => v || '')) : 'null',
   };
+  /* spec.finish: 0..1 multipliers for the film-wide finish layers (1 = the default look): grain (moving film grain), bloom (glow), streak (horizontal light streaks) */
+  const fin = spec.finish || {}, fx = (k, base) => +(base * Math.max(0, Math.min(2, typeof fin[k] === 'number' ? fin[k] : 1))).toFixed(3);
   const htmlVals = {
+    GRAIN: fx('grain', 0.07), BLOOM: fx('bloom', 0.6), STREAK: fx('streak', 0.22),
     TITLE: esc(meta.title || 'Untitled film'),
     EYEBROW: esc(meta.eyebrow || 'A short film'),
     LEDE: esc(meta.lede || ''),

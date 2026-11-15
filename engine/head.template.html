@@ -19,7 +19,7 @@ body{margin:0;background:var(--ink);color:var(--bone);font-family:var(--sans);ov
 #stage{position:absolute;inset:0;overflow:hidden;background:var(--ink)}
 #c{position:absolute;inset:0;width:100%;height:100%;display:block}
 .vig{position:absolute;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 50%,rgba(4,5,11,0) 42%,rgba(4,5,11,.72) 100%)}
-.grain{position:absolute;inset:-40px;pointer-events:none;opacity:.07;background-size:128px 128px;animation:gr .7s steps(6) infinite}
+.grain{position:absolute;inset:-40px;pointer-events:none;opacity:{{GRAIN}};background-size:128px 128px;animation:gr .7s steps(6) infinite}
 @keyframes gr{0%{transform:translate(0,0)}20%{transform:translate(-18px,12px)}40%{transform:translate(14px,-22px)}60%{transform:translate(-26px,-8px)}80%{transform:translate(20px,18px)}100%{transform:translate(0,0)}}
 #flash{position:absolute;inset:0;background:var(--bone);opacity:0;pointer-events:none;z-index:4}
 #flash.go{animation:fl 1.1s ease-out}
@@ -49,10 +49,12 @@ h2{font-size:clamp(34px,min(8.5vw,13vh),96px);font-style:italic}
 .btn svg{width:14px;height:14px;fill:currentColor}
 .fine{font-family:var(--mono);font-size:11px;letter-spacing:.1em;color:var(--dim);margin:0;max-width:40ch;text-wrap:balance}
 @media (prefers-reduced-motion:reduce){.grain{animation:none}}
+#studioBack{position:fixed;z-index:40;left:12px;top:12px;padding:8px 14px;border-radius:999px;background:rgba(4,5,11,.72);color:#f3ead9;border:1px solid rgba(255,255,255,.25);font:600 13px/1 var(--sans,system-ui);text-decoration:none;backdrop-filter:blur(6px)}
+#studioBack:hover{background:rgba(4,5,11,.9)}
 
 #bloom,#streak{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;mix-blend-mode:screen;z-index:2}
-#bloom{opacity:.6}
-#streak{opacity:.22}
+#bloom{opacity:{{BLOOM}}}
+#streak{opacity:{{STREAK}}}
 #prompt{position:absolute;z-index:7;left:0;right:0;top:calc(var(--bar) + 5vh);margin:0;padding:0 var(--gutr) 0 var(--gut);text-align:center;font-family:var(--mono);font-size:clamp(12px,min(2.4vw,3.6vh),20px);letter-spacing:.12em;color:var(--ember);text-shadow:0 0 3px #04050b,0 0 10px #04050b,0 0 18px rgba(255,174,92,.55);pointer-events:none;min-height:1.4em;transition:top .9s ease,font-size .9s ease,opacity .6s ease}
 #prompt::after{content:"";display:inline-block;width:.55em;height:1.05em;margin-left:.3em;background:var(--ember);vertical-align:-.15em;animation:blink 1.06s steps(1) infinite;box-shadow:0 0 14px rgba(255,174,92,.9)}
 #prompt:empty::before{content:"\200b"}
@@ -69,6 +71,7 @@ h2{font-size:clamp(34px,min(8.5vw,13vh),96px);font-style:italic}
   <div id="flash"></div>
   <div class="vig"></div>
   <div class="grain" id="grain"></div>
+<a id="studioBack" href="./#preview" hidden>&larr; Back to studio</a>
   <div class="bar top"></div><div class="bar bot"></div>
   <header class="hud">
     <span id="tc">TC 00:00</span>

@@ -48,3 +48,5 @@ function bgGrad(a,b){var gr=g.createLinearGradient(0,0,0,H);gr.addColorStop(0,a)
 function reset(){g.globalCompositeOperation='source-over';g.globalAlpha=1;g.lineCap='round';g.lineJoin='round'}
 var X3=0,Y3=0,Z3=0;
 function p3(x,y,z,yaw,pit,sc){var cy=Math.cos(yaw),sy=Math.sin(yaw),x1=x*cy-z*sy,z1=x*sy+z*cy,cp=Math.cos(pit),sp=Math.sin(pit),y1=y*cp-z1*sp,z2=y*sp+z1*cp,f=1/(1-z2*.14);X3=CX+x1*sc*f;Y3=CY+y1*sc*f;Z3=z2;return f}
+/* opened from the studio (?studio=1): show a way back */
+try{if(/[?&]studio\b/.test(location.search)){var sb=document.getElementById('studioBack');if(sb)sb.hidden=false}}catch(e){}

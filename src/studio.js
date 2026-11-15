@@ -173,7 +173,7 @@ function createStudio(opts) {
           else if (p.startsWith('/review/')) file = safeJoin(f('build/review'), p.slice(8));
           else if (p.startsWith('/studio/') && p.endsWith('.js')) file = safeJoin(path.join(ROOT, 'studio'), p.slice(8));
           else if (p.startsWith('/gallery/')) file = safeJoin(path.join(ROOT, 'docs', 'gallery'), p.slice(9));
-          if (file && fs.existsSync(file) && fs.statSync(file).isFile()) { const ext = path.extname(file).toLowerCase(); res.writeHead(200, { 'Content-Type': MIME[ext] || 'application/octet-stream', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'Content-Length': fs.statSync(file).size }); return req.method === 'HEAD' ? res.end() : fs.createReadStream(file).pipe(res); }
+          if (file && fs.existsSync(file) && fs.statSync(file).isFile()) { const ext = path.extname(file).toLowerCase(); res.writeHead(200, Object.assign({ 'Content-Type': MIME[ext] || 'application/octet-stream', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'Content-Length': fs.statSync(file).size }, p === '/download/film.mp4' ? { 'Content-Disposition': 'attachment; filename="' + (path.basename(f('')).replace(/[^\w.-]/g, '_') || 'film') + '.mp4"' } : {})); return req.method === 'HEAD' ? res.end() : fs.createReadStream(file).pipe(res); }
         }
         return send(404, { error: 'not found' });
       };

@@ -39,6 +39,10 @@ function validate(spec, dir) {
   const bpm = spec.bpm, bars = spec.bars;
   if (!(bpm >= 60 && bpm <= 200)) err('bpm', 'bpm must be between 60 and 200', 'Use 128 for the built-in score.');
   if (!(Number.isInteger(bars) && bars >= 8 && bars <= 200)) err('bars', 'bars must be an integer from 8 to 200', 'bars = film length in seconds * bpm / 240.');
+  if (spec.finish !== undefined) {
+    if (!spec.finish || typeof spec.finish !== 'object' || Array.isArray(spec.finish)) err('finish', 'finish must be an object', 'Example: "finish": { "grain": 0.3 }. Keys: grain, bloom, streak (0 to 2, 1 = default).');
+    else Object.keys(spec.finish).forEach(k => { const v = spec.finish[k]; if (!['grain', 'bloom', 'streak'].includes(k)) err('finish.' + k, 'unknown finish key "' + k + '"', 'Keys: grain, bloom, streak.'); else if (typeof v !== 'number' || !(v >= 0 && v <= 2)) err('finish.' + k, k + ' must be a number from 0 to 2', '0 turns it off, 1 is the default look.'); });
+  }
   const hasParts = !!(spec.score && spec.score.parts !== undefined);
   const preset = (spec.score && spec.score.preset) || 'anthem-46';
   if (!SCORES[preset]) err('score.preset', 'unknown score preset "' + preset + '"', 'Available: ' + Object.keys(SCORES).join(', '));
