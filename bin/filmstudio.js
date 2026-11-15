@@ -31,6 +31,11 @@ const HELP = `filmstudio <command> [project-dir] [options]   (all output is JSON
   install-skill [--to dir] [--root workspace] [--force]   install the Claude Code skill; print MCP and AGENTS.md snippets for another repo
   doctor [--deep]                        check this machine
   mcp [--root dir]                       run an MCP server on stdio (tools + the guide as resources)
+  scene new <name> [--look wayang]       write a scene: code you draw for one beat of the script (guide: scenes); then preview and check it
+  scene preview <name> [--beats 8] [--frames 0,2,4] [--size 960x540] [--look ink]   render frames and a strip you can look at
+  scene check <name>                     lint + render tests: errors, blank or frozen scenes, same-frame determinism, draw speed
+  scene list | rig new <name> | look list | look show <name> | look new <name>   scenes, puppet rigs and looks (style guides)
+  library list|save <kind> <name>|use <kind> <name>   keep scenes, rigs and looks you want to reuse across films (~/.filmstudio/library)
   length <seconds> [--preset calm-46]    suggest bars and bpm for a target length
   list [--root dir]                      list the projects in the workspace (default ~/filmstudio-projects or FILMSTUDIO_ROOT)
   serve [dir|--root dir] [--port 4173] [--host 127.0.0.1] [--token t] [--allow-host name.ngrok.app]   local web page: one project if dir has spec.json, else a project picker over the workspace (token required off localhost)
@@ -100,6 +105,32 @@ const HELP = `filmstudio <command> [project-dir] [options]   (all output is JSON
         fs.writeFileSync(sp, JSON.stringify(spc, null, 1)); applied = { bars: spc.bars, bpm: spc.bpm, format: spc.format || '16:9', preset: (spc.score || {}).preset, shots: spc.shots.length, note: flags.length ? 'Starter shots were squeezed to fit; they are placeholders, replace them.' : undefined };
       }
       return out({ ok: true, created: target, applied, next: flags.example ? 'cd there, then `filmstudio validate`, `filmstudio build`.' : 'A valid starter spec.json (shots only, no narration) is in place. Edit the shots, meta text and add narration, then `validate`. See `filmstudio guide quick-start`.' });
+    }
+    if (cmd === 'scene' || cmd === 'rig' || cmd === 'look' || cmd === 'library') {
+      const T = require('../src/scenetools'), sub = pos[1], nm = pos[2], pd = path.resolve(flags.dir ? String(flags.dir) : '.');
+      const parseSize = () => { const z = flags.size ? String(flags.size).split('x').map(Number) : []; return z.length === 2 && z[0] > 0 ? { width: z[0], height: z[1] } : {}; };
+      const optsFrom = () => Object.assign(parseSize(), { beats: flags.beats ? Number(flags.beats) : undefined, frames: flags.frames ? String(flags.frames).split(',').map(Number) : undefined, params: flags.params ? JSON.parse(String(flags.params)) : (flags.look ? { look: String(flags.look) } : undefined) });
+      if (cmd === 'library') {
+        if (sub === 'path') return out({ ok: true, library: T.libRoot() });
+        if (sub === 'list') return out({ ok: true, library: T.libRoot(), items: T.libList(nm) });
+        if (sub === 'save') { if (!pos[3]) fail('usage: filmstudio library save <scene|rig|look> <name> [--dir project]'); return out(Object.assign({ ok: true }, T.libSave(pd, nm, pos[3]))); }
+        if (sub === 'use') { if (!pos[3]) fail('usage: filmstudio library use <scene|rig|look> <name> [--as new-name] [--force] [--dir project]'); return out(Object.assign({ ok: true }, T.libUse(pd, nm, pos[3], { as: flags.as ? String(flags.as) : undefined, force: !!flags.force }))); }
+        fail('usage: filmstudio library <list [kind]|save <kind> <name>|use <kind> <name>|path>');
+      }
+      if (cmd === 'look') {
+        if (sub === 'new') { if (!nm) fail('usage: filmstudio look new <name>'); return out({ ok: true, created: T.scaffold(pd, 'look', nm), next: 'Edit it, then use it with scene({ look: \'' + nm + '\' }).' }); }
+        const cat = T.lookCatalog(pd);
+        if (sub === 'list' || !sub) return out({ ok: true, looks: Object.values(cat).map(l => ({ name: l.name, desc: l.desc, bright: l.bright, source: l.source })), hint: 'Use one with scene({ look: "name" }). `filmstudio look show <name>` has its palette and guide; `filmstudio guide looks` explains them all.' });
+        if (sub === 'show') { if (!cat[nm]) fail('no look "' + nm + '"', { looks: Object.keys(cat) }); return out(Object.assign({ ok: true }, cat[nm])); }
+        fail('usage: filmstudio look <list|show <name>|new <name>>');
+      }
+      if (cmd === 'rig') { if (sub === 'new') { if (!nm) fail('usage: filmstudio rig new <name>'); return out({ ok: true, created: T.scaffold(pd, 'rig', nm), next: 'Draw the parts, then c.rig(\'' + nm + '\').pose({...}).draw(x, y, scale) in a scene.' }); } if (sub === 'list' || !sub) return out({ ok: true, rigs: require('../src/scenes').listDir(pd, 'rigs') }); fail('usage: filmstudio rig <list|new <name>>'); }
+      // scene
+      if (sub === 'new') { if (!nm) fail('usage: filmstudio scene new <name> [--look wayang]'); return out({ ok: true, created: T.scaffold(pd, 'scene', nm, { look: flags.look ? String(flags.look) : undefined }), next: 'Use it in spec.json: [startBar, endBar, "scene", "' + nm + '"]. Edit draw(c), then `filmstudio scene preview ' + nm + '`.' }); }
+      if (sub === 'list' || !sub) return out({ ok: true, scenes: require('../src/scenes').listDir(pd, 'scenes'), rigs: require('../src/scenes').listDir(pd, 'rigs'), looks: require('../src/scenes').listDir(pd, 'looks') });
+      if (sub === 'preview') { if (!nm) fail('usage: filmstudio scene preview <name> [--beats 8] [--frames 0,2,4,6] [--size 960x540] [--look ink]'); const r = await T.preview(pd, nm, optsFrom()); out(r); return process.exit(r.ok ? 0 : 1); }
+      if (sub === 'check') { if (!nm) fail('usage: filmstudio scene check <name> [--beats 8]'); const r = await T.check(pd, nm, optsFrom()); out(r); return process.exit(r.ok ? 0 : 1); }
+      fail('usage: filmstudio scene <new|list|preview|check> <name>');
     }
     const spec = readSpec(dir);
     if (cmd === 'validate') { const r = validate(spec, dir); out(r); return process.exit(r.ok ? 0 : 1); }

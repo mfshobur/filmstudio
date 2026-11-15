@@ -4,8 +4,10 @@ var BPM={{BPM}},SPB=60/BPM,TOTAL_BARS={{BARS}};
 var TITLE_LINES={{TITLE_LINES}},TITLE_ACCENT={{TITLE_ACCENT}},SCORE={{SCORE}};
 function bb(bar){return (bar-1)*4}
 var SH={{SHOTS}};
+var SCENES={{SCENES}},SC_DATA={{SCDATA}},RIGS_SRC={{RIGS}},LOOKS_SRC={{LOOKS}};
 var BRIGHT={paper:1,cartoon:1,iso:.5,board:1,shadow:.5,ink:1,comic:1,pixel:.5,image:.5,memphis:1,poster:1,clay:1,origami:1,voxel:1,multiplane:1,map:.5};
 function isBright(sh){
+  if(sh[2]==='scene')return scIsBright(sh);
   if(sh[2]==='board')return !(sh[4]&&sh[4].palette&&sh[4].palette.bg&&lum(sh[4].palette.bg)<.4);
   if(sh[2]==='type'&&sh[4]&&sh[4].palette&&sh[4].palette.bg)return lum(sh[4].palette.bg)>.6;
   if(sh[2]==='stage'&&sh[4]&&sh[4].background)return BRIGHT[sh[4].background[0]]>.9;
@@ -14,6 +16,7 @@ function isBright(sh){
 function lum(hex){var m=/^#?([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(hex||'');if(!m)return .5;return (parseInt(m[1],16)*.299+parseInt(m[2],16)*.587+parseInt(m[3],16)*.114)/255}
 var DRAW={
   stage:function(v){stage()},
+  scene:function(v){scDraw(v)},
   type:function(v){kinetic(v)},
   board:function(v){whiteboard(v)},
   shadow:function(v){shadowScene(v)},
@@ -117,6 +120,7 @@ function syncOverlays(beat){
   var en=$('#end');if(beat>=bb({{END_BAR}}))en.classList.remove('gone');else en.classList.add('gone');
 }
 var DRAW_ERRS=[];
+scLoadUser(RIGS_SRC,LOOKS_SRC).forEach(function(m){DRAW_ERRS.push({style:'scene',variant:'(rigs/looks)',message:m})});
 var GRABC=document.createElement('canvas');GRABC.width=48;GRABC.height=27;
 var lastT=performance.now()/1000,ema=.016,slowN=0;
 function frame(){
@@ -164,7 +168,7 @@ var bM=$('#bMusic'),bV=$('#bVoice');
 bM.addEventListener('click',function(){var on=bM.getAttribute('aria-pressed')!=='true';bM.setAttribute('aria-pressed',on);A.setMusic(on)});
 bV.addEventListener('click',function(){var on=bV.getAttribute('aria-pressed')!=='true';bV.setAttribute('aria-pressed',on);A.setVoice(on)});
 document.addEventListener('visibilitychange',function(){if(!A.ctx)return;if(document.hidden)A.ctx.suspend();else A.ctx.resume()});
-window.__film={setBeat:function(b){EXPORTING=true;FORCE=b},spb:SPB,bars:TOTAL_BARS,errors:function(){return DRAW_ERRS},grab:function(){var x=GRABC.getContext('2d');x.drawImage(cv,0,0,48,27);var d=x.getImageData(0,0,48,27).data,o=[];for(var i=0;i<d.length;i+=4)o.push(d[i]+d[i+1]+d[i+2]);return o},seek:function(b){FORCE=b},free:function(){FORCE=null},vready:function(){return VOB.filter(Boolean).length},shots:SH.length};
+window.__film={setBeat:function(b){EXPORTING=true;FORCE=b},spb:SPB,bars:TOTAL_BARS,errors:function(){return DRAW_ERRS},grab:function(){var x=GRABC.getContext('2d');x.drawImage(cv,0,0,48,27);var d=x.getImageData(0,0,48,27).data,o=[];for(var i=0;i<d.length;i+=4)o.push(d[i]+d[i+1]+d[i+2]);return o},seek:function(b){FORCE=b},free:function(){FORCE=null},vready:function(){return VOB.filter(Boolean).length},shots:SH.length,sceneMs:function(){return {n:SC_MS.n,avg:SC_MS.n?SC_MS.sum/SC_MS.n:0,max:SC_MS.max}},resetMs:function(){SC_MS.n=0;SC_MS.sum=0;SC_MS.max=0},grabN:function(w,h){var q=document.createElement('canvas');q.width=w;q.height=h;var x=q.getContext('2d');x.drawImage(cv,0,0,w,h);var d=x.getImageData(0,0,w,h).data,o=[];for(var i=0;i<d.length;i+=4)o.push(d[i],d[i+1],d[i+2]);return o}};
 try{if(document.fonts&&document.fonts.load){document.fonts.load('italic 90px "Instrument Serif"');document.fonts.load('800 20px "Hanken Grotesk"');document.fonts.load('20px "IBM Plex Mono"')}}catch(e){}
 requestAnimationFrame(frame);
 })();

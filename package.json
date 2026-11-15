@@ -19,8 +19,8 @@
   }
  },
  "scripts": {
-  "test": "node test/run.js && node test/providers.test.js && node test/mcp.test.js && node test/studio.test.js && node test/timeline.test.js && node test/composer.test.js && node test/skill-sync.test.js",
+  "test": "node test/run.js && node test/providers.test.js && node test/mcp.test.js && node test/studio.test.js && node test/timeline.test.js && node test/composer.test.js && node test/scenes.test.js && node test/skill-sync.test.js",
   "qa": "node tools/qa-all.js",
-  "test:browser": "node test/export.test.js && node test/studio-ui.test.js && node test/timeline-ui.test.js"
+  "test:browser": "node test/export.test.js && node test/studio-ui.test.js && node test/timeline-ui.test.js && node test/scenes-browser.test.js"
  }
 }

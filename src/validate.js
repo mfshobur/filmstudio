@@ -67,7 +67,8 @@ function validate(spec, dir) {
       if (Math.abs(a - prev) > 1e-9) err(p, 'starts at bar ' + a + ' but the previous shot ended at ' + prev, 'Shots must be contiguous: set start to ' + prev + '.');
       if (!(b > a)) err(p, 'end must be greater than start', '');
       if (((b - a) * 4) % 1 !== 0) err(p, 'shot length must be a whole number of beats (multiples of 0.25 bar)', 'Round to the nearest 0.25.');
-      if (!STYLES[st]) err(p, 'unknown style "' + st + '"', 'Known styles: ' + Object.keys(STYLES).join(', '));
+      if (st === 'scene') { require('./scenes').checkShot(v, dir).forEach(e => err(p, e.message, e.fix)); }
+      else if (!STYLES[st]) err(p, 'unknown style "' + st + '"', 'Known styles: ' + Object.keys(STYLES).join(', ') + ', or "scene" for a scene you write (`filmstudio guide scenes`).');
       else if (!STYLES[st].variants.includes(v)) err(p, 'unknown variant "' + v + '" for style "' + st + '"', 'Variants of ' + st + ': ' + STYLES[st].variants.join(', '));
       if (st === 'glitch' && s[4] && s[4].background && !(Array.isArray(s[4].background) && STYLES[s[4].background[0]] && s[4].background[0] !== 'glitch' && STYLES[s[4].background[0]].variants.includes(s[4].background[1]))) err(p + '[4].background', 'background must be [style,variant] of a non-glitch style', 'e.g. ["synth","sun"]');
       if (st === 'stopmo') { const bgp = s[4] && s[4].background; if (!(Array.isArray(bgp) && STYLES[bgp[0]] && bgp[0] !== 'stopmo' && STYLES[bgp[0]].variants.includes(bgp[1]))) err(p + '[4].background', 'stopmo needs params.background = [style,variant] of another style', 'e.g. [5,7,"stopmo","boil",{"background":["paper","land1"]}]'); }

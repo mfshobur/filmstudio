@@ -27,7 +27,9 @@ function compile(spec, projectDir) {
   });
   const hasVoice = vo.some(Boolean);
   const prompts = (spec.prompts || []).map(p => [bb(p.bar) + (p.beat || 0), p.hide ? null : (p.text || ''), p.big ? 1 : 0]);
+  const sc = require('./scenes').collect(spec, projectDir);
   const vals = {
+    SCENES: JSON.stringify(sc.scenes), SCDATA: JSON.stringify(sc.data), RIGS: JSON.stringify(sc.rigs), LOOKS: JSON.stringify(sc.looks),
     BPM: spec.bpm || 128,
     BARS: spec.bars || 46,
     END_BAR: spec.endCardBar || (spec.bars || 46) - 1.4,
@@ -56,7 +58,7 @@ function compile(spec, projectDir) {
   });
   const rd = f => fs.readFileSync(path.join(ENGINE, f), 'utf8');
   const head = fill(rd('head.template.html'), htmlVals);
-  const js = rd('p1.js') + rd('music.js') + rd('p2.js') + rd('p2b.js') + rd('p2c.js').replace('CHARS_DATA', () => vals.CHARACTERS) + rd('p2d.js') + rd('p2e.js') + rd('p2f.js') + rd('p2g.js') + rd('p2h.js') + fill(rd('p3.template.js'), vals);
+  const js = rd('p1.js') + rd('music.js') + rd('p2.js') + rd('p2b.js') + rd('p2c.js').replace('CHARS_DATA', () => vals.CHARACTERS) + rd('p2d.js') + rd('p2e.js') + rd('p2f.js') + rd('p2g.js') + rd('p2h.js') + rd('pscene.js') + rd('plooks.js') + fill(rd('p3.template.js'), vals);
   return head + '<script>\n' + js + '\n</script>\n';
 }
 module.exports = { compile };
