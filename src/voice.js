@@ -14,9 +14,9 @@ function toMp3(src, dst) {
   const r = spawnSync('ffmpeg', ['-loglevel', 'error', '-y', '-i', src, '-af', MASTER, '-ac', '1', '-ar', '24000', '-c:a', 'libmp3lame', '-b:a', '64k', dst]);
   return r.status === 0;
 }
-function runPython(args, onLine) {
+function runPython(args, onLine, python) {
   return new Promise(resolve => {
-    const py = process.env.FILMSTUDIO_PYTHON || 'python3';
+    const py = python || process.env.FILMSTUDIO_PYTHON || 'python3';
     const p = spawn(py, args, { stdio: ['ignore', 'pipe', 'pipe'] });
     p.stdout.on('data', d => String(d).split('\n').filter(Boolean).forEach(l => onLine && onLine(l)));
     p.stderr.on('data', () => {});
@@ -63,7 +63,30 @@ async function voice(dir, spec, opts = {}) {
       fs.rmSync(jf, { force: true });
     }
     narr.forEach((n, i) => { const m = path.join(vdir, num(i) + '.mp3'); if (fs.existsSync(m)) n.file = 'voice/' + num(i) + '.mp3'; });
-  } else throw new Error('unknown voice provider "' + provider + '". Use kokoro, elevenlabs or file.');
+  } else if (provider === 'neutts') {
+    /* NeuTTS-2E: emotional English, speakers emily/sophie/paul/steven, emotion per line. Runs in its own venv (~/.filmstudio/venv-neutts). */
+    const home = path.join(os.homedir(), '.filmstudio');
+    const gguf = process.env.FILMSTUDIO_NEUTTS_MODEL || path.join(home, 'models', 'neutts', 'neutts-2e-Q8_0.gguf');
+    const onnx = process.env.FILMSTUDIO_NEUTTS_CODEC || path.join(home, 'models', 'neutts', 'neucodec-onnx-decoder-int8', 'model.onnx');
+    const py = process.env.FILMSTUDIO_NEUTTS_PYTHON || path.join(home, 'venv-neutts', 'bin', 'python');
+    for (const f of [gguf, onnx, py]) if (!fs.existsSync(f)) throw new Error('NeuTTS file not found: ' + f + '. See `filmstudio guide voice` (NeuTTS) for setup, or run `filmstudio doctor`.');
+    const vs = spec.voice || {}, EMO = ['angry', 'disgusted', 'fearful', 'happy', 'neutral', 'sad', 'surprised'], SPK = ['emily', 'sophie', 'paul', 'steven'];
+    narr.forEach((n, i) => { const e = n.emotion || vs.emotion || 'neutral', sp = n.speaker || vs.speaker || 'emily'; if (!EMO.includes(e)) throw new Error('narration[' + i + '].emotion "' + e + '" is not one of ' + EMO.join(', ')); if (!SPK.includes(sp)) throw new Error('narration[' + i + '].speaker "' + sp + '" is not one of ' + SPK.join(', ')); });
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      const pending = narr.map((n, i) => i).filter(i => opts.force || !fs.existsSync(path.join(vdir, num(i) + '.mp3')));
+      if (!pending.length) break;
+      log('attempt ' + attempt + ': ' + pending.length + ' clip(s) to generate');
+      const job = pending.map(i => ({ text: narr[i].text, speaker: narr[i].speaker || vs.speaker || 'emily', emotion: narr[i].emotion || vs.emotion || 'neutral', seed: narr[i].seed != null ? narr[i].seed : (vs.seed != null ? vs.seed + i : undefined), out: path.join(vdir, num(i) + '.wav') }));
+      const jf = path.join(vdir, 'job.json'); fs.writeFileSync(jf, JSON.stringify(job));
+      await runPython([path.join(__dirname, '..', 'providers', 'neutts_gen.py'), gguf, onnx, jf], l => log(l), py);
+      for (const i of pending) {
+        const w = path.join(vdir, num(i) + '.wav'), m = path.join(vdir, num(i) + '.mp3');
+        if (fs.existsSync(w) && fs.statSync(w).size > 1000 && toMp3(w, m)) fs.rmSync(w, { force: true });
+      }
+      fs.rmSync(jf, { force: true });
+    }
+    narr.forEach((n, i) => { const m = path.join(vdir, num(i) + '.mp3'); if (fs.existsSync(m)) n.file = 'voice/' + num(i) + '.mp3'; });
+  } else throw new Error('unknown voice provider "' + provider + '". Use kokoro, neutts, elevenlabs or file.');
   const durations = narr.map((n, i) => { if (!(n.file && fs.existsSync(path.resolve(dir, n.file)))) return null; const d = probe(path.resolve(dir, n.file)); if (d) return d; try { const w = JSON.parse(fs.readFileSync(path.join(vdir, num(i) + '.words.json'), 'utf8')); return w.duration ? w.duration + 0.15 : null; } catch (e) { return null; } });
   fs.writeFileSync(path.join(vdir, 'durations.json'), JSON.stringify(durations));
   narr.forEach((n, i) => { if (durations[i]) n.dur = +durations[i].toFixed(2); });
