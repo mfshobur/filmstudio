@@ -91,4 +91,22 @@ t('audiomix: cuts map marks every cut and the big section starts louder', () => 
 t('audiomix: ducking dips under speech and recovers', () => { const sr = 8000, e = am.duckEnvelope(sr * 4, sr, [[1, 2]], .5); assert.ok(e[0] > .99, 'full before speech'); assert.ok(e[Math.round(1.8 * sr)] < .55, 'ducked during speech'); assert.ok(e[Math.round(3.9 * sr)] > .9, 'recovered after'); });
 t('audiomix: mixDown places the voice at its start and never exceeds full scale', () => { const sr = 8000, music = new Float32Array(sr * 3).fill(.8), v = new Float32Array(sr).fill(.9), out = am.mixDown(music, [{ start: 1, pcm: v }], sr, {}); assert.ok(Math.max(...out) <= 0.9001); assert.ok(out[Math.round(1.5 * sr)] > out[Math.round(0.2 * sr)], 'voice region louder than music-only'); });
 t('audiomix: writeWav16 writes a valid header', () => { const f = path.join(os.tmpdir(), 'fs-test.wav'); am.writeWav16(f, new Float32Array([0, .5, -.5, 1]), 8000); const b = fs.readFileSync(f); assert.strictEqual(b.toString('ascii', 0, 4), 'RIFF'); assert.strictEqual(b.toString('ascii', 8, 12), 'WAVE'); assert.strictEqual(b.readUInt32LE(24), 8000); assert.strictEqual(b.readUInt32LE(40), 8); assert.strictEqual(b.length, 44 + 8); });
+const { execFileSync } = require('child_process');
+const cli = (...a) => { try { return { code: 0, out: execFileSync(process.execPath, [path.join(ROOT, 'bin', 'filmstudio.js')].concat(a), { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }) }; } catch (e) { return { code: e.status, out: String(e.stdout) }; } };
+t('install-skill copies the skill, records the clone path, prints snippets, refuses to overwrite without --force', () => {
+  const to = fs.mkdtempSync(path.join(os.tmpdir(), 'fs-skill-')), r = cli('install-skill', '--to', to, '--root', path.join(to, 'ws')), j = JSON.parse(r.out);
+  assert.strictEqual(r.code, 0); assert.ok(fs.existsSync(path.join(to, 'film-maker', 'SKILL.md')));
+  assert.strictEqual(fs.readFileSync(path.join(to, 'film-maker', 'CLONE_PATH'), 'utf8').trim(), ROOT);
+  assert.ok(j.mcp_claude_code.includes(path.join(ROOT, 'bin', 'filmstudio.js')) && j.mcp_claude_code.includes(path.join(to, 'ws')));
+  assert.deepStrictEqual(j.mcp_json.mcpServers.filmstudio.args.slice(0, 2), [path.join(ROOT, 'bin', 'filmstudio.js'), 'mcp']);
+  assert.ok(/explain-a-codebase/.test(j.agents_md_snippet));
+  assert.notStrictEqual(cli('install-skill', '--to', to).code, 0, 'second install should need --force');
+  assert.strictEqual(cli('install-skill', '--to', to, '--force').code, 0);
+});
+t('guide explain-a-codebase exists and every style/variant it names is real', () => {
+  const g = fs.readFileSync(path.join(ROOT, 'docs', 'agent-guide', '19-explain-a-codebase.md'), 'utf8');
+  assert.ok(cli('guide', 'explain-a-codebase').out.includes('Explain a project or codebase'));
+  const refs = [...g.matchAll(/`([a-z]+)\/([a-z0-9]+)`/g)]; assert.ok(refs.length > 10);
+  refs.forEach(([, s, v]) => { assert.ok(STYLES[s], 'unknown style ' + s); assert.ok(STYLES[s].variants.includes(v), 'unknown variant ' + s + '/' + v); });
+});
 console.log('\n' + pass + ' passed, ' + fail + ' failed'); process.exit(fail ? 1 : 0);

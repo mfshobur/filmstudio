@@ -21,6 +21,6 @@ Verified: Claude Code (non-interactive run with `--mcp-config`) started the serv
 Long tools (`voice`, `review`, `export`) can run for minutes; if your client has a tool timeout, use the shell for those and MCP for the quick ones. The paid-voice guard works the same over MCP: `filmstudio_voice` with provider `elevenlabs` returns `NEEDS_CONFIRMATION` until `yes` is true.
 
 ## Option C: Claude Code skill
-Copy `skills/film-maker` to `~/.claude/skills/`. It tells the agent where filmstudio is and to read the guide.
+Run `filmstudio install-skill` (or `node <clone>/bin/filmstudio.js install-skill`). It copies `skills/film-maker` to `~/.claude/skills/` and records the clone path in a `CLONE_PATH` file next to the skill, so the agent can find filmstudio from any repo. It also prints the exact MCP command and an `AGENTS.md` snippet for the repo you want films about; see `guide explain-a-codebase`. Use `--to <dir>` for another skills folder and `--force` to replace an existing install.
 
 Whatever the harness, the loop is: write files, `validate`, `voice`, `voice-check`, `build`, `review`, `audio-check`, look, fix; `export` if a video file is wanted.

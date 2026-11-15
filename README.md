@@ -61,6 +61,17 @@ node bin/filmstudio.js doctor
 
 `doctor` tells you what's missing and how to install it. You can build a film with only Node; the rest is for narration and checking.
 
+### Use it from another project
+To let an agent in any repo make a film (for example a video that explains that repo):
+
+```
+cd filmstudio
+npm link                          # optional: puts `filmstudio` on your PATH
+filmstudio install-skill          # copies the Claude Code skill to ~/.claude/skills/film-maker
+```
+
+`install-skill` also prints a ready-to-paste MCP command and an `AGENTS.md` snippet that use this clone's real path. Keep films in one workspace folder (the `--root` in those snippets), not inside the other repo. The guide for this is `filmstudio guide explain-a-codebase`.
+
 ## Try the example
 
 ```
@@ -76,7 +87,7 @@ Then open `build/film.html` in a browser and press Begin. Use headphones.
 
 If you'd rather type than talk, run `node bin/filmstudio.js serve my-film` and open the address it prints. It's a plain page for the brief, the storyboard, the voice and notes; your agent sees everything you change because it's all files.
 
-The normal way is to point an agent (Claude Code, Codex CLI, Gemini CLI, Cursor, anything that can run shell commands) at this repo and tell it what you want. The agent reads `AGENTS.md`, which sends it to a written guide in `docs/agent-guide/`. With Claude Code you can also copy `skills/film-maker` into `~/.claude/skills/`.
+The normal way is to point an agent (Claude Code, Codex CLI, Gemini CLI, Cursor, anything that can run shell commands) at this repo and tell it what you want. The agent reads `AGENTS.md`, which sends it to a written guide in `docs/agent-guide/`. With Claude Code, `filmstudio install-skill` installs the `film-maker` skill so it works from any folder.
 
 You can do it by hand too. A film is a folder:
 
@@ -107,8 +118,8 @@ All commands print JSON.
 | `serve` | open a local web page to edit the storyboard, hear the narration, preview the film, and leave notes for your agent |
 | `mcp` | run an MCP server (11 tools, the guide as resources) for agent tools that prefer native tool calls |
 | `length <seconds>` | suggest `bars` and `bpm` for a target film length |
+| `install-skill` | install the Claude Code skill; print MCP and `AGENTS.md` snippets for use from another repo |
 | `doctor` | check this machine |
-
 | `styles` | list the styles and variants |
 | `guide [topic]` | print the agent guide |
 

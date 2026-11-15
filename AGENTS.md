@@ -23,7 +23,7 @@ Length: **seconds = bars x 240 / bpm**. Run `filmstudio length <seconds> [--pres
 - You cannot hear audio or judge taste: say so, use measurements, ask the user to listen and report timecodes.
 - Ask before paid APIs, model downloads, exposing a server, deleting files. Never write secrets into files.
 - Ask the user at most 3 questions, in one message; default the rest.
-- Honest limits: procedural graphics only, not photoreal footage, no real maps, no user images yet. See `filmstudio styles` for the 28 styles and `guide style-grammar` for when to use each.
+- Honest limits: procedural graphics only, not photoreal footage, no real maps, no screen recordings (your own pictures and logos work through the `image` style). See `filmstudio styles` for all styles and `guide style-grammar` for when to use each.
 - If anything fails to start: `filmstudio doctor`.
 
 The user may keep the studio page open (`filmstudio serve <project>`). Read `feedback.json` for their notes (`filmstudio guide studio`).

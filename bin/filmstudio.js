@@ -28,6 +28,7 @@ const HELP = `filmstudio <command> [project-dir] [options]   (all output is JSON
   build [dir]                            write build/film.html
   review [dir] [--beats 10,20] [--size 400x800] [--motion]   screenshot every style variant + contact sheets
   audio-check [dir]                      render the score offline; report loudness, clipping, dynamics
+  install-skill [--to dir] [--root workspace] [--force]   install the Claude Code skill; print MCP and AGENTS.md snippets for another repo
   doctor [--deep]                        check this machine
   mcp [--root dir]                       run an MCP server on stdio (tools + the guide as resources)
   length <seconds> [--preset calm-46]    suggest bars and bpm for a target length
@@ -58,6 +59,21 @@ const HELP = `filmstudio <command> [project-dir] [options]   (all output is JSON
       const port = Number(flags.port || 4173); await st.listen(port);
       console.log(JSON.stringify({ ok: true, url: 'http://' + (host === '0.0.0.0' ? 'localhost' : host) + ':' + port + '/' + (token ? '?token=' + token : ''), dir: path.resolve(dir), note: 'Ctrl+C to stop. Nothing is exposed beyond ' + host + '.' }, null, 2));
       return;
+    }
+    if (cmd === 'install-skill') {
+      // Copy the Claude Code skill to a skills folder and print ready-to-paste setup for another repo. Edits no settings file.
+      const os = require('os'), to = path.resolve(flags.to ? String(flags.to) : path.join(os.homedir(), '.claude', 'skills')), dest = path.join(to, 'film-maker');
+      if (fs.existsSync(dest) && !flags.force) fail('already installed: ' + dest, { fix: 'Re-run with --force to replace it.' });
+      fs.rmSync(dest, { recursive: true, force: true }); fs.mkdirSync(to, { recursive: true });
+      fs.cpSync(path.join(ROOT, 'skills', 'film-maker'), dest, { recursive: true });
+      fs.writeFileSync(path.join(dest, 'CLONE_PATH'), ROOT + '\n');
+      const cli = path.join(ROOT, 'bin', 'filmstudio.js'), ws = flags.root ? path.resolve(String(flags.root)) : path.join(os.homedir(), 'filmstudio-projects');
+      return out({ ok: true, installed: dest, clone: ROOT,
+        optional_global_command: 'cd ' + ROOT + ' && npm link   (puts `filmstudio` on PATH)',
+        mcp_claude_code: 'claude mcp add filmstudio -- node ' + cli + ' mcp --root ' + ws,
+        mcp_json: { mcpServers: { filmstudio: { command: 'node', args: [cli, 'mcp', '--root', ws] } } },
+        agents_md_snippet: '## Making videos\nTo make a short film about this project, run `node ' + cli + ' guide explain-a-codebase` and follow it. Keep film projects in ' + ws + ', not in this repo.',
+        note: 'The skill lets Claude Code find filmstudio from any repo. Paste the snippet into that repo\'s AGENTS.md or CLAUDE.md so agents know to use it.' });
     }
     if (cmd === 'doctor') return out(await require('../src/doctor').doctor({ deep: !!flags.deep }));
     if (cmd === 'new') {
