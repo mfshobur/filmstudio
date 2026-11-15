@@ -32,7 +32,8 @@ const HELP = `filmstudio <command> [project-dir] [options]   (all output is JSON
   doctor [--deep]                        check this machine
   mcp [--root dir]                       run an MCP server on stdio (tools + the guide as resources)
   length <seconds> [--preset calm-46]    suggest bars and bpm for a target length
-  serve [dir] [--port 4173] [--host 127.0.0.1] [--token t] [--allow-host name.ngrok.app]   local web page to edit the storyboard (token required off localhost)
+  list [--root dir]                      list the projects in the workspace (default ~/filmstudio-projects or FILMSTUDIO_ROOT)
+  serve [dir|--root dir] [--port 4173] [--host 127.0.0.1] [--token t] [--allow-host name.ngrok.app]   local web page: one project if dir has spec.json, else a project picker over the workspace (token required off localhost)
   styles [--mood calm]                   list shot styles and variants (filter by mood)
   guide [topic]                          print the agent guide (no topic = list topics)`;
 
@@ -51,13 +52,20 @@ const HELP = `filmstudio <command> [project-dir] [options]   (all output is JSON
     }
     if (cmd === 'mcp') { require('../src/mcp').serve(flags.root ? String(flags.root) : null); return; }
     if (cmd === 'length') { const sec = Number(pos[1]); if (!(sec > 0)) fail('usage: filmstudio length <seconds> [--preset anthem-46|calm-46]'); const r = require('../src/registry').planLength(sec, flags.preset ? String(flags.preset) : 'anthem-46'); return out(Object.assign(r, { set: 'In spec.json set "bars": ' + r.bars + ' and "bpm": ' + r.bpm + '.', note: Math.abs(r.seconds - sec) > 2 ? 'Closest this score can get to ' + sec + ' s without a very fast or slow tempo.' : undefined })); }
+    if (cmd === 'list') {
+      const W = require('../src/workspace'), root = W.resolveRoot(flags.root);
+      return out({ ok: true, root, exists: fs.existsSync(root), projects: W.listProjects(root), note: 'A project is a subfolder of the workspace that has spec.json. Set the workspace with --root or FILMSTUDIO_ROOT (default ~/filmstudio-projects).' });
+    }
     if (cmd === 'serve') {
+      const W = require('../src/workspace'), explicit = pos[1] ? path.resolve(pos[1]) : null;
+      const asProject = !flags.root && fs.existsSync(path.join(explicit || process.cwd(), 'spec.json'));
+      const mode = asProject ? { dir: explicit || process.cwd() } : { root: W.resolveRoot(flags.root || explicit) };
       const host = String(flags.host || '127.0.0.1'), local = ['127.0.0.1', 'localhost', '::1'].includes(host);
       const allow = flags['allow-host'] ? String(flags['allow-host']).split(',').map(x => x.trim()).filter(Boolean) : [];
       const token = flags.token ? String(flags.token) : (local && !allow.length ? null : require('crypto').randomBytes(16).toString('hex'));
-      const st = require('../src/studio').createStudio({ dir: path.resolve(dir), host, token, allowHosts: allow });
+      const st = require('../src/studio').createStudio(Object.assign({ host, token, allowHosts: allow }, mode));
       const port = Number(flags.port || 4173); await st.listen(port);
-      console.log(JSON.stringify({ ok: true, url: 'http://' + (host === '0.0.0.0' ? 'localhost' : host) + ':' + port + '/' + (token ? '?token=' + token : ''), dir: path.resolve(dir), note: 'Ctrl+C to stop. Nothing is exposed beyond ' + host + '.' }, null, 2));
+      console.log(JSON.stringify({ ok: true, url: 'http://' + (host === '0.0.0.0' ? 'localhost' : host) + ':' + port + '/' + (token ? '?token=' + token : ''), mode: mode.dir ? 'project' : 'workspace', dir: mode.dir, root: mode.root, note: 'Ctrl+C to stop. Nothing is exposed beyond ' + host + '.' }, null, 2));
       return;
     }
     if (cmd === 'install-skill') {

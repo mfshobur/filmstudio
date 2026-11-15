@@ -7,6 +7,15 @@ filmstudio serve path/to/project            # http://127.0.0.1:4173
 filmstudio serve path/to/project --port 5000
 ```
 
+## Many projects: the workspace
+Keep all films in one **workspace folder** (default `~/filmstudio-projects`; set it with `--root <dir>` or `FILMSTUDIO_ROOT`). A project is any subfolder of it that has `spec.json`.
+```
+filmstudio list                        # JSON: every project with title, length, format, last edited/built
+filmstudio serve                       # no spec.json here: opens the project picker for the workspace
+filmstudio serve --root ~/films        # same, explicit workspace
+```
+The picker shows a card per project (title, length, format, edited/built times, a "changed since build" flag, the review contact sheet as thumbnail) and a New project form. Opening a card goes to `/p/<name>/`, the normal studio for that project; "all projects" in the header goes back. `filmstudio serve <dir>` still serves one project when `<dir>` has `spec.json`. Create projects inside the workspace (`filmstudio new <workspace>/<name>`, or the MCP tool with the server rooted there) so the picker finds them. Over MCP, `filmstudio_list` shows what exists.
+
 Tell the user the URL it prints. The server listens on localhost only. To reach it from another device use `--host 0.0.0.0`; a token is then required (the URL printed includes it). To reach it through a tunnel (ngrok, cloudflared), add `--allow-host <the tunnel's host name>`; that also forces a token. Never expose it to the internet without the user's say-so, and don't print the token anywhere else.
 
 ## What the user can do there

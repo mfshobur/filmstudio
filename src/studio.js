@@ -15,10 +15,8 @@ const CLI = path.join(ROOT, 'bin', 'filmstudio.js');
 const MAX_BODY = 5 * 1024 * 1024;
 const MIME = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.jpg': 'image/jpeg', '.png': 'image/png', '.mp3': 'audio/mpeg', '.wav': 'audio/wav', '.mp4': 'video/mp4', '.md': 'text/markdown; charset=utf-8', '.svg': 'image/svg+xml' };
 
-function createStudio(opts) {
-  const dir = path.resolve(opts.dir), host = opts.host || '127.0.0.1', token = opts.token || null;
-  const local = ['127.0.0.1', 'localhost', '::1'].includes(host);
-  if (!local && !token) throw new Error('A token is required when serving on a non-local address (--token).');
+/* Per-project state and helpers: one of these per project folder (the studio serves one, or many in workspace mode). */
+function makeProject(dir) {
   const f = n => path.join(dir, n);
   const readJson = (p, d) => { try { return JSON.parse(fs.readFileSync(p, 'utf8')); } catch (e) { return d; } };
   const writeJson = (p, o) => { fs.writeFileSync(p + '.tmp', JSON.stringify(o, null, 1)); fs.renameSync(p + '.tmp', p); };
@@ -53,6 +51,18 @@ function createStudio(opts) {
     p.on('error', e => { job.status = 'failed'; job.log += String(e); running = null; });
     return { job };
   }
+  return { dir, f, readJson, writeJson, project, safeJoin, startJob, jobs };
+}
+
+/* opts.dir: serve that one project (routes at /). opts.root (no dir): serve a workspace of projects (routes at /p/<name>/, picker at /). */
+function createStudio(opts) {
+  const host = opts.host || '127.0.0.1', token = opts.token || null;
+  const local = ['127.0.0.1', 'localhost', '::1'].includes(host);
+  if (!local && !token) throw new Error('A token is required when serving on a non-local address (--token).');
+  const WS = require('./workspace');
+  const workspaceRoot = opts.dir ? null : path.resolve(opts.root || WS.resolveRoot());
+  const single = workspaceRoot ? null : makeProject(path.resolve(opts.dir)), cache = new Map();
+  const getProject = d => { if (!cache.has(d)) cache.set(d, makeProject(d)); return cache.get(d); };
 
   const server = http.createServer((req, res) => {
     const send = (code, body, type) => { res.writeHead(code, { 'Content-Type': type || 'application/json', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' }); res.end(typeof body === 'string' || Buffer.isBuffer(body) ? body : JSON.stringify(body)); };
@@ -61,7 +71,7 @@ function createStudio(opts) {
       const hostHdr = String(req.headers.host || '').replace(/:\d+$/, '').replace(/^\[|\]$/g, '');
       const okHosts = ['127.0.0.1', 'localhost', '::1'].concat(opts.allowHosts || [], local ? [] : [host]);
       if (!okHosts.includes(hostHdr)) return send(403, { error: 'host not allowed' });
-      const url = new URL(req.url, 'http://x'), p = url.pathname;
+      const url = new URL(req.url, 'http://x'); let p = url.pathname;
       /* token (only required when serving beyond localhost): Authorization: Bearer, ?token=, or cookie */
       if (token) {
         const cookie = (req.headers.cookie || '').split(/;\s*/).find(c => c.startsWith('fs_token=')), given = (req.headers.authorization || '').replace(/^Bearer /, '') || url.searchParams.get('token') || (cookie && cookie.slice(9));
@@ -74,6 +84,20 @@ function createStudio(opts) {
       const body = () => new Promise((resolve, reject) => { let n = 0; const ch = []; req.on('data', d => { n += d.length; if (n > MAX_BODY) { reject(Object.assign(new Error('body too large'), { code: 413 })); req.destroy(); } else ch.push(d); }); req.on('end', () => resolve(Buffer.concat(ch).toString('utf8'))); req.on('error', reject); });
       const json = async () => { const t = await body(); try { return JSON.parse(t || 'null'); } catch (e) { throw Object.assign(new Error('invalid JSON'), { code: 400 }); } };
       const handle = async () => {
+        let proj = single;
+        if (!proj) { /* workspace mode: project list, create, and /p/<name>/... routed to that project */
+          if (p === '/api/projects' && req.method === 'GET') return send(200, { mode: 'workspace', root: workspaceRoot, projects: WS.listProjects(workspaceRoot) });
+          if (p === '/api/projects' && req.method === 'POST') { const b = await json(), r = WS.createProject(workspaceRoot, b); return r.error ? send(r.code, { error: r.error }) : send(200, { ok: true, name: b.name, created: r.result.created, applied: r.result.applied }); }
+          const m = /^\/p\/([^/]+)(\/.*)?$/.exec(p);
+          if (m) {
+            let name; try { name = decodeURIComponent(m[1]); } catch (e) { return send(404, { error: 'no such project' }); }
+            const d = WS.projectDir(workspaceRoot, name); if (!d) return send(404, { error: 'no such project' });
+            if (!m[2]) { res.writeHead(301, { Location: '/p/' + encodeURIComponent(name) + '/' }); return res.end(); }
+            proj = getProject(d); p = m[2];
+          } else if (req.method === 'GET' && (p === '/' || p === '/index.html')) return send(200, fs.readFileSync(path.join(ROOT, 'studio', 'index.html')), MIME['.html']);
+          else return send(404, { error: 'not found' });
+        } else if (p === '/api/projects' && req.method === 'GET') return send(200, { mode: 'project', projects: [] });
+        const { dir, f, readJson, writeJson, project, safeJoin, startJob, jobs } = proj;
         if (p === '/api/project' && req.method === 'GET') return send(200, project());
         if (p === '/api/spec' && req.method === 'PUT') { const s = await json(); if (!s || typeof s !== 'object' || Array.isArray(s)) return send(400, { error: 'spec must be a JSON object' }); if (fs.existsSync(f('spec.json')) && !fs.existsSync(f('spec.json.bak'))) fs.copyFileSync(f('spec.json'), f('spec.json.bak')); writeJson(f('spec.json'), s); return send(200, { saved: true, validation: validate(s, dir) }); }
         if (p === '/api/validate' && req.method === 'POST') { const s = await json(); return send(200, validate(s, dir)); }
@@ -108,6 +132,6 @@ function createStudio(opts) {
       handle().catch(e => send(e.code === 413 || e.code === 400 ? e.code : 500, { error: String(e.message) }));
     } catch (e) { send(500, { error: String(e.message) }); }
   });
-  return { server, dir, host, token, listen: (port) => new Promise((r, j) => { server.once('error', j); server.listen(port || 0, host, () => r(server.address().port)); }), close: () => new Promise(r => server.close(r)) };
+  return { server, dir: single ? single.dir : null, root: workspaceRoot, host, token, listen: (port) => new Promise((r, j) => { server.once('error', j); server.listen(port || 0, host, () => r(server.address().port)); }), close: () => new Promise(r => server.close(r)) };
 }
 module.exports = { createStudio };

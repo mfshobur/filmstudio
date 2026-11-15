@@ -103,6 +103,12 @@ t('install-skill copies the skill, records the clone path, prints snippets, refu
   assert.notStrictEqual(cli('install-skill', '--to', to).code, 0, 'second install should need --force');
   assert.strictEqual(cli('install-skill', '--to', to, '--force').code, 0);
 });
+t('list: --root and FILMSTUDIO_ROOT pick the workspace; only folders with spec.json are projects; nothing is created', () => {
+  const ws = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'fs-list-')), 'ws'); fs.mkdirSync(ws); fs.cpSync(path.join(ROOT, 'examples', 'starter'), path.join(ws, 'one'), { recursive: true }); fs.mkdirSync(path.join(ws, 'plain'));
+  const j = JSON.parse(cli('list', '--root', ws).out); assert.strictEqual(j.root, ws); assert.deepStrictEqual(j.projects.map(p => p.name), ['one']); assert.ok(j.projects[0].seconds > 0 && j.projects[0].format);
+  const e = JSON.parse(execFileSync(process.execPath, [path.join(ROOT, 'bin', 'filmstudio.js'), 'list'], { encoding: 'utf8', env: Object.assign({}, process.env, { FILMSTUDIO_ROOT: ws }) })); assert.strictEqual(e.root, ws);
+  const none = path.join(ws, 'missing'); const m = JSON.parse(cli('list', '--root', none).out); assert.strictEqual(m.exists, false); assert.deepStrictEqual(m.projects, []); assert.ok(!fs.existsSync(none), 'list must not create the workspace');
+});
 t('guide explain-a-codebase exists and every style/variant it names is real', () => {
   const g = fs.readFileSync(path.join(ROOT, 'docs', 'agent-guide', '19-explain-a-codebase.md'), 'utf8');
   assert.ok(cli('guide', 'explain-a-codebase').out.includes('Explain a project or codebase'));
