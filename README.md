@@ -83,6 +83,28 @@ node ../bin/filmstudio.js build
 
 Then open `build/film.html` in a browser and press Begin. Use headphones.
 
+## Viewing your films in the browser (the studio)
+
+Keep all your films in one workspace folder (default `~/filmstudio-projects`; set another with `--root` or `FILMSTUDIO_ROOT`) and serve it:
+
+```
+filmstudio serve --root ~/filmstudio-projects      # leave it running; Ctrl+C stops it
+```
+
+Then open **http://127.0.0.1:4173/**. It only listens on your own machine.
+
+| address | what you get |
+|---|---|
+| `http://127.0.0.1:4173/` | the project picker: one card per film (title, length, format, last edited and built, a "changed since build" flag) and a New project form |
+| `http://127.0.0.1:4173/p/<name>/` | the studio for one film. Tabs: Idea, Storyboard, **Timeline**, Voice, Preview, Review, Status |
+| `http://127.0.0.1:4173/p/<name>/film.html` | just the film, full page: press Begin, use headphones |
+
+`<name>` is the project's folder name. Use `--port 5000` for another port. To serve a single film instead, run `filmstudio serve path/to/film` (the folder with `spec.json`); its address is then `http://127.0.0.1:4173/`.
+
+**The Timeline tab** shows music, video shots, narration and prompts on a ruler. Drag the handle between two shots to retime the cut, drag narration lines or prompts to move them, press `S` to split the shot under the playhead, `Delete` to remove the selected shot or prompt, and `Ctrl/Cmd+Z` to undo. It follows your agent live: when the agent changes `spec.json` the page redraws within about two seconds, and if you and the agent both change the file the page asks whether to load the agent's version or keep yours, instead of overwriting. Narration lines can only move between their neighbours, because voice clips are matched to lines by position.
+
+Details and the HTTP endpoints for tools: `filmstudio guide studio`.
+
 ## Making your own
 
 If you'd rather type than talk, run `node bin/filmstudio.js serve my-film` and open the address it prints. It's a plain page for the brief, the storyboard, the voice and notes; your agent sees everything you change because it's all files.
