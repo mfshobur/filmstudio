@@ -40,6 +40,8 @@
       '.tl-end{position:absolute;top:0;bottom:0;border-left:2px dashed var(--ember);pointer-events:none}',
       '.tl-blk{position:absolute;border-radius:4px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;font:11px/1.3 var(--mono);color:#fff;padding:3px 6px;border:1px solid rgba(255,255,255,.28);user-select:none;touch-action:none}',
       '.tl-blk.sel{outline:2px solid var(--ice);z-index:3}',
+      '.tl-viewer{display:flex;flex-direction:column;align-items:center;gap:4px;margin:2px 0 12px}',
+      '.tl-vcv{display:block;height:40vh;min-height:190px;max-height:520px;width:auto;max-width:100%;aspect-ratio:16/9;background:#000;border-radius:8px;border:1px solid rgba(255,255,255,.18)}',
       '.tl-shot{cursor:pointer;background-size:cover;background-position:center;text-shadow:0 1px 3px #000,0 0 2px #000}',
       '.tl-h{position:absolute;top:0;bottom:0;width:12px;margin-left:-6px;cursor:col-resize;z-index:4;touch-action:none}',
       '.tl-h::after{content:"";position:absolute;left:5px;top:22%;bottom:22%;width:2px;background:rgba(255,255,255,.8);border-radius:1px}',
@@ -71,11 +73,13 @@
     var sh = d.tracks.shots.filter(function (s) { return T.ph >= s.start && T.ph < s.end; })[0];
     return 'bar ' + (Math.round(T.ph * 100) / 100) + ' · ' + r1((T.ph - 1) * d.secPerBar) + ' s of ' + d.seconds + ' s' + (sh ? ' · shot #' + (sh.i + 1) + ' ' + sh.style + '/' + sh.variant : '');
   }
-  function movePH(bar) {
-    var d = T.data; T.ph = clamp(snap(bar, 0.25), 1, d.bars + 1);
+  function movePH(bar, free) {
+    var d = T.data; T.ph = clamp(free ? bar : snap(bar, 0.25), 1, d.bars + 1);
+    if (!free && playTimer) { clearInterval(playTimer); playTimer = null; var pb = CUR && CUR.el.querySelector('.tl-play'); if (pb) pb.textContent = 'Play'; }
     if (!CUR) return;
     var ph = CUR.el.querySelector('.tl-ph'); if (ph) ph.style.left = (LABW + (T.ph - 1) * T.zoom) + 'px';
     var rd = CUR.el.querySelector('.tl-read'); if (rd) rd.textContent = readout();
+    updateViewer();
   }
 
   /* ---------- committing edits ---------- */
@@ -141,41 +145,77 @@
     CUR.el.querySelectorAll('.tl-blk[data-k]').forEach(function (e) { e.classList.toggle('sel', e.dataset.k === k && +e.dataset.i === i); });
   }
 
-  /* ---------- thumbnails: a hidden copy of the built film is seeked to the middle of each shot and its canvas copied ---------- */
-  var THUMBS = {}, TH = { built: null, busy: false, again: false };
+  /* ---------- the film behind the timeline: one hidden copy of the built film, seeked to any beat, its canvas copied out ---------- */
+  var THUMBS = {}, FILM = { p: null, q: Promise.resolve(), frame: null }, VIEW = { canvas: null, tick: 0 };
   function thumbKey(s) { return (T.data && T.data.built) + '|' + s.start + '-' + s.end + '|' + s.style + '/' + s.variant; }
+  function filmFrame() {
+    if (FILM.p && FILM.frame && document.body.contains(FILM.frame)) return FILM.p;
+    var fr = document.createElement('iframe'); FILM.frame = fr;
+    fr.setAttribute('aria-hidden', 'true'); fr.tabIndex = -1;
+    fr.style.cssText = 'position:fixed;left:-2000px;top:0;width:960px;height:540px;border:0;opacity:0;pointer-events:none';
+    FILM.p = new Promise(function (res, rej) {
+      fr.onload = function () {
+        var w = fr.contentWindow, tries = 0;
+        (function ready() {
+          if (!w.__film && tries++ < 60) return setTimeout(ready, 100);
+          if (!w.__film) return rej(new Error('no built film'));
+          try { var st = w.document.createElement('style'); st.textContent = '#intro{display:none!important}'; w.document.head.appendChild(st); } catch (e) {}
+          setTimeout(function () { res({ w: w, cv: w.document.getElementById('c') }); }, 900);
+        })();
+      };
+    });
+    fr.src = 'film.html' + (location.search || '');  /* relative: the studio may be mounted at /p/<project>/ */
+    document.body.appendChild(fr); return FILM.p;
+  }
+  /* run jobs one after another (they share one canvas); a job gets { w, cv } and returns when its frame is drawn */
+  function onFilm(job) {
+    var run = FILM.q.then(function () { return filmFrame(); }).then(job);
+    FILM.q = run.catch(function () {}); return run;
+  }
+  function seekDraw(f, beat, out, ow, oh) {
+    f.w.__film.seek(beat);
+    return new Promise(function (r) { f.w.requestAnimationFrame(function () { f.w.requestAnimationFrame(function () { setTimeout(r, 40); }); }); }).then(function () {
+      out.width = ow; out.height = oh; out.getContext('2d').drawImage(f.cv, 0, 0, ow, oh);
+    });
+  }
+  function shotMid(s) { return (s.start - 1) * 4 + (s.end - s.start) * 4 * 0.55; }
   function loadThumbs() {
     var d = T.data; if (!d || !d.built) return;
-    if (TH.busy) { TH.again = true; return; }
-    var todo = d.tracks.shots.filter(function (s) { return !THUMBS[thumbKey(s)]; }); if (!todo.length) return;
-    TH.busy = true;
-    var fr = document.createElement('iframe');
-    fr.setAttribute('aria-hidden', 'true'); fr.tabIndex = -1;
-    fr.style.cssText = 'position:fixed;left:-2000px;top:0;width:640px;height:360px;border:0;opacity:0;pointer-events:none';
-    var done = function () { try { fr.remove(); } catch (e) {} TH.busy = false; if (TH.again) { TH.again = false; loadThumbs(); } };
-    var wait = function (ms) { return new Promise(function (r) { setTimeout(r, ms); }); };
-    fr.onload = function () {
-      var w = fr.contentWindow, tries = 0;
-      (function ready() {
-        if (!w.__film && tries++ < 50) return setTimeout(ready, 100);
-        if (!w.__film) return done();
-        try { var st = w.document.createElement('style'); st.textContent = '#intro{display:none!important}'; w.document.head.appendChild(st); } catch (e) {}
-        var cv = w.document.getElementById('c'), q = w.document.createElement('canvas'); q.width = 192; q.height = 108;
-        var i = 0;
-        (function next() {
-          if (i >= todo.length || !document.body.contains(CUR.el)) return done();
-          var s = todo[i++], beat = (s.start - 1) * 4 + (s.end - s.start) * 4 * 0.55;
-          w.__film.seek(beat);
-          wait(450).then(function () {
-            try { q.getContext('2d').drawImage(cv, 0, 0, 192, 108); THUMBS[thumbKey(s)] = q.toDataURL('image/jpeg', 0.7);
-              var el = CUR.el.querySelector('.tl-shot[data-i="' + s.i + '"]'); if (el) el.style.backgroundImage = 'url(' + THUMBS[thumbKey(s)] + ')'; } catch (e) {}
-            next();
-          });
-        })();
-      })();
-    };
-    fr.src = 'film.html' + (location.search || '');  /* relative: the studio may be mounted at /p/<project>/ */
-    document.body.appendChild(fr);
+    var todo = d.tracks.shots.filter(function (s) { return !THUMBS[thumbKey(s)]; });
+    todo.forEach(function (s) {
+      onFilm(function (f) {
+        if (!CUR || !document.body.contains(CUR.el) || THUMBS[thumbKey(s)]) return;
+        var q = document.createElement('canvas');
+        return seekDraw(f, shotMid(s), q, 256, Math.round(256 * f.cv.height / f.cv.width)).then(function () {
+          THUMBS[thumbKey(s)] = q.toDataURL('image/jpeg', 0.7);
+          var el = CUR.el.querySelector('.tl-shot[data-i="' + s.i + '"]'); if (el) el.style.backgroundImage = 'url(' + THUMBS[thumbKey(s)] + ')';
+        });
+      }).catch(function () {});
+    });
+  }
+  /* the viewer: the frame at the playhead, large, like the monitor in an editor. It shows the last build. */
+  function barBeat() { return (T.ph - 1) * 4; }
+  function updateViewer() {
+    if (!VIEW.canvas || !T.data || !T.data.built) return;
+    var my = ++VIEW.tick;
+    onFilm(function (f) {
+      if (my !== VIEW.tick) return;   /* a newer playhead position replaced this one */
+      var w = Math.min(1280, Math.round((VIEW.canvas.parentNode ? VIEW.canvas.parentNode.clientWidth : 960) * 1.5)) || 960;
+      return seekDraw(f, barBeat(), VIEW.canvas, w, Math.round(w * f.cv.height / f.cv.width));
+    }).catch(function () {});
+  }
+  var playTimer = null;
+  function togglePlay() {
+    var d = T.data; if (!d) return;
+    if (playTimer) { clearInterval(playTimer); playTimer = null; return render(); }
+    var t0 = Date.now(), b0 = T.ph; if (b0 >= d.bars + 1 - 0.01) b0 = 1;
+    playTimer = setInterval(function () {
+      if (!CUR || !document.body.contains(CUR.el)) { clearInterval(playTimer); playTimer = null; return; }
+      var bar = b0 + (Date.now() - t0) / 1000 / d.secPerBar;
+      if (bar >= d.bars + 1) { clearInterval(playTimer); playTimer = null; T.ph = d.bars + 1; movePH(T.ph, true); return render(); }
+      movePH(bar, true);
+    }, 90);
+    render();
   }
 
   /* ---------- drawing ---------- */
@@ -202,7 +242,7 @@
     tr.music.forEach(function (m) { mus.appendChild(h('div', { class: 'tl-blk tl-mus', style: 'top:3px;bottom:3px;left:' + x(m.startBar) + 'px;width:' + ((m.endBar - m.startBar) * Z - 1) + 'px', text: m.name, title: m.name + ' · bars ' + m.startBar + ' to ' + (m.endBar - 1) + ' (follows the score; not editable)' })); });
 
     /* shots */
-    var sl_ = lane('video', 66), shotEls = [], handleEls = [];
+    var sl_ = lane('video', 84), shotEls = [], handleEls = [];
     tr.shots.forEach(function (s, i) {
       var el_ = h('div', { class: 'tl-blk tl-shot' + (T.sel && T.sel.k === 'shot' && T.sel.i === i ? ' sel' : ''), 'data-k': 'shot', 'data-i': i, style: 'top:3px;bottom:3px;left:' + x(s.start) + 'px;width:' + ((s.end - s.start) * Z - 1) + 'px;background:hsl(' + hue(s.style) + ',42%,30%)', text: s.style + '/' + s.variant, title: '#' + (i + 1) + ' ' + s.style + '/' + s.variant + ' · bars ' + s.start + ' to ' + s.end + ' · ' + s.beats + ' beats. Click to select, press S to split at the playhead.' });
       el_.addEventListener('pointerdown', function (e) { var r = sl_.getBoundingClientRect(); select('shot', i); movePH(1 + (e.clientX - r.left) / Z); });
@@ -260,11 +300,14 @@
       h('span', { class: 'tl-live' + (CUR.ctx.live() ? ' on' : ''), title: 'live: the timeline follows changes an agent makes to spec.json' }), h('span', { class: 'dim', text: 'live' }),
       btn('−', function () { zoomTo(T.zoom / 1.3); }, 'Zoom out'), btn('+', function () { zoomTo(T.zoom * 1.3); }, 'Zoom in'),
       btn('Fit', function () { zoomTo((el.clientWidth - LABW - 24) / d.bars); }, 'Fit the whole film in view'),
-      btn('Split (S)', splitAtPlayhead, 'Cut the shot under the playhead in two'), btn('Delete', deleteSelected, 'Delete the selected shot or prompt'), btn('Undo', undo, 'Undo the last timeline edit (Ctrl/Cmd+Z)'),
+      (function () { var b = btn(playTimer ? 'Pause' : 'Play', togglePlay, 'Play the timeline silently (pictures only; the Preview tab plays with sound)'); b.classList.add('tl-play'); return b; })(), btn('Split (S)', splitAtPlayhead, 'Cut the shot under the playhead in two'), btn('Delete', deleteSelected, 'Delete the selected shot or prompt'), btn('Undo', undo, 'Undo the last timeline edit (Ctrl/Cmd+Z)'),
       h('span', { class: 'tl-read', text: readout() })
     ]);
     var scroll = h('div', { class: 'tl-scroll' }, [body]);
-    el.textContent = ''; el.appendChild(tools); el.appendChild(scroll);
+    if (!VIEW.canvas) { VIEW.canvas = document.createElement('canvas'); VIEW.canvas.className = 'tl-vcv'; VIEW.canvas.width = 960; VIEW.canvas.height = 540; VIEW.canvas.setAttribute('aria-label', 'The film at the playhead'); }
+    var viewer = h('div', { class: 'tl-viewer' }, [VIEW.canvas, h('div', { class: 'dim', text: d.built ? 'The frame at the playhead, from the last build. Click the ruler or press Play.' : 'No build yet: build the film (Preview tab) to see its pictures here.' })]);
+    el.textContent = ''; el.appendChild(viewer); el.appendChild(tools); el.appendChild(scroll);
+    updateViewer();
     el.appendChild(h('div', { class: 'tl-msg' + (T.bad ? ' bad' : ''), role: 'status', text: T.msg }));
     el.appendChild(h('p', { class: 'dim', text: 'Drag a cut handle to retime shots, drag narration or prompts to move them. Dashed outlines are estimated lengths (run voice to measure). Edits save straight into spec.json and show in the Storyboard tab.' }));
     scroll.scrollLeft = sl;
