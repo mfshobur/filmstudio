@@ -75,16 +75,17 @@ A.stopAll=function(){
   A.srcs.forEach(function(s){try{s.stop()}catch(e){}});A.srcs=[];
   if(A.ok){try{A.musicOut.disconnect()}catch(e){}A.musicOut=A.ctx.createGain();A.musicOut.gain.value=A.music?.42:0;A.musicOut.connect(A.duck);A.duck.gain.cancelScheduledValues(0);A.duck.gain.value=1}
 };
-A.run=function(cuts){
-  var c=A.ctx;A.t0=c.currentTime+.8;
+A.run=function(cuts,from){
+  var c=A.ctx;from=from||0;A.t0=c.currentTime+(from>0?.25:.8)-from*SPB;
   A.M=createMusic(c,A.musicOut,BPM,SCORE);A.M.cuts=cuts;
-  var next=0,M=A.M;
+  var next=Math.max(0,Math.floor(from*SPB/A.M.s16)),M=A.M;
   function pump(){while(next<M.steps&&A.t0+next*M.s16<c.currentTime+1.4){try{M.step(next,A.t0+next*M.s16)}catch(e){}next++}if(next>=M.steps){clearInterval(A.timer);A.timer=null}}
   pump();A.timer=setInterval(pump,60);
   for(var i=0;i<VOB.length;i++){
     if(!VOB[i])continue;var s=c.createBufferSource();s.buffer=VOB[i];s.connect(A.vgain);
-    var t=A.t0+(bb(VO_AT[i][0])+VO_AT[i][1])*SPB;s.start(t);A.srcs.push(s);
-    A.duck.gain.setTargetAtTime(.5,Math.max(c.currentTime,t-.08),.07);A.duck.gain.setTargetAtTime(1,t+VOB[i].duration,.3);
+    var t=A.t0+(bb(VO_AT[i][0])+VO_AT[i][1])*SPB,now=c.currentTime;if(t+VOB[i].duration<now)continue;
+    s.start(Math.max(t,now),Math.max(0,now-t));A.srcs.push(s);
+    A.duck.gain.setTargetAtTime(.5,Math.max(now,t-.08),.07);A.duck.gain.setTargetAtTime(1,Math.max(now,t+VOB[i].duration),.3);
   }
 };
 A.setMusic=function(on){A.music=on;if(A.ok)A.musicOut.gain.setTargetAtTime(on?.42:0,A.ctx.currentTime,.2)};
@@ -168,7 +169,7 @@ var bM=$('#bMusic'),bV=$('#bVoice');
 bM.addEventListener('click',function(){var on=bM.getAttribute('aria-pressed')!=='true';bM.setAttribute('aria-pressed',on);A.setMusic(on)});
 bV.addEventListener('click',function(){var on=bV.getAttribute('aria-pressed')!=='true';bV.setAttribute('aria-pressed',on);A.setVoice(on)});
 document.addEventListener('visibilitychange',function(){if(!A.ctx)return;if(document.hidden)A.ctx.suspend();else A.ctx.resume()});
-window.__film={drawAt:function(b){FORCE=b;ONCE=true;try{frame()}finally{ONCE=false}},setBeat:function(b){EXPORTING=true;FORCE=b},spb:SPB,bars:TOTAL_BARS,errors:function(){return DRAW_ERRS},grab:function(){var x=GRABC.getContext('2d');x.drawImage(cv,0,0,48,27);var d=x.getImageData(0,0,48,27).data,o=[];for(var i=0;i<d.length;i+=4)o.push(d[i]+d[i+1]+d[i+2]);return o},seek:function(b){FORCE=b},free:function(){FORCE=null},vready:function(){return VOB.filter(Boolean).length},shots:SH.length,sceneMs:function(){return {n:SC_MS.n,avg:SC_MS.n?SC_MS.sum/SC_MS.n:0,max:SC_MS.max}},resetMs:function(){SC_MS.n=0;SC_MS.sum=0;SC_MS.max=0},grabN:function(w,h){var q=document.createElement('canvas');q.width=w;q.height=h;var x=q.getContext('2d');x.drawImage(cv,0,0,w,h);var d=x.getImageData(0,0,w,h).data,o=[];for(var i=0;i<d.length;i+=4)o.push(d[i],d[i+1],d[i+2]);return o}};
+window.__film={audioStart:function(b){A.init();return A.decode().then(function(){A.stopAll();if(A.ok)A.run(cutsMap(),b||0);return !!A.ok})},audioStop:function(){A.stopAll()},audioBeat:function(){return A.ok&&A.srcs.length+(A.timer?1:0)>0?(A.ctx.currentTime-A.t0)/SPB:null},audioState:function(){return A.ctx?A.ctx.state:'none'},setMusic:function(on){A.setMusic(on)},setVoice:function(on){A.setVoice(on)},drawAt:function(b){FORCE=b;ONCE=true;try{frame()}finally{ONCE=false}},setBeat:function(b){EXPORTING=true;FORCE=b},spb:SPB,bars:TOTAL_BARS,errors:function(){return DRAW_ERRS},grab:function(){var x=GRABC.getContext('2d');x.drawImage(cv,0,0,48,27);var d=x.getImageData(0,0,48,27).data,o=[];for(var i=0;i<d.length;i+=4)o.push(d[i]+d[i+1]+d[i+2]);return o},seek:function(b){FORCE=b},free:function(){FORCE=null},vready:function(){return VOB.filter(Boolean).length},shots:SH.length,sceneMs:function(){return {n:SC_MS.n,avg:SC_MS.n?SC_MS.sum/SC_MS.n:0,max:SC_MS.max}},resetMs:function(){SC_MS.n=0;SC_MS.sum=0;SC_MS.max=0},grabN:function(w,h){var q=document.createElement('canvas');q.width=w;q.height=h;var x=q.getContext('2d');x.drawImage(cv,0,0,w,h);var d=x.getImageData(0,0,w,h).data,o=[];for(var i=0;i<d.length;i+=4)o.push(d[i],d[i+1],d[i+2]);return o}};
 try{if(document.fonts&&document.fonts.load){document.fonts.load('italic 90px "Instrument Serif"');document.fonts.load('800 20px "Hanken Grotesk"');document.fonts.load('20px "IBM Plex Mono"')}}catch(e){}
 requestAnimationFrame(frame);
 })();

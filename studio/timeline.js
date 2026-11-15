@@ -80,7 +80,7 @@
   function clock() { var d = T.data, t = Math.max(0, (T.ph - 1) * d.secPerBar), m = Math.floor(t / 60); return m + ':' + ('0' + Math.floor(t % 60)).slice(-2) + '.' + Math.floor((t % 1) * 10) + '  /  ' + Math.floor(d.seconds / 60) + ':' + ('0' + Math.round(d.seconds % 60)).slice(-2); }
   function movePH(bar, free) {
     var d = T.data; T.ph = clamp(free ? bar : snap(bar, 0.25), 1, d.bars + 1);
-    if (!free && playTimer) { clearInterval(playTimer); playTimer = null; if (CUR) CUR.el.querySelectorAll('.tl-play').forEach(function (b) { b.textContent = '\u25B6'; b.title = 'Play (Space)'; }); }
+    if (!free && playTimer) stopPlay();
     if (!CUR) return;
     var ph = CUR.el.querySelector('.tl-ph'); if (ph) ph.style.left = (LABW + (T.ph - 1) * T.zoom) + 'px';
     var rd = CUR.el.querySelector('.tl-read'); if (rd) rd.textContent = readout();
@@ -157,7 +157,7 @@
   function filmFrame() {
     if (FILM.p && FILM.frame && document.body.contains(FILM.frame)) return FILM.p;
     var fr = document.createElement('iframe'); FILM.frame = fr;
-    fr.setAttribute('aria-hidden', 'true'); fr.tabIndex = -1;
+    fr.setAttribute('aria-hidden', 'true'); fr.setAttribute('allow', 'autoplay'); fr.tabIndex = -1;
     fr.style.cssText = 'position:fixed;left:-2000px;top:0;width:960px;height:540px;border:0;opacity:0;pointer-events:none';
     FILM.p = new Promise(function (res, rej) {
       fr.onload = function () {
@@ -219,16 +219,31 @@
     }, true).catch(function () {});
   }
   var playTimer = null;
+  function stopAudio() { if (FILM.p) FILM.p.then(function (f) { try { f.w.__film.audioStop(); } catch (e) {} }, function () {}); }
+  function stopPlay() {
+    if (playTimer) { clearInterval(playTimer); playTimer = null; }
+    stopAudio();
+    if (CUR) CUR.el.querySelectorAll('.tl-play').forEach(function (b) { b.textContent = '\u25B6'; b.title = 'Play (Space)'; });
+  }
+  /* Play runs the film's own music and narration from the playhead (the film page does the sound); the playhead follows the audio clock. */
   function togglePlay() {
     var d = T.data; if (!d) return;
-    if (playTimer) { clearInterval(playTimer); playTimer = null; return render(); }
-    var t0 = Date.now(), b0 = T.ph; if (b0 >= d.bars + 1 - 0.01) b0 = 1;
+    if (playTimer) { stopPlay(); return render(); }
+    var b0 = T.ph; if (b0 >= d.bars + 1 - 0.01) b0 = 1; T.ph = b0;
+    var wall0 = Date.now(), audio = false, tried = !d.built, audioFrom = (b0 - 1) * 4;
+    if (d.built) filmFrame().then(function (f) { return f.w.__film.audioStart ? f.w.__film.audioStart(audioFrom) : false; }).then(function (ok) { audio = ok; tried = true; wall0 = Date.now(); }, function () { tried = true; wall0 = Date.now(); });
     playTimer = setInterval(function () {
-      if (!CUR || !document.body.contains(CUR.el)) { clearInterval(playTimer); playTimer = null; return; }
-      var bar = b0 + (Date.now() - t0) / 1000 / d.secPerBar;
-      if (bar >= d.bars + 1) { clearInterval(playTimer); playTimer = null; T.ph = d.bars + 1; movePH(T.ph, true); return render(); }
-      movePH(bar, true);
-    }, 90);
+      if (!CUR || !document.body.contains(CUR.el)) { stopPlay(); return; }
+      var bar;
+      if (!tried) return;   /* audio is still decoding: hold the playhead
+      */
+      if (audio) {
+        var ab = FILM.p && FILM.frame && FILM.frame.contentWindow.__film.audioBeat();
+        if (ab === null || ab === undefined) bar = d.bars + 1; else bar = 1 + ab / 4;
+      } else bar = b0 + (Date.now() - wall0) / 1000 / d.secPerBar;
+      if (bar >= d.bars + 1) { stopPlay(); T.ph = d.bars + 1; movePH(T.ph, true); return render(); }
+      movePH(Math.max(bar, b0), true);
+    }, 70);
     render();
   }
 
